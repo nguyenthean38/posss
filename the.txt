@@ -1,0 +1,8 @@
+Giới thiệu: Tại sao Cần Nhiều Hơn Một Kiến Trúc RAG?
+Bởi vì một kiến trúc RAG không bao giờ là đủ. Lĩnh vực Truy xuất Tăng cường Tạo sinh (Retrieval-Augmented Generation - RAG) đang phát triển với tốc độ chóng mặt, vượt ra ngoài các mô hình ban đầu. Các kiến trúc đã tiến hóa từ Tiêu chuẩn (Standard) đến Nâng cao (Advanced) và Chuyên biệt (Specialized), mỗi loại được thiết kế để giải quyết những thách thức riêng biệt. Đối với bất kỳ ai đang xây dựng các sản phẩm AI vào năm 2025, việc hiểu rõ các mẫu thiết kế này là vô cùng cần thiết để tạo ra các ứng dụng thông minh, hiệu quả và đáng tin cậy.
+Sổ tay này sẽ giới thiệu chi tiết 25 mẫu thiết kế RAG, được phân loại thành 5 nhóm chính, giúp bạn xây dựng nền tảng vững chắc và tiến tới các kỹ thuật tinh vi hơn:
+•	Nền tảng (Foundation)
+•	Nâng cao (Advanced)
+•	Chuyên biệt (Specialized)
+•	Tối ưu hóa (Optimized)
+•	Theo Lĩnh vực cụ thể (Domain-Specific)
