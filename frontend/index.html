@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Bán Hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3 shadow-sm" style="height: 60px;">
+        <a class="navbar-brand fw-bold" href="#"><i class="fas fa-mobile-alt me-2"></i>Smart POS</a>
+        <div class="ms-auto d-flex align-items-center">
+            <button class="btn btn-outline-light btn-sm me-2" onclick="toggleLanguage()">🇬🇧/🇻🇳 Lang</button>
+            <button class="btn btn-outline-light btn-sm me-3" onclick="toggleTheme()"><i
+                    class="fas fa-moon"></i></button>
+            <span class="text-white small me-2">Nhân viên: <b>Nguyễn Văn A</b></span>
+            <a href="login.html" class="text-white-50"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <div class="container-fluid pos-container">
+        <div class="row h-100">
+            <div class="col-md-8 product-list-area bg-light">
+                <div class="d-flex mb-3 gap-2">
+                    <input type="text" class="form-control form-control-lg" placeholder="Tìm kiếm sản phẩm (F3)..."
+                        id="searchInput">
+                    <select class="form-select w-25">
+                        <option>Tất cả danh mục</option>
+                        <option>Điện thoại</option>
+                        <option>Phụ kiện</option>
+                    </select>
+                </div>
+
+                <div class="row g-3" id="productGrid">
+                </div>
+            </div>
+
+            <div class="col-md-4 cart-area shadow">
+                <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-primary"><i class="fas fa-shopping-cart me-2"></i>Giỏ hàng</h5>
+                    <span class="badge bg-danger rounded-pill" id="cartCount">0</span>
+                </div>
+
+                <div class="cart-items" id="cartItems">
+                    <div class="text-center text-muted mt-5">Chưa có sản phẩm nào</div>
+                </div>
+
+                <div class="cart-footer shadow-lg">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tạm tính:</span>
+                        <span class="fw-bold" id="subTotal">0 ₫</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="h4 fw-bold text-primary" data-i18n="total">Tổng tiền:</span>
+                        <span class="h4 fw-bold text-accent" id="finalTotal">0 ₫</span>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-secondary w-100 py-2" onclick="clearCart()">Hủy đơn</button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-accent w-100 py-2" onclick="checkout()"><i
+                                    class="fas fa-print me-1"></i> Thanh toán</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        let cart = [];
+
+        // Load sản phẩm khi trang chạy
+        async function loadProducts() {
+            const products = await API.getProducts();
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+
+            products.forEach(p => {
+                grid.innerHTML += `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card product-card h-100" onclick="addToCart(${p.id})">
+                            <img src="${p.img}" class="card-img-top p-3" alt="${p.name}">
+                            <div class="card-body text-center p-2">
+                                <h6 class="card-title fw-bold mb-1 text-truncate">${p.name}</h6>
+                                <p class="card-text text-primary fw-bold">${formatCurrency(p.price)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Thêm vào giỏ
+        async function addToCart(id) {
+            const products = await API.getProducts(); // Trong thực tế nên cache lại danh sách này
+            const product = products.find(p => p.id === id);
+
+            const existingItem = cart.find(i => i.id === id);
+            if (existingItem) {
+                existingItem.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            renderCart();
+        }
+
+        // Render Giỏ hàng
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            const countBadge = document.getElementById('cartCount');
+
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted mt-5">Chưa có sản phẩm nào</div>';
+                countBadge.innerText = 0;
+                updateTotals(0);
+                return;
+            }
+
+            let html = '<ul class="list-group list-group-flush">';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                total += item.price * item.qty;
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div style="width: 50%">
+                            <div class="fw-bold text-truncate">${item.name}</div>
+                            <small class="text-muted">${formatCurrency(item.price)}</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="updateQty(${index}, -1)">-</button>
+                            <span class="mx-2 fw-bold">${item.qty}</span>
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="updateQty(${index}, 1)">+</button>
+                        </div>
+                        <div class="text-end" style="width: 20%">
+                            <div class="fw-bold">${formatCurrency(item.price * item.qty)}</div>
+                            <small class="text-danger cursor-pointer" onclick="removeItem(${index})"><i class="fas fa-trash"></i></small>
+                        </div>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+
+            container.innerHTML = html;
+            countBadge.innerText = cart.length;
+            updateTotals(total);
+        }
+
+        function updateQty(index, change) {
+            cart[index].qty += change;
+            if (cart[index].qty <= 0) cart.splice(index, 1);
+            renderCart();
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function clearCart() {
+            if (confirm('Bạn có chắc muốn hủy đơn hàng này?')) {
+                cart = [];
+                renderCart();
+            }
+        }
+
+        function updateTotals(amount) {
+            document.getElementById('subTotal').innerText = formatCurrency(amount);
+            document.getElementById('finalTotal').innerText = formatCurrency(amount);
+        }
+
+        function checkout() {
+            if (cart.length === 0) return alert('Giỏ hàng trống!');
+            alert('Đang xử lý thanh toán và in hóa đơn...');
+            // Gọi API thanh toán ở đây
+        }
+
+        // Khởi chạy
+        loadProducts();
+    </script>
+</body>
+
+</html>
