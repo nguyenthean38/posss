@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhoneStore POS — Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Fonts (optional) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./assets/css/style.css" />
+</head>
+
+<body class="ps-body ps-noise">
+    <div class="ps-app">
+        <!-- SIDEBAR -->
+        <aside class="ps-sidebar" id="sidebar">
+            <div class="ps-sidebar__brand">
+                <div class="ps-brand__icon">
+                    <i class="bi bi-cart3"></i>
+                </div>
+                <div class="ps-brand__text">
+                    <div class="ps-brand__title">PhoneStore POS</div>
+                </div>
+            </div>
+
+            <nav class="ps-nav">
+                <a class="ps-nav__item active" href="#" data-tooltip="Dashboard">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Point of Sale">
+                    <i class="bi bi-bag"></i>
+                    <span>Point of Sale</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Products">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Products</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Categories">
+                    <i class="bi bi-tags"></i>
+                    <span>Categories</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Employees">
+                    <i class="bi bi-people"></i>
+                    <span>Employees</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Customers">
+                    <i class="bi bi-person"></i>
+                    <span>Customers</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Reports">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>Reports</span>
+                </a>
+            </nav>
+
+            <div class="ps-sidebar__footer">
+                <a class="ps-nav__item" href="#">
+                    <i class="bi bi-person-circle"></i>
+                    <span>Profile</span>
+                </a>
+                <a class="ps-nav__item" href="#">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </a>
+
+                <button class="ps-collapse btn btn-sm" id="btnCollapse" type="button" aria-label="Collapse sidebar">
+                    <i class="bi bi-chevron-left"></i>
+                    <span>Collapse</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="ps-main">
+            <!-- TOPBAR -->
+            <header class="ps-topbar">
+                <div class="ps-topbar__left">
+                    <button class="ps-icon-btn d-lg-none" id="btnMobileMenu" type="button" aria-label="Open menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="ps-topbar__title">Dashboard</div>
+                </div>
+
+                <div class="ps-topbar__right">
+                    <button class="ps-chip" type="button" title="Language">
+                        <i class="bi bi-globe"></i>
+                        <span>EN</span>
+                    </button>
+
+                    <button class="ps-icon-btn" id="btnTheme" type="button" title="Toggle theme">
+                        <i class="bi bi-brightness-high"></i>
+                    </button>
+
+                    <div class="ps-user">
+                        <div class="ps-user__avatar">A</div>
+                        <div class="ps-user__meta">
+                            <div class="ps-user__name">Admin</div>
+                            <div class="ps-user__role">Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <section class="ps-content">
+                <!-- KPI CARDS -->
+                <div class="row g-3 g-lg-4">
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="ps-card ps-kpi">
+                            <div class="ps-kpi__icon">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <div class="ps-kpi__body">
+                                <div class="ps-kpi__value">42.600.000 ₫</div>
+                                <div class="ps-kpi__label">Total Revenue</div>
+                            </div>
+                            <div class="ps-kpi__trend up">
+                                <i class="bi bi-arrow-up-right"></i>
+                                <span>+12.5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="ps-card ps-kpi">
+                            <div class="ps-kpi__icon">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+                            <div class="ps-kpi__body">
+                                <div class="ps-kpi__value">129</div>
+                                <div class="ps-kpi__label">Total Orders</div>
+                            </div>
+                            <div class="ps-kpi__trend up">
+                                <i class="bi bi-arrow-up-right"></i>
+                                <span>+8.2%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="ps-card ps-kpi">
+                            <div class="ps-kpi__icon">
+                                <i class="bi bi-box"></i>
+                            </div>
+                            <div class="ps-kpi__body">
+                                <div class="ps-kpi__value">256</div>
+                                <div class="ps-kpi__label">Total Products</div>
+                            </div>
+                            <div class="ps-kpi__trend up">
+                                <i class="bi bi-arrow-up-right"></i>
+                                <span>+3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="ps-card ps-kpi">
+                            <div class="ps-kpi__icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="ps-kpi__body">
+                                <div class="ps-kpi__value">1,240</div>
+                                <div class="ps-kpi__label">Total Customers</div>
+                            </div>
+                            <div class="ps-kpi__trend down">
+                                <i class="bi bi-arrow-down-right"></i>
+                                <span>-2.1%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHARTS -->
+                <div class="row g-3 g-lg-4 mt-1">
+                    <div class="col-12 col-xl-7">
+                        <div class="ps-card ps-panel">
+                            <div class="ps-panel__head">
+                                <div class="ps-panel__title">
+                                    <i class="bi bi-graph-up"></i>
+                                    <span>Sales Overview</span>
+                                </div>
+                            </div>
+                            <div class="ps-panel__body">
+                                <div class="ps-chart">
+                                    <canvas id="salesBar"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-5">
+                        <div class="ps-card ps-panel">
+                            <div class="ps-panel__head">
+                                <div class="ps-panel__title">
+                                    <i class="bi bi-activity"></i>
+                                    <span>Orders</span>
+                                </div>
+                            </div>
+                            <div class="ps-panel__body">
+                                <div class="ps-chart">
+                                    <canvas id="ordersLine"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLES -->
+                <div class="row g-3 g-lg-4 mt-1">
+                    <div class="col-12 col-xl-7">
+                        <div class="ps-card ps-panel">
+                            <div class="ps-panel__head">
+                                <div class="ps-panel__title">Recent Orders</div>
+                            </div>
+                            <div class="ps-panel__body p-0">
+                                <div class="table-responsive">
+                                    <table class="table ps-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 140px;">ID</th>
+                                                <th>Customer Name</th>
+                                                <th class="text-end" style="width: 180px;">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><a class="ps-link" href="#">ORD-001</a></td>
+                                                <td>Nguyễn Văn A</td>
+                                                <td class="text-end">12.500.000 ₫</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a class="ps-link" href="#">ORD-002</a></td>
+                                                <td>Trần Thị B</td>
+                                                <td class="text-end">3.200.000 ₫</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a class="ps-link" href="#">ORD-003</a></td>
+                                                <td>Lê Văn C</td>
+                                                <td class="text-end">8.900.000 ₫</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a class="ps-link" href="#">ORD-004</a></td>
+                                                <td>Phạm Thị D</td>
+                                                <td class="text-end">1.500.000 ₫</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a class="ps-link" href="#">ORD-005</a></td>
+                                                <td>Hoàng Văn E</td>
+                                                <td class="text-end">25.000.000 ₫</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-5">
+                        <div class="ps-card ps-panel">
+                            <div class="ps-panel__head">
+                                <div class="ps-panel__title">Top Products</div>
+                            </div>
+                            <div class="ps-panel__body">
+                                <div class="ps-toplist">
+                                    <div class="ps-topitem">
+                                        <div class="ps-rank">1</div>
+                                        <div class="ps-topitem__meta">
+                                            <div class="ps-topitem__name">iPhone 15 Pro Max</div>
+                                            <div class="ps-topitem__sub">45 products sold</div>
+                                        </div>
+                                        <div class="ps-topitem__value">1.125.000.000 ₫</div>
+                                    </div>
+
+                                    <div class="ps-topitem">
+                                        <div class="ps-rank">2</div>
+                                        <div class="ps-topitem__meta">
+                                            <div class="ps-topitem__name">Samsung Galaxy S24</div>
+                                            <div class="ps-topitem__sub">38 products sold</div>
+                                        </div>
+                                        <div class="ps-topitem__value">760.000.000 ₫</div>
+                                    </div>
+
+                                    <div class="ps-topitem">
+                                        <div class="ps-rank">3</div>
+                                        <div class="ps-topitem__meta">
+                                            <div class="ps-topitem__name">AirPods Pro 2</div>
+                                            <div class="ps-topitem__sub">67 products sold</div>
+                                        </div>
+                                        <div class="ps-topitem__value">402.000.000 ₫</div>
+                                    </div>
+
+                                    <div class="ps-topitem">
+                                        <div class="ps-rank">4</div>
+                                        <div class="ps-topitem__meta">
+                                            <div class="ps-topitem__name">Ốp lưng iPhone</div>
+                                            <div class="ps-topitem__sub">120 products sold</div>
+                                        </div>
+                                        <div class="ps-topitem__value">36.000.000 ₫</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- MOBILE OVERLAY -->
+        <div class="ps-overlay" id="overlay"></div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script src="./assets/js/dashboard.js"></script>
+</body>
+
+</html>
