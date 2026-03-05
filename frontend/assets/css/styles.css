@@ -1,0 +1,1572 @@
+/* ===== THEME TOKENS (CSS variables) ===== */
+:root {
+    --radius: 18px;
+    --radius-sm: 14px;
+
+    /* default (dark) values; will be overridden by [data-theme="light"] */
+    --bg0: #070c16;
+    --bg1: #0b1220;
+    --surface: rgba(255, 255, 255, .035);
+    --surface2: rgba(255, 255, 255, .055);
+    --border: rgba(255, 255, 255, .08);
+    --border2: rgba(255, 255, 255, .12);
+
+    --text: rgba(255, 255, 255, .92);
+    --muted: rgba(255, 255, 255, .60);
+
+    --shadow: 0 18px 50px rgba(0, 0, 0, .45);
+    --shadowSoft: 0 10px 24px rgba(0, 0, 0, .25);
+
+    --primary: #3b82f6;
+    --cyan: #22d3ee;
+    --green: #22c55e;
+    --red: #ef4444;
+
+    --focus: 0 0 0 4px rgba(59, 130, 246, .18);
+}
+
+body[data-theme="light"] {
+    --bg0: #f7f8fb;
+    --bg1: #eef2ff;
+    --surface: rgba(255, 255, 255, .72);
+    --surface2: rgba(255, 255, 255, .88);
+    --border: rgba(15, 23, 42, .10);
+    --border2: rgba(15, 23, 42, .16);
+
+    --text: rgba(15, 23, 42, .92);
+    --muted: rgba(15, 23, 42, .62);
+
+    --shadow: 0 18px 50px rgba(15, 23, 42, .12);
+    --shadowSoft: 0 10px 24px rgba(15, 23, 42, .10);
+
+    --focus: 0 0 0 4px rgba(59, 130, 246, .20);
+}
+
+/* ===== GLOBAL ===== */
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(900px 550px at 20% 10%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 60%),
+        radial-gradient(900px 550px at 85% 20%, color-mix(in srgb, var(--cyan) 14%, transparent), transparent 60%),
+        radial-gradient(700px 480px at 70% 90%, color-mix(in srgb, var(--green) 10%, transparent), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+}
+
+/* subtle noise */
+.ps-noise::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+}
+
+/* ===== LAYOUT ===== */
+.ps-app {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 290px 1fr;
+}
+
+.ps-sidebar {
+    position: sticky;
+    top: 0;
+    height: auto;
+    padding: 18px 14px;
+    border-right: 1px solid var(--border);
+
+}
+
+.ps-main {
+    min-width: 0;
+    padding: 18px 20px 28px;
+}
+
+/* IMPORTANT: give content top padding equal to fixed topbar height */
+.ps-content {
+    padding-top: 88px;
+    /* fixed topbar spacing */
+}
+
+/* ===== BRAND ===== */
+.ps-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 10px 16px;
+}
+
+.ps-brand__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--primary) 22%, transparent),
+            color-mix(in srgb, var(--cyan) 12%, transparent));
+    border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-brand__icon i {
+    font-size: 20px;
+    color: var(--text);
+    filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--primary) 35%, transparent));
+}
+
+.ps-brand__title {
+    font-weight: 900;
+    letter-spacing: .2px;
+    line-height: 1.1;
+}
+
+.ps-brand__text {
+    display: flex;
+    flex-direction: column;
+}
+
+.ps-brand__text::after {
+    content: "Sales & Inventory";
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* ===== NAV ===== */
+.ps-nav {
+    display: grid;
+    gap: 6px;
+    padding: 10px 8px;
+}
+
+.ps-nav__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 14px;
+    color: color-mix(in srgb, var(--text) 82%, transparent);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.ps-nav__item i {
+    font-size: 18px;
+    opacity: .95;
+}
+
+.ps-nav__item:hover {
+    background: color-mix(in srgb, #fff 6%, transparent);
+    border-color: var(--border);
+    transform: translateY(-1px);
+    color: var(--text);
+}
+
+.ps-nav__item.active {
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--primary) 22%, transparent),
+            color-mix(in srgb, var(--cyan) 8%, transparent));
+    border-color: color-mix(in srgb, var(--primary) 26%, transparent);
+    color: var(--text);
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-nav__item.active::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: 12px;
+    bottom: 12px;
+    width: 4px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, var(--primary), var(--cyan));
+}
+
+/* ===== FOOTER ===== */
+.ps-sidebar__footer {
+    margin-top: auto;
+    padding: 12px 8px 6px;
+    display: grid;
+    gap: 6px;
+}
+
+.ps-collapse {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: color-mix(in srgb, var(--text) 88%, transparent);
+    transition: background .15s ease, transform .15s ease;
+}
+
+.ps-collapse:hover {
+    background: color-mix(in srgb, #fff 6%, transparent);
+    transform: translateY(-1px);
+}
+
+/* ===== TOPBAR (FIXED) ===== */
+.ps-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadowSoft);
+}
+
+/* fixed to top of main area */
+.ps-topbar--fixed {
+    position: fixed;
+    top: 18px;
+    left: calc(290px + 20px);
+    /* sidebar width + main padding-left */
+    right: 20px;
+    /* main padding-right */
+    z-index: 30;
+}
+
+/* if collapsed desktop */
+.ps-app.sidebar-collapsed .ps-topbar--fixed {
+    left: calc(96px + 20px);
+}
+
+/* on mobile (sidebar overlay), topbar should span full width */
+@media (max-width: 991.98px) {
+    .ps-topbar--fixed {
+        left: 16px;
+        right: 16px;
+        top: 16px;
+    }
+
+    .ps-main {
+        padding: 16px;
+    }
+
+    .ps-content {
+        padding-top: 88px;
+    }
+}
+
+.ps-topbar__left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ps-topbar__title {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: .2px;
+}
+
+.ps-topbar__right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ps-icon-btn {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--text);
+    transition: transform .15s ease, background .15s ease;
+}
+
+.ps-icon-btn:hover {
+    background: color-mix(in srgb, #fff 6%, transparent);
+    transform: translateY(-1px);
+}
+
+.ps-icon-btn:focus {
+    outline: none;
+    box-shadow: var(--focus);
+}
+
+.ps-chip {
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform .15s ease, background .15s ease;
+}
+
+.ps-chip:hover {
+    background: color-mix(in srgb, #fff 6%, transparent);
+    transform: translateY(-1px);
+}
+
+.ps-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 2%, transparent);
+}
+
+.ps-user__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--primary) 22%, transparent),
+            color-mix(in srgb, var(--cyan) 10%, transparent));
+    border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-user__meta {
+    line-height: 1.1;
+}
+
+.ps-user__name {
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.ps-user__role {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* ===== CARDS ===== */
+.ps-card {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-kpi {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    gap: 12px;
+    padding: 18px;
+    align-items: center;
+    min-height: 98px;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.ps-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: var(--border2);
+}
+
+.ps-kpi::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background:
+        radial-gradient(500px 120px at 20% 0%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 60%),
+        radial-gradient(450px 120px at 90% 30%, color-mix(in srgb, var(--cyan) 14%, transparent), transparent 55%);
+    opacity: .55;
+    pointer-events: none;
+}
+
+.ps-kpi__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    box-shadow: var(--shadowSoft);
+    z-index: 1;
+}
+
+.ps-kpi__icon i {
+    font-size: 18px;
+    color: var(--text);
+}
+
+.ps-kpi__body {
+    z-index: 1;
+}
+
+.ps-kpi__value {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: .2px;
+}
+
+.ps-kpi__label {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.ps-kpi__trend {
+    z-index: 1;
+    font-weight: 900;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+    background: color-mix(in srgb, #000 10%, transparent);
+}
+
+body[data-theme="light"] .ps-kpi__trend {
+    background: color-mix(in srgb, #fff 60%, transparent);
+}
+
+.ps-kpi__trend.up {
+    color: color-mix(in srgb, var(--green) 95%, transparent);
+}
+
+.ps-kpi__trend.down {
+    color: color-mix(in srgb, var(--red) 95%, transparent);
+}
+
+/* ===== PANELS ===== */
+.ps-panel {
+    overflow: hidden;
+}
+
+.ps-panel__head {
+    padding: 14px 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+}
+
+.ps-panel__title {
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: .2px;
+}
+
+.ps-panel__title i {
+    color: var(--muted);
+}
+
+.ps-panel__body {
+    padding: 14px 16px;
+}
+
+/* ===== CHARTS ===== */
+.ps-chart {
+    height: 300px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, #fff 3%, transparent), color-mix(in srgb, #fff 1%, transparent));
+    padding: 8px;
+}
+
+.ps-chart canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ===== TABLE ===== */
+.ps-table {
+    color: var(--text);
+}
+
+.ps-table thead th {
+    font-size: 12px;
+    color: var(--muted);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent) !important;
+    background: color-mix(in srgb, #fff 1%, transparent);
+    padding: 14px 16px;
+}
+
+.ps-table tbody td {
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent) !important;
+    padding: 14px 16px;
+}
+
+.ps-table tbody tr {
+    transition: background .12s ease;
+}
+
+.ps-table tbody tr:hover {
+    background: color-mix(in srgb, #fff 3%, transparent);
+}
+
+.ps-link {
+    color: color-mix(in srgb, var(--primary) 95%, transparent);
+    text-decoration: none;
+}
+
+.ps-link:hover {
+    text-decoration: underline;
+}
+
+/* ===== TOP LIST ===== */
+.ps-toplist {
+    display: grid;
+    gap: 10px;
+}
+
+.ps-topitem {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.ps-topitem:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, #fff 4%, transparent);
+    border-color: var(--border2);
+}
+
+.ps-rank {
+    width: 32px;
+    height: 32px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    color: var(--text);
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--primary) 20%, transparent),
+            color-mix(in srgb, var(--cyan) 10%, transparent));
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.ps-topitem__name {
+    font-weight: 900;
+}
+
+.ps-topitem__sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.ps-topitem__value {
+    font-weight: 900;
+    color: var(--text);
+}
+
+/* ===== MOBILE SIDEBAR ===== */
+.ps-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .55);
+    display: none;
+    z-index: 40;
+}
+
+@media (max-width: 991.98px) {
+    .ps-app {
+        grid-template-columns: 1fr;
+    }
+
+    .ps-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-110%);
+        transition: .22s ease;
+        width: 290px;
+        z-index: 50;
+        background: color-mix(in srgb, var(--bg0) 92%, transparent);
+        backdrop-filter: blur(16px);
+    }
+
+    .ps-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .ps-overlay.show {
+        display: block;
+    }
+}
+
+/* ===== COLLAPSED DESKTOP + TOOLTIP ===== */
+@media (min-width: 992px) {
+    .ps-app.sidebar-collapsed {
+        grid-template-columns: 96px 1fr;
+    }
+
+    .ps-app.sidebar-collapsed .ps-brand__text,
+    .ps-app.sidebar-collapsed .ps-nav__item span,
+    .ps-app.sidebar-collapsed .ps-collapse span,
+    .ps-app.sidebar-collapsed .ps-user__meta {
+        display: none;
+    }
+
+    .ps-app.sidebar-collapsed .ps-sidebar__brand {
+        justify-content: center;
+    }
+
+    .ps-app.sidebar-collapsed .ps-nav__item {
+        justify-content: center;
+        padding: 12px;
+    }
+
+    .ps-app.sidebar-collapsed .ps-nav__item.active::before {
+        left: 0;
+        top: 10px;
+        bottom: 10px;
+    }
+
+    .ps-app.sidebar-collapsed .ps-nav__item[data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 106%;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        color: var(--text);
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .12s ease, transform .12s ease;
+        box-shadow: var(--shadowSoft);
+    }
+
+    .ps-app.sidebar-collapsed .ps-nav__item:hover::after {
+        opacity: 1;
+        transform: translateY(-50%) translateX(4px);
+    }
+
+}
+
+/* =========================
+   HOTFIX: KPI + SPACING + PANEL COLORS
+   Paste this at the END of styles.css
+========================= */
+
+/* 1) Reduce overall gaps a bit (Bootstrap gutters are ok, but our panels had big padding) */
+.ps-panel__head {
+    padding: 12px 14px !important;
+}
+
+.ps-panel__body {
+    padding: 12px 14px !important;
+}
+
+/* chart card body already has padding -> keep chart height stable */
+.ps-chart {
+    height: 270px !important;
+    padding: 8px !important;
+}
+
+/* 2) Make KPI cards equal height and prevent text overflow */
+.ps-kpi {
+    min-height: 104px !important;
+    height: 104px !important;
+    grid-template-columns: 52px minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    padding: 14px 14px !important;
+    align-items: center !important;
+}
+
+/* prevent grid overflow (very important for ellipsis to work) */
+.ps-kpi__body {
+    min-width: 0 !important;
+}
+
+/* value and label never overflow */
+.ps-kpi__value {
+    font-size: 20px !important;
+    line-height: 1.15 !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+
+.ps-kpi__label {
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+
+/* trend pill fixed width behavior to keep KPI aligned */
+.ps-kpi__trend {
+    white-space: nowrap !important;
+    padding: 6px 10px !important;
+    align-self: start !important;
+    margin-top: 2px !important;
+}
+
+/* icon size consistent */
+.ps-kpi__icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 14px !important;
+}
+
+/* 3) Make the 2 panels in each row same height */
+.ps-panel {
+    height: 100% !important;
+}
+
+.ps-panel .ps-panel__body {
+    height: calc(100% - 49px) !important;
+    /* head ~49px */
+}
+
+/* For chart panels: let chart fill the body */
+.ps-panel .ps-chart {
+    height: 100% !important;
+}
+
+/* 4) Fix Recent Orders (table panel) dark theme background being "off" */
+body[data-theme="dark"] .ps-card.ps-panel {
+    background: rgba(255, 255, 255, .03) !important;
+    border-color: rgba(255, 255, 255, .08) !important;
+}
+
+body[data-theme="dark"] .ps-panel__head {
+    background: rgba(255, 255, 255, .02) !important;
+    border-bottom-color: rgba(255, 255, 255, .06) !important;
+}
+
+/* Table container should NOT become lighter than panel in dark mode */
+body[data-theme="dark"] .ps-panel__body {
+    background: transparent !important;
+}
+
+body[data-theme="dark"] .ps-table {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: rgba(255, 255, 255, .88) !important;
+    --bs-table-border-color: rgba(255, 255, 255, .06) !important;
+}
+
+body[data-theme="dark"] .ps-table thead th {
+    background: rgba(255, 255, 255, .015) !important;
+    color: rgba(255, 255, 255, .62) !important;
+    border-bottom-color: rgba(255, 255, 255, .07) !important;
+}
+
+body[data-theme="dark"] .ps-table tbody tr:hover {
+    background: rgba(255, 255, 255, .03) !important;
+}
+
+/* 5) Tighten table row spacing a bit (was too tall) */
+.ps-table thead th {
+    padding: 12px 14px !important;
+}
+
+.ps-table tbody td {
+    padding: 12px 14px !important;
+}
+
+/* 6) Make Top Products items equal height + no overflow */
+.ps-topitem {
+    min-height: 64px !important;
+    padding: 10px 12px !important;
+    grid-template-columns: 34px minmax(0, 1fr) auto !important;
+}
+
+.ps-topitem__meta {
+    min-width: 0 !important;
+}
+
+.ps-topitem__name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+
+.ps-topitem__sub {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+
+.ps-topitem__value {
+    white-space: nowrap !important;
+}
+
+/* 7) Reduce overall card padding (KPI/Panel already adjusted) */
+.ps-card {
+    box-shadow: var(--shadowSoft) !important;
+}
+
+/* 8) Responsive: KPI value font smaller on very small screens */
+@media (max-width: 420px) {
+    .ps-kpi {
+        height: auto !important;
+        min-height: 102px !important;
+    }
+
+    .ps-kpi__value {
+        font-size: 18px !important;
+    }
+}
+
+/* =========================
+   FIX: KPI Revenue value not truncated
+========================= */
+
+/* Give body column more room, keep trend fixed */
+.ps-kpi {
+    grid-template-columns: 52px minmax(0, 1fr) 96px !important;
+    /* trend column fixed */
+    height: 104px !important;
+}
+
+/* Make trend narrower on smaller cards */
+.ps-kpi__trend {
+    justify-content: center !important;
+    width: 86px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+}
+
+/* IMPORTANT: allow value to show fully by scaling font */
+.ps-kpi__value {
+    /* remove ellipsis for KPI value */
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    margin-top: 10px !important;
+    /* responsive font size so long currency still fits */
+    font-size: clamp(16px, 1.35vw, 22px) !important;
+    letter-spacing: .2px !important;
+    line-height: 1.15 !important;
+}
+
+/* label stays one line but can truncate */
+.ps-kpi__label {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Slightly reduce icon box so value has more space */
+.ps-kpi__icon {
+    width: 42px !important;
+    height: 42px !important;
+}
+
+/* If screen is very wide, let value breathe more */
+@media (min-width: 1200px) {
+    .ps-kpi {
+        grid-template-columns: 52px minmax(0, 1fr) 104px !important;
+    }
+}
+
+.ps-currency {
+    font-size: .85em;
+    color: var(--muted);
+    margin-left: 2px;
+    font-weight: 800;
+}
+
+/* =========================
+   FIX: KPI trend pill (percentage box)
+========================= */
+
+/* KPI: chuyển sang layout tương đối để trend đặt góc phải */
+.ps-kpi {
+    position: relative !important;
+    padding-right: 78px !important;
+    /* chừa chỗ cho pill */
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+    /* bỏ cột trend khỏi grid */
+}
+
+/* pill nằm góc phải trên, không chiếm layout */
+.ps-kpi__trend {
+    position: absolute !important;
+    top: 2px !important;
+    right: 3px !important;
+
+    height: 28px !important;
+    min-width: 74px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+
+    padding: 0 10px !important;
+    border-radius: 999px !important;
+
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+
+    border: 1px solid rgba(255, 255, 255, .10) !important;
+    background: rgba(0, 0, 0, .10) !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, .18) !important;
+}
+
+/* icon nhỏ lại cho gọn */
+.ps-kpi__trend i {
+    font-size: 13px !important;
+    line-height: 1 !important;
+}
+
+/* màu nền theo up/down rõ ràng, không bị lạc tone */
+.ps-kpi__trend.up {
+    color: rgba(34, 197, 94, .98) !important;
+    background: rgba(34, 197, 94, .10) !important;
+    border-color: rgba(34, 197, 94, .22) !important;
+}
+
+.ps-kpi__trend.down {
+    color: rgba(239, 68, 68, .98) !important;
+    background: rgba(239, 68, 68, .10) !important;
+    border-color: rgba(239, 68, 68, .22) !important;
+}
+
+/* light mode: nền pill sáng hơn */
+body[data-theme="light"] .ps-kpi__trend {
+    background: rgba(255, 255, 255, .75) !important;
+    border-color: rgba(15, 23, 42, .10) !important;
+    box-shadow: 0 10px 18px rgba(15, 23, 42, .10) !important;
+}
+
+body[data-theme="light"] .ps-kpi__trend.up {
+    background: rgba(34, 197, 94, .10) !important;
+    border-color: rgba(34, 197, 94, .20) !important;
+}
+
+body[data-theme="light"] .ps-kpi__trend.down {
+    background: rgba(239, 68, 68, .10) !important;
+    border-color: rgba(239, 68, 68, .20) !important;
+}
+
+/* đảm bảo value không bị đụng pill */
+.ps-kpi__body {
+    padding-right: 6px !important;
+}
+
+/* =========================
+   POS PAGE (Products + Cart + Modal)
+========================= */
+.ps-pos {
+    padding-top: 88px;
+}
+
+.ps-pos__search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-pos__search i {
+    color: var(--muted);
+    font-size: 18px;
+}
+
+.ps-pos__searchInput {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.ps-pos__searchInput::placeholder {
+    color: color-mix(in srgb, var(--muted) 80%, transparent);
+}
+
+/* product cards */
+.ps-product {
+    height: 150px;
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.ps-product:hover {
+    transform: translateY(-2px);
+    border-color: var(--border2);
+    background: color-mix(in srgb, #fff 4%, transparent);
+}
+
+.ps-product__icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    flex: 0 0 auto;
+}
+
+.ps-product__icon i {
+    font-size: 22px;
+    color: var(--muted);
+}
+
+.ps-product__meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ps-product__name {
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-product__sku {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: .3px;
+}
+
+.ps-product__price {
+    margin-top: 6px;
+    font-weight: 900;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+.ps-product__stock {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* cart */
+.ps-cart {
+    height: calc(100vh - 128px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+@media (max-width: 1199.98px) {
+    .ps-cart {
+        height: auto;
+        min-height: 520px;
+    }
+}
+
+.ps-cart__head {
+    padding: 14px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ps-cart__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+}
+
+.ps-cart__title i {
+    color: var(--muted);
+}
+
+.ps-cart__count {
+    color: var(--muted);
+    font-weight: 800;
+}
+
+.ps-cart__clear {
+    border: none;
+    background: transparent;
+    color: color-mix(in srgb, var(--red) 90%, transparent);
+    font-weight: 800;
+}
+
+.ps-cart__body {
+    padding: 14px;
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+.ps-cart__empty {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: var(--muted);
+}
+
+.ps-cart__empty i {
+    font-size: 52px;
+    opacity: .4;
+    margin-bottom: 10px;
+}
+
+.ps-cartItem {
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.ps-cartItem__left {
+    min-width: 0;
+}
+
+.ps-cartItem__name {
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-cartItem__price {
+    font-weight: 900;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+    font-size: 13px;
+}
+
+.ps-cartItem__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.ps-qtyBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+}
+
+.ps-qtyNum {
+    width: 28px;
+    text-align: center;
+    font-weight: 900;
+    color: var(--text);
+}
+
+.ps-delBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: color-mix(in srgb, var(--muted) 90%, transparent);
+    display: grid;
+    place-items: center;
+}
+
+.ps-delBtn:hover {
+    color: color-mix(in srgb, var(--red) 90%, transparent);
+    border-color: color-mix(in srgb, var(--red) 25%, transparent);
+}
+
+.ps-cart__footer {
+    padding: 14px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, #000 6%, transparent);
+}
+
+body[data-theme="light"] .ps-cart__footer {
+    background: color-mix(in srgb, #fff 60%, transparent);
+}
+
+.ps-cart__totalRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.ps-cart__totalLabel {
+    font-weight: 900;
+    font-size: 18px;
+}
+
+.ps-cart__totalValue {
+    font-weight: 900;
+    font-size: 18px;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+/* primary button (reuse) */
+.ps-btn-primary {
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    background: color-mix(in srgb, var(--primary) 85%, transparent);
+    color: white;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-btn-primary:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+/* modal */
+.ps-modal {
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    box-shadow: var(--shadow);
+}
+
+.ps-modal__head {
+    padding: 14px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.ps-modal__title {
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.ps-modal__body {
+    padding: 14px 14px;
+}
+
+.ps-modal__footer {
+    padding: 14px 14px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.ps-label {
+    font-weight: 800;
+    color: var(--text);
+    opacity: .9;
+    margin-bottom: 6px;
+}
+
+.ps-input {
+    width: 100%;
+    height: 46px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #000 10%, transparent);
+    color: var(--text);
+    padding: 0 14px;
+    outline: none;
+    font-weight: 700;
+}
+
+body[data-theme="light"] .ps-input {
+    background: color-mix(in srgb, #fff 70%, transparent);
+}
+
+.ps-divider {
+    height: 1px;
+    background: color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.ps-pay__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ps-pay__muted {
+    color: var(--muted);
+    font-weight: 800;
+}
+
+.ps-pay__sum {
+    font-weight: 900;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+/* toast */
+.ps-toast {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    box-shadow: var(--shadowSoft);
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: .18s ease;
+}
+
+.ps-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.ps-toast i {
+    color: color-mix(in srgb, var(--green) 90%, transparent);
+    font-size: 18px;
+}
+
+/* =========================
+   POS product layout: icon centered, text left below
+========================= */
+.ps-product {
+    height: 176px !important;
+    padding: 14px 14px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    /* icon trên, text dưới */
+    align-items: stretch !important;
+    gap: 10px !important;
+}
+
+/* icon box nằm giữa */
+.ps-product__icon {
+    width: 52px !important;
+    height: 52px !important;
+    margin: 0 auto !important;
+    /* căn giữa */
+    border-radius: 16px !important;
+    display: grid !important;
+    place-items: center !important;
+}
+
+/* meta căn trái */
+.ps-product__meta {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    /* căn trái */
+    gap: 4px !important;
+    text-align: left !important;
+}
+
+/* 1 dòng, không tràn */
+.ps-product__name,
+.ps-product__sku,
+.ps-product__price,
+.ps-product__stock {
+    width: 100% !important;
+    margin-bottom: -3px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* đẩy stock xuống đáy để card đều */
+.ps-product__stock {
+    margin-top: auto !important;
+    color: var(--muted) !important;
+    font-size: 12px !important;
+}
+
+.ps-product__price {
+    font-weight: 900 !important;
+    color: color-mix(in srgb, var(--primary) 92%, transparent) !important;
+}
+
+/* icon trong box to hơn chút */
+.ps-product__icon i {
+    font-size: 24px !important;
+    color: var(--muted) !important;
+}
+
+/* =========================
+   Toast: darker in dark theme
+========================= */
+body[data-theme="dark"] .ps-toast {
+    background: rgba(10, 14, 24, .92) !important;
+    /* đậm hơn */
+    border-color: rgba(255, 255, 255, .14) !important;
+    /* viền rõ hơn */
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .45) !important;
+    color: rgba(255, 255, 255, .92) !important;
+}
+
+body[data-theme="dark"] .ps-toast i {
+    color: rgba(34, 197, 94, .98) !important;
+    filter: drop-shadow(0 10px 18px rgba(34, 197, 94, .25));
+}
+
+body[data-theme="dark"] .ps-toast #toastText {
+    color: rgba(255, 255, 255, .92) !important;
+}
+
+/* =========================
+   Dark theme: Payment modal stronger
+========================= */
+body[data-theme="dark"] .ps-modal {
+    background: rgba(10, 14, 24, .95) !important;
+    /* đậm hơn */
+    border-color: rgba(255, 255, 255, .14) !important;
+    box-shadow: 0 26px 70px rgba(0, 0, 0, .60) !important;
+}
+
+body[data-theme="dark"] .ps-modal__head {
+    background: rgba(255, 255, 255, .03) !important;
+    border-bottom-color: rgba(255, 255, 255, .10) !important;
+}
+
+body[data-theme="dark"] .ps-modal__title {
+    color: rgba(255, 255, 255, .94) !important;
+}
+
+body[data-theme="dark"] .ps-label {
+    color: rgba(255, 255, 255, .86) !important;
+}
+
+body[data-theme="dark"] .ps-input {
+    background: rgba(255, 255, 255, .05) !important;
+    border-color: rgba(255, 255, 255, .12) !important;
+    color: rgba(255, 255, 255, .92) !important;
+}
+
+body[data-theme="dark"] .ps-input::placeholder {
+    color: rgba(255, 255, 255, .48) !important;
+}
+
+body[data-theme="dark"] .ps-divider {
+    background: rgba(255, 255, 255, .10) !important;
+}
+
+/* =========================
+   Fix: Sidebar scrollbar + layout shift (flicker)
+========================= */
+
+/* Sidebar: không cho hiện scrollbar (và tránh hover làm thay đổi width) */
+.ps-sidebar {
+    overflow: hidden !important;
+    /* tắt luôn scrollbar trong sidebar */
+}
+
+/* Nếu nav dài quá, chỉ cho cuộn ở vùng nav, không phải toàn sidebar */
+.ps-nav {
+    overflow-y: auto;
+    max-height: calc(100vh - 210px);
+    /* chừa brand + footer */
+    padding-right: 6px;
+    /* tránh đè lên scrollbar khi browser vẫn reserve */
+}
+
+/* Ẩn scrollbar của ps-nav nhưng vẫn cuộn được */
+.ps-nav {
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.ps-nav::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* Ngăn “layout shift” khi modal mở/đóng (Bootstrap thêm scrollbar => giật) */
+html {
+    scrollbar-gutter: stable;
+    /* reserve chỗ scrollbar để không nhảy layout */
+}
+
+/* Bootstrap modal mở hay làm body padding-right thay đổi => giật sidebar/topbar */
+body.modal-open {
+    padding-right: 0 !important;
+    /* chặn bootstrap bơm padding */
+    overflow: hidden !important;
+}
+
+/* =========================
+   HARD FIX: stop layout shift when modal opens (no flicker)
+========================= */
+
+/* Always keep a vertical scrollbar reserved to prevent width jump */
+html {
+    overflow-y: scroll !important;
+    /* luôn có scrollbar */
+}
+
+/* When modal open: lock background without removing scrollbar */
+body.modal-open {
+    overflow: visible !important;
+    /* không để Bootstrap làm mất scrollbar */
+}
+
+/* optional: keep sidebar stable */
+.ps-sidebar {
+    overflow: hidden !important;
+}

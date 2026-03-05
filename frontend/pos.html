@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhoneStore POS — Point of Sale</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+
+<body class="ps-body ps-noise" data-theme="dark">
+    <div class="ps-app">
+        <!-- SIDEBAR -->
+        <aside class="ps-sidebar" id="sidebar">
+            <div class="ps-sidebar__brand">
+                <div class="ps-brand__icon"><i class="bi bi-cart3"></i></div>
+                <div class="ps-brand__text">
+                    <div class="ps-brand__title">PhoneStore POS</div>
+                </div>
+            </div>
+
+            <nav class="ps-nav">
+                <a class="ps-nav__item" href="dashboard.html" data-tooltip="Dashboard">
+                    <i class="bi bi-grid-fill"></i>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+
+                <a class="ps-nav__item active" href="pos.html" data-tooltip="Point of Sale">
+                    <i class="bi bi-bag"></i>
+                    <span data-i18n="nav.pos">Point of Sale</span>
+                </a>
+
+                <a class="ps-nav__item" href="#" data-tooltip="Products">
+                    <i class="bi bi-box-seam"></i>
+                    <span data-i18n="nav.products">Products</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Categories">
+                    <i class="bi bi-tags"></i>
+                    <span data-i18n="nav.categories">Categories</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Employees">
+                    <i class="bi bi-people"></i>
+                    <span data-i18n="nav.employees">Employees</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Customers">
+                    <i class="bi bi-person"></i>
+                    <span data-i18n="nav.customers">Customers</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Reports">
+                    <i class="bi bi-bar-chart"></i>
+                    <span data-i18n="nav.reports">Reports</span>
+                </a>
+            </nav>
+
+            <div class="ps-sidebar__footer">
+                <a class="ps-nav__item" href="#" data-tooltip="Profile">
+                    <i class="bi bi-person-circle"></i>
+                    <span data-i18n="nav.profile">Profile</span>
+                </a>
+                <a class="ps-nav__item" href="#" data-tooltip="Logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span data-i18n="nav.logout">Logout</span>
+                </a>
+
+                <button class="ps-collapse btn btn-sm" id="btnCollapse" type="button">
+                    <i class="bi bi-chevron-left"></i>
+                    <span data-i18n="nav.collapse">Collapse</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="ps-main">
+            <!-- TOPBAR -->
+            <header class="ps-topbar ps-topbar--fixed" id="topbar">
+                <div class="ps-topbar__left">
+                    <button class="ps-icon-btn d-lg-none" id="btnMobileMenu" type="button" aria-label="Open menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="ps-topbar__title" data-i18n="page.pos">Point of Sale</div>
+                </div>
+
+                <div class="ps-topbar__right">
+                    <button class="ps-chip" id="btnLang" type="button" title="Language">
+                        <i class="bi bi-globe"></i>
+                        <span id="langLabel">VI</span>
+                    </button>
+
+                    <button class="ps-icon-btn" id="btnTheme" type="button" title="Toggle theme">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+
+                    <div class="ps-user">
+                        <div class="ps-user__avatar">A</div>
+                        <div class="ps-user__meta">
+                            <div class="ps-user__name">Admin</div>
+                            <div class="ps-user__role" data-i18n="role.admin">Administrator</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <section class="ps-content ps-pos">
+                <div class="row g-3 g-lg-3">
+                    <!-- LEFT: PRODUCTS -->
+                    <div class="col-12 col-xl-8">
+                        <div class="ps-pos__search ps-card">
+                            <i class="bi bi-search"></i>
+                            <input id="searchInput" type="text" class="ps-pos__searchInput"
+                                placeholder="Tìm sản phẩm theo tên hoặc mã vạch..." data-i18n-ph="pos.searchPh" />
+                        </div>
+
+                        <div class="row g-3 mt-0" id="productGrid">
+                            <!-- JS render -->
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: CART -->
+                    <div class="col-12 col-xl-4">
+                        <div class="ps-card ps-cart">
+                            <div class="ps-cart__head">
+                                <div class="ps-cart__title">
+                                    <i class="bi bi-cart"></i>
+                                    <span data-i18n="cart.title">Cart</span>
+                                    <span class="ps-cart__count" id="cartCount">(0)</span>
+                                </div>
+
+                                <button class="ps-cart__clear" id="btnClearCart" type="button">
+                                    <span data-i18n="cart.clear">Clear</span>
+                                </button>
+                            </div>
+
+                            <div class="ps-cart__body" id="cartBody">
+                                <!-- empty state / items -->
+                            </div>
+
+                            <div class="ps-cart__footer">
+                                <div class="ps-cart__totalRow">
+                                    <div class="ps-cart__totalLabel" data-i18n="cart.total">Total</div>
+                                    <div class="ps-cart__totalValue" id="cartTotal">0 ₫</div>
+                                </div>
+
+                                <button class="ps-btn-primary w-100" id="btnCheckout" type="button"
+                                    data-bs-toggle="modal" data-bs-target="#payModal" disabled>
+                                    <i class="bi bi-cash-coin"></i>
+                                    <span data-i18n="cart.checkout">Checkout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- MOBILE OVERLAY -->
+        <div class="ps-overlay" id="overlay"></div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div class="modal fade" id="payModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ps-modal">
+                <div class="ps-modal__head">
+                    <div class="ps-modal__title" data-i18n="pay.title">Payment</div>
+                    <button class="ps-icon-btn" type="button" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="ps-modal__body">
+                    <label class="ps-label" data-i18n="pay.phone">Phone number</label>
+                    <input class="ps-input" id="payPhone" placeholder="0901234567" />
+
+                    <label class="ps-label mt-3" data-i18n="pay.name">Customer name</label>
+                    <input class="ps-input" id="payName" placeholder="Nguyễn Văn A" />
+
+                    <div class="ps-divider my-3"></div>
+
+                    <div class="ps-pay__row">
+                        <div class="ps-pay__muted" data-i18n="cart.total">Total</div>
+                        <div class="ps-pay__sum" id="payTotal">0 ₫</div>
+                    </div>
+
+                    <label class="ps-label mt-3" data-i18n="pay.cash">Cash given</label>
+                    <input class="ps-input" id="payCash" placeholder="0" inputmode="numeric" />
+
+                    <div class="ps-pay__row mt-2">
+                        <div class="ps-pay__muted" data-i18n="pay.change">Change</div>
+                        <div class="ps-pay__sum" id="payChange">0 ₫</div>
+                    </div>
+                </div>
+
+                <div class="ps-modal__footer">
+                    <button class="ps-btn-primary w-100" id="btnCompletePay" type="button" disabled>
+                        <span data-i18n="pay.complete">Complete payment</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="ps-toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+        <i class="bi bi-check2-circle"></i>
+        <div id="toastText">OK</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/pos.js"></script>
+</body>
+
+</html>
