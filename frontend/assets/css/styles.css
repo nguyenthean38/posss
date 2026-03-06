@@ -695,6 +695,11 @@ body[data-theme="light"] .ps-kpi__trend {
         grid-template-columns: 96px 1fr;
     }
 
+    .ps-app.sidebar-collapsed .ps-sidebar {
+        overflow: visible !important;
+        z-index: 100;
+    }
+
     .ps-app.sidebar-collapsed .ps-brand__text,
     .ps-app.sidebar-collapsed .ps-nav__item span,
     .ps-app.sidebar-collapsed .ps-collapse span,
@@ -726,19 +731,26 @@ body[data-theme="light"] .ps-kpi__trend {
         padding: 8px 10px;
         border-radius: 12px;
         border: 1px solid var(--border);
-        background: var(--surface2);
+        background: var(--bg1);
         color: var(--text);
-        font-size: 12px;
+        font-size: 13px;
+        font-weight: 700;
         white-space: nowrap;
         opacity: 0;
         pointer-events: none;
         transition: opacity .12s ease, transform .12s ease;
-        box-shadow: var(--shadowSoft);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border2);
+    }
+
+    .ps-app.sidebar-collapsed .ps-nav__item:hover {
+        z-index: 110;
+        background: color-mix(in srgb, #fff 10%, transparent);
     }
 
     .ps-app.sidebar-collapsed .ps-nav__item:hover::after {
         opacity: 1;
-        transform: translateY(-50%) translateX(4px);
+        transform: translateY(-50%) translateX(6px);
     }
 
 }
