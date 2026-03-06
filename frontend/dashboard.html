@@ -41,34 +41,34 @@
                     <i class="bi bi-bag"></i>
                     <span data-i18n="nav.pos">Point of Sale</span>
                 </a>
-                <a class="ps-nav__item" href="#" data-tooltip="Products">
+                <a class="ps-nav__item" href="products.html" data-tooltip="Products">
                     <i class="bi bi-box-seam"></i>
                     <span data-i18n="nav.products">Products</span>
                 </a>
-                <a class="ps-nav__item" href="#" data-tooltip="Categories">
+                <a class="ps-nav__item" href="categories.html" data-tooltip="Categories">
                     <i class="bi bi-tags"></i>
                     <span data-i18n="nav.categories">Categories</span>
                 </a>
-                <a class="ps-nav__item" href="#" data-tooltip="Employees">
+                <a class="ps-nav__item" href="employees.html" data-tooltip="Employees">
                     <i class="bi bi-people"></i>
                     <span data-i18n="nav.employees">Employees</span>
                 </a>
-                <a class="ps-nav__item" href="#" data-tooltip="Customers">
+                <a class="ps-nav__item" href="customers.html" data-tooltip="Customers">
                     <i class="bi bi-person"></i>
                     <span data-i18n="nav.customers">Customers</span>
                 </a>
-                <a class="ps-nav__item" href="#" data-tooltip="Reports">
+                <a class="ps-nav__item" href="reports.html" data-tooltip="Reports">
                     <i class="bi bi-bar-chart"></i>
                     <span data-i18n="nav.reports">Reports</span>
                 </a>
             </nav>
 
             <div class="ps-sidebar__footer">
-                <a class="ps-nav__item" href="#" data-tooltip="Profile">
+                <a class="ps-nav__item" href="profile.html" data-tooltip="Profile">
                     <i class="bi bi-person-circle"></i>
                     <span data-i18n="nav.profile">Profile</span>
                 </a>
-                <a class="ps-nav__item" href="#" data-tooltip="Logout">
+                <a class="ps-nav__item" href="login.html" data-tooltip="Logout">
                     <i class="bi bi-box-arrow-right"></i>
                     <span data-i18n="nav.logout">Logout</span>
                 </a>
@@ -88,7 +88,10 @@
                     <button class="ps-icon-btn d-lg-none" id="btnMobileMenu" type="button" aria-label="Open menu">
                         <i class="bi bi-list"></i>
                     </button>
-                    <div class="ps-topbar__title" data-i18n="page.dashboard">Dashboard</div>
+                    <div class="ps-topbar__title">
+                        <i class="bi bi-grid-fill me-2" style="color:var(--muted)"></i>
+                        <span data-i18n="nav.dashboard">Dashboard</span>
+                    </div>
                 </div>
 
                 <div class="ps-topbar__right">
@@ -103,13 +106,15 @@
                         <i class="bi bi-moon-stars"></i>
                     </button>
 
-                    <div class="ps-user">
-                        <div class="ps-user__avatar">A</div>
-                        <div class="ps-user__meta">
-                            <div class="ps-user__name">Admin</div>
-                            <div class="ps-user__role">Admin</div>
+                    <a href="profile.html" class="ps-user-link">
+                        <div class="ps-user">
+                            <div class="ps-user__avatar">AD</div>
+                            <div class="ps-user__meta">
+                                <div class="ps-user__name">Administrator</div>
+                                <div class="ps-user__role" data-i18n="role.admin">Administrator</div>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
             </header>
 

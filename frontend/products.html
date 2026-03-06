@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhoneStore POS — Products</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+
+<body class="ps-body ps-noise" data-theme="dark">
+    <div class="ps-app">
+        <!-- SIDEBAR -->
+        <aside class="ps-sidebar" id="sidebar">
+            <div class="ps-sidebar__brand">
+                <div class="ps-brand__icon"><i class="bi bi-cart3"></i></div>
+                <div class="ps-brand__text">
+                    <div class="ps-brand__title">PhoneStore POS</div>
+                </div>
+            </div>
+
+            <nav class="ps-nav">
+                <a class="ps-nav__item" href="dashboard.html" data-tooltip="Dashboard">
+                    <i class="bi bi-grid-fill"></i>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+
+                <a class="ps-nav__item" href="pos.html" data-tooltip="Point of Sale">
+                    <i class="bi bi-bag"></i>
+                    <span data-i18n="nav.pos">Point of Sale</span>
+                </a>
+
+                <a class="ps-nav__item active" href="products.html" data-tooltip="Products">
+                    <i class="bi bi-box-seam"></i>
+                    <span data-i18n="nav.products">Products</span>
+                </a>
+
+                <a class="ps-nav__item" href="categories.html" data-tooltip="Categories">
+                    <i class="bi bi-tags"></i>
+                    <span data-i18n="nav.categories">Categories</span>
+                </a>
+                <a class="ps-nav__item" href="employees.html" data-tooltip="Employees">
+                    <i class="bi bi-people"></i>
+                    <span data-i18n="nav.employees">Employees</span>
+                </a>
+                <a class="ps-nav__item" href="customers.html" data-tooltip="Customers">
+                    <i class="bi bi-person"></i>
+                    <span data-i18n="nav.customers">Customers</span>
+                </a>
+                <a class="ps-nav__item" href="reports.html" data-tooltip="Reports">
+                    <i class="bi bi-bar-chart"></i>
+                    <span data-i18n="nav.reports">Reports</span>
+                </a>
+            </nav>
+
+            <div class="ps-sidebar__footer">
+                <a class="ps-nav__item" href="profile.html" data-tooltip="Profile">
+                    <i class="bi bi-person-circle"></i>
+                    <span data-i18n="nav.profile">Profile</span>
+                </a>
+                <a class="ps-nav__item" href="login.html" data-tooltip="Logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span data-i18n="nav.logout">Logout</span>
+                </a>
+
+                <button class="ps-collapse btn btn-sm" id="btnCollapse" type="button">
+                    <i class="bi bi-chevron-left"></i>
+                    <span data-i18n="nav.collapse">Collapse</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="ps-main">
+            <!-- TOPBAR -->
+            <header class="ps-topbar ps-topbar--fixed">
+                <div class="ps-topbar__left">
+                    <button class="ps-icon-btn d-lg-none" id="btnMobileMenu" type="button" aria-label="Open menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="ps-topbar__title">
+                        <i class="bi bi-box-seam me-2" style="color:var(--muted)"></i>
+                        <span data-i18n="page.products">Products</span>
+                        <span class="ps-count" id="prodCount">(0)</span>
+                    </div>
+                </div>
+
+                <div class="ps-topbar__right">
+                    <button class="ps-chip" id="btnLang" type="button">
+                        <i class="bi bi-globe"></i>
+                        <span id="langLabel">VI</span>
+                    </button>
+
+                    <button class="ps-icon-btn" id="btnTheme" type="button">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+
+                    <a href="profile.html" class="ps-user-link">
+                        <div class="ps-user">
+                            <div class="ps-user__avatar">AD</div>
+                            <div class="ps-user__meta">
+                                <div class="ps-user__name">Administrator</div>
+                                <div class="ps-user__role" data-i18n="role.admin">Administrator</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <section class="ps-content ps-products">
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                    <div class="ps-pos__search ps-card flex-grow-1">
+                        <i class="bi bi-search"></i>
+                        <input id="searchInput" type="text" class="ps-pos__searchInput"
+                            placeholder="Tìm sản phẩm theo tên hoặc mã vạch..." data-i18n-ph="prod.searchPh" />
+                    </div>
+
+                    <button class="ps-btn-primary ps-btn-sm" id="btnAdd" type="button" data-bs-toggle="modal"
+                        data-bs-target="#productModal">
+                        <i class="bi bi-plus-lg"></i>
+                        <span data-i18n="prod.add">Add product</span>
+                    </button>
+                </div>
+
+                <div class="ps-card ps-tableCard">
+                    <div class="table-responsive">
+                        <table class="table ps-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="prod.colName">Product name</th>
+                                    <th style="width: 180px;" data-i18n="prod.colBarcode">Barcode</th>
+                                    <th style="width: 150px;" data-i18n="prod.colCategory">Category</th>
+                                    <th class="text-end" style="width: 160px;" data-i18n="prod.colCost">Cost</th>
+                                    <th class="text-end" style="width: 160px;" data-i18n="prod.colPrice">Price</th>
+                                    <th class="text-center" style="width: 120px;" data-i18n="prod.colStock">Stock</th>
+                                    <th class="text-center" style="width: 140px;" data-i18n="prod.colActions">Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody">
+                                <!-- JS render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div class="ps-overlay" id="overlay"></div>
+    </div>
+
+    <!-- ADD/EDIT MODAL -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ps-modal">
+                <div class="ps-modal__head">
+                    <div class="ps-modal__title" id="modalTitle" data-i18n="prod.modalAdd">Add product</div>
+                    <button class="ps-icon-btn" type="button" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="ps-modal__body">
+                    <input type="hidden" id="prodId" />
+
+                    <label class="ps-label" data-i18n="prod.fName">Product name</label>
+                    <input class="ps-input" id="fName" />
+
+                    <div class="row g-2 mt-3">
+                        <div class="col-6">
+                            <label class="ps-label" data-i18n="prod.fBarcode">Barcode</label>
+                            <input class="ps-input" id="fBarcode" />
+                        </div>
+                        <div class="col-6">
+                            <label class="ps-label" data-i18n="prod.fType">Type</label>
+                            <select class="ps-input" id="fType">
+                                <option value="phone" data-i18n="type.phone">Phone</option>
+                                <option value="earbuds" data-i18n="type.earbuds">Earbuds</option>
+                                <option value="case" data-i18n="type.case">Case</option>
+                                <option value="charger" data-i18n="type.charger">Charger</option>
+                                <option value="cable" data-i18n="type.cable">Cable</option>
+                                <option value="accessory" data-i18n="type.accessory">Accessory</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-3">
+                        <div class="col-6">
+                            <label class="ps-label" data-i18n="prod.fCost">Cost</label>
+                            <input class="ps-input" id="fCost" inputmode="numeric" />
+                        </div>
+                        <div class="col-6">
+                            <label class="ps-label" data-i18n="prod.fPrice">Price</label>
+                            <input class="ps-input" id="fPrice" inputmode="numeric" />
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-3">
+                        <div class="col-6">
+                            <label class="ps-label" data-i18n="prod.fCategory">Category</label>
+                            <input class="ps-input" id="fCategory" placeholder="Điện thoại / Phụ kiện" />
+                        </div>
+                        <div class="col-6">
+                            <label class="ps-label" data-i18n="prod.fStock">Stock</label>
+                            <input class="ps-input" id="fStock" inputmode="numeric" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ps-modal__footer d-flex gap-2">
+                    <button class="ps-btn-secondary w-100" type="button" data-bs-dismiss="modal">
+                        <span data-i18n="common.cancel">Cancel</span>
+                    </button>
+                    <button class="ps-btn-primary w-100" id="btnSave" type="button">
+                        <span data-i18n="common.save">Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW MODAL -->
+    <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ps-modal ps-view">
+                <div class="ps-modal__head">
+                    <div class="ps-modal__title" data-i18n="prod.modalView">Xem chi tiết</div>
+                    <button class="ps-icon-btn" type="button" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="ps-modal__body" id="viewBody">
+                    <!-- JS render -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- DELETE CONFIRM MODAL -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ps-modal ps-confirm">
+                <div class="ps-modal__head">
+                    <div class="ps-modal__title" data-i18n="prod.modalDelete">Xóa sản phẩm</div>
+                    <button class="ps-icon-btn" type="button" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="ps-modal__body">
+                    <div class="ps-confirm__text" id="deleteText">
+                        <!-- JS -->
+                    </div>
+                </div>
+
+                <div class="ps-modal__footer d-flex gap-2">
+                    <button class="ps-btn-secondary w-100" type="button" data-bs-dismiss="modal">
+                        <span data-i18n="common.cancel">Hủy</span>
+                    </button>
+                    <button class="ps-btn-danger w-100" id="btnConfirmDelete" type="button">
+                        <i class="bi bi-trash3"></i>
+                        <span data-i18n="common.delete">Xóa</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Toast -->
+    <div class="ps-toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+        <i class="bi bi-check2-circle"></i>
+        <div id="toastText">OK</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/products.js"></script>
+</body>
+
+</html>

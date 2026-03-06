@@ -19,9 +19,10 @@
     // ===== I18N DICT =====
     const i18n = {
         vi: {
-            "page.dashboard": "Bảng điều khiển",
+            "page.dashboard": "Tổng quan",
+            "role.admin": "Quản trị viên",
 
-            "nav.dashboard": "Bảng điều khiển",
+            "nav.dashboard": "Tổng quan",
             "nav.pos": "Bán hàng",
             "nav.products": "Sản phẩm",
             "nav.categories": "Danh mục",
@@ -53,6 +54,7 @@
         },
         en: {
             "page.dashboard": "Dashboard",
+            "role.admin": "Administrator",
 
             "nav.dashboard": "Dashboard",
             "nav.pos": "Point of Sale",
@@ -334,35 +336,5 @@
 
     applyLang(savedLang);
     setTheme(savedTheme);
-    // =========================
-    // HARD FIX: Lock body on Bootstrap modal without layout shift
-    // =========================
-    (() => {
-        const modalEl = document.getElementById("payModal");
-        if (!modalEl) return;
 
-        let scrollY = 0;
-
-        modalEl.addEventListener("show.bs.modal", () => {
-            scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-
-            // lock body without removing scrollbar
-            document.body.style.position = "fixed";
-            document.body.style.top = `-${scrollY}px`;
-            document.body.style.left = "0";
-            document.body.style.right = "0";
-            document.body.style.width = "100%";
-        });
-
-        modalEl.addEventListener("hidden.bs.modal", () => {
-            // restore
-            document.body.style.position = "";
-            document.body.style.top = "";
-            document.body.style.left = "";
-            document.body.style.right = "";
-            document.body.style.width = "";
-
-            window.scrollTo(0, scrollY);
-        });
-    })();
 })();

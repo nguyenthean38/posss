@@ -23,6 +23,8 @@
     --red: #ef4444;
 
     --focus: 0 0 0 4px rgba(59, 130, 246, .18);
+
+    color-scheme: dark;
 }
 
 body[data-theme="light"] {
@@ -40,6 +42,8 @@ body[data-theme="light"] {
     --shadowSoft: 0 10px 24px rgba(15, 23, 42, .10);
 
     --focus: 0 0 0 4px rgba(59, 130, 246, .20);
+
+    color-scheme: light;
 }
 
 /* ===== GLOBAL ===== */
@@ -84,10 +88,12 @@ body {
 .ps-sidebar {
     position: sticky;
     top: 0;
-    height: auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
     padding: 18px 14px;
     border-right: 1px solid var(--border);
-
+    overflow-y: auto;
 }
 
 .ps-main {
@@ -139,12 +145,7 @@ body {
     flex-direction: column;
 }
 
-.ps-brand__text::after {
-    content: "Sales & Inventory";
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--muted);
-}
+/* role text standardized */
 
 /* ===== NAV ===== */
 .ps-nav {
@@ -334,10 +335,24 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 16px;
     border: 1px solid var(--border);
     background: color-mix(in srgb, #fff 2%, transparent);
+    transition: all .2s ease;
+    cursor: pointer;
+}
+
+.ps-user:hover {
+    background: color-mix(in srgb, #fff 6%, transparent);
+    border-color: var(--border2);
+    transform: translateY(-1px);
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-user-link {
+    text-decoration: none !important;
+    color: inherit !important;
 }
 
 .ps-user__avatar {
@@ -364,7 +379,7 @@ body {
 }
 
 .ps-user__role {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
 }
 
@@ -435,7 +450,7 @@ body {
 
 .ps-kpi__label {
     margin-top: 4px;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
 }
 
@@ -481,6 +496,7 @@ body[data-theme="light"] .ps-kpi__trend {
     align-items: center;
     gap: 10px;
     letter-spacing: .2px;
+    font-size: 18px;
 }
 
 .ps-panel__title i {
@@ -505,13 +521,58 @@ body[data-theme="light"] .ps-kpi__trend {
     height: 100% !important;
 }
 
+/* Legend items in donut chart */
+.ps-legend {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+}
+
+.ps-legend .it {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: color-mix(in srgb, #fff 2%, transparent);
+    transition: background .15s ease;
+}
+
+.ps-legend .it:hover {
+    background: color-mix(in srgb, #fff 4%, transparent);
+}
+
+.ps-legend .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+.ps-legend .it-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ps-legend .it-name {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ps-legend .it-val {
+    font-size: 13px;
+    color: var(--muted);
+}
+
 /* ===== TABLE ===== */
 .ps-table {
     color: var(--text);
 }
 
 .ps-table thead th {
-    font-size: 12px;
+    font-size: 15px;
     color: var(--muted);
     border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent) !important;
     background: color-mix(in srgb, #fff 1%, transparent);
@@ -752,19 +813,108 @@ body[data-theme="light"] .ps-kpi__trend {
     border-radius: 14px !important;
 }
 
-/* 3) Make the 2 panels in each row same height */
+/* 3) Charts & Stability */
+.ps-chart {
+    min-height: 300px !important;
+    height: auto !important;
+    flex: 1;
+}
+
 .ps-panel {
+    display: flex;
+    flex-direction: column;
     height: 100% !important;
 }
 
-.ps-panel .ps-panel__body {
-    height: calc(100% - 49px) !important;
-    /* head ~49px */
+.ps-panel__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
-/* For chart panels: let chart fill the body */
-.ps-panel .ps-chart {
-    height: 100% !important;
+/* 4.5) Order details grid in modal */
+.ps-orderGrid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px 16px;
+}
+
+.ps-orderGrid .k {
+    font-weight: 800;
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.ps-orderGrid .v {
+    font-weight: 900;
+    color: var(--text);
+    font-size: 15px;
+}
+
+/* 4) Theme improvements for extra components */
+.ps-filterBox {
+    padding: 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadowSoft);
+}
+
+.ps-filterRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.ps-filterLabel {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+/* Style for native date picker icons and appearance */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: .6;
+    cursor: pointer;
+}
+
+body[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+}
+
+/* Range bar buttons */
+.ps-rangebar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.ps-rangebtn {
+    padding: 10px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 15px;
+    transition: all .15s ease;
+}
+
+.ps-rangebtn:hover {
+    background: var(--surface2);
+    transform: translateY(-1px);
+}
+
+.ps-rangebtn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: var(--shadowSoft);
 }
 
 /* 4) Fix Recent Orders (table panel) dark theme background being "off" */
@@ -827,6 +977,7 @@ body[data-theme="dark"] .ps-table tbody tr:hover {
 }
 
 .ps-topitem__sub {
+    font-size: 13px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -1006,7 +1157,6 @@ body[data-theme="light"] .ps-kpi__trend.down {
     gap: 10px;
     padding: 12px 14px;
     border-radius: var(--radius);
-    background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: var(--shadowSoft);
 }
@@ -1107,6 +1257,10 @@ body[data-theme="light"] .ps-kpi__trend.down {
     }
 }
 
+.ps-pos__search {
+    backdrop-filter: none !important;
+}
+
 .ps-cart__head {
     padding: 14px 14px;
     border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
@@ -1172,6 +1326,14 @@ body[data-theme="light"] .ps-kpi__trend.down {
 
 .ps-cartItem__left {
     min-width: 0;
+}
+
+.ps-topitem__name {
+    font-weight: 950;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .ps-cartItem__name {
@@ -1323,6 +1485,8 @@ body[data-theme="light"] .ps-cart__footer {
     padding: 0 14px;
     outline: none;
     font-weight: 700;
+    font-size: 15px;
+    color-scheme: inherit;
 }
 
 body[data-theme="light"] .ps-input {
@@ -1507,66 +1671,1170 @@ body[data-theme="dark"] .ps-divider {
     background: rgba(255, 255, 255, .10) !important;
 }
 
-/* =========================
-   Fix: Sidebar scrollbar + layout shift (flicker)
-========================= */
-
-/* Sidebar: không cho hiện scrollbar (và tránh hover làm thay đổi width) */
-.ps-sidebar {
-    overflow: hidden !important;
-    /* tắt luôn scrollbar trong sidebar */
-}
-
-/* Nếu nav dài quá, chỉ cho cuộn ở vùng nav, không phải toàn sidebar */
-.ps-nav {
-    overflow-y: auto;
-    max-height: calc(100vh - 210px);
-    /* chừa brand + footer */
-    padding-right: 6px;
-    /* tránh đè lên scrollbar khi browser vẫn reserve */
-}
-
-/* Ẩn scrollbar của ps-nav nhưng vẫn cuộn được */
-.ps-nav {
-    scrollbar-width: none;
-    /* Firefox */
-}
-
-.ps-nav::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-}
-
-/* Ngăn “layout shift” khi modal mở/đóng (Bootstrap thêm scrollbar => giật) */
-html {
-    scrollbar-gutter: stable;
-    /* reserve chỗ scrollbar để không nhảy layout */
-}
-
-/* Bootstrap modal mở hay làm body padding-right thay đổi => giật sidebar/topbar */
-body.modal-open {
-    padding-right: 0 !important;
-    /* chặn bootstrap bơm padding */
-    overflow: hidden !important;
-}
 
 /* =========================
-   HARD FIX: stop layout shift when modal opens (no flicker)
+   PRODUCTS PAGE
+========================= */
+.ps-products {
+    padding-top: 88px;
+}
+
+.ps-count {
+    margin-left: 8px;
+    color: var(--muted);
+    font-weight: 900;
+    font-size: 14px;
+}
+
+.ps-btn-sm {
+    height: 46px;
+    padding: 0 14px;
+    border-radius: 14px;
+}
+
+/* table card */
+.ps-tableCard {
+    overflow: hidden;
+}
+
+/* category pill */
+.ps-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    font-weight: 900;
+    font-size: 12px;
+    color: color-mix(in srgb, var(--primary) 90%, transparent);
+}
+
+/* stock badge */
+.ps-stock {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 2%, transparent);
+}
+
+.ps-stock.ok {
+    color: color-mix(in srgb, var(--green) 90%, transparent);
+    border-color: color-mix(in srgb, var(--green) 22%, transparent);
+    background: color-mix(in srgb, var(--green) 10%, transparent);
+}
+
+.ps-stock.low {
+    color: color-mix(in srgb, #f59e0b 90%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 22%, transparent);
+    background: color-mix(in srgb, #f59e0b 10%, transparent);
+}
+
+.ps-stock.out {
+    color: color-mix(in srgb, var(--red) 90%, transparent);
+    border-color: color-mix(in srgb, var(--red) 22%, transparent);
+    background: color-mix(in srgb, var(--red) 10%, transparent);
+}
+
+/* action buttons */
+.ps-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.ps-actBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+}
+
+.ps-actBtn:hover {
+    color: var(--text);
+    border-color: var(--border2);
+}
+
+.ps-actBtn.danger:hover {
+    color: color-mix(in srgb, var(--red) 92%, transparent);
+    border-color: color-mix(in srgb, var(--red) 22%, transparent);
+}
+
+/* secondary button */
+.ps-btn-secondary {
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--text);
+    font-weight: 900;
+}
+
+/* =========================
+   Products: View modal layout like screenshot + Delete button
 ========================= */
 
-/* Always keep a vertical scrollbar reserved to prevent width jump */
-html {
-    overflow-y: scroll !important;
-    /* luôn có scrollbar */
+/* view modal */
+.ps-view .ps-modal__body {
+    padding: 18px 18px 20px !important;
 }
 
-/* When modal open: lock background without removing scrollbar */
-body.modal-open {
-    overflow: visible !important;
-    /* không để Bootstrap làm mất scrollbar */
+/* header section: icon + name + barcode centered */
+.ps-view__hero {
+    display: grid;
+    place-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 10px 6px 14px;
 }
 
-/* optional: keep sidebar stable */
-.ps-sidebar {
-    overflow: hidden !important;
+.ps-view__icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 4%, transparent);
+    box-shadow: var(--shadowSoft);
+    overflow: hidden;
+}
+
+.ps-view__icon i {
+    font-size: 28px;
+    color: var(--muted);
+}
+
+.ps-view__name {
+    font-weight: 950;
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+.ps-view__barcode {
+    color: var(--muted);
+    font-weight: 800;
+    letter-spacing: .4px;
+}
+
+/* info card (2 columns) */
+.ps-view__card {
+    margin-top: 12px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    overflow: hidden;
+}
+
+.ps-view__grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 16px;
+    padding: 14px 16px;
+    align-items: center;
+}
+
+.ps-view__label {
+    color: var(--muted);
+    font-weight: 800;
+}
+
+.ps-view__value {
+    font-weight: 900;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.ps-view__divider {
+    height: 1px;
+    background: color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+/* profit row */
+.ps-view__profit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    font-weight: 900;
+}
+
+.ps-view__profit .v {
+    color: color-mix(in srgb, var(--green) 92%, transparent);
+}
+
+/* confirm modal */
+.ps-confirm__text {
+    font-weight: 850;
+    color: var(--text);
+    line-height: 1.35;
+}
+
+/* danger button */
+.ps-btn-danger {
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
+    background: color-mix(in srgb, var(--red) 86%, transparent);
+    color: white;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: var(--shadowSoft);
+}
+
+/* =========================
+   THEME for Select/Combobox (dark & light)
+========================= */
+
+/* apply to select that uses .ps-input */
+select.ps-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    padding-right: 44px;
+    /* chừa chỗ mũi tên */
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) 50%,
+        calc(100% - 12px) 50%;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
+/* dark mode */
+body[data-theme="dark"] select.ps-input {
+    background-color: rgba(255, 255, 255, .05) !important;
+    border-color: rgba(255, 255, 255, .12) !important;
+    color: rgba(255, 255, 255, .92) !important;
+}
+
+/* light mode */
+body[data-theme="light"] select.ps-input {
+    background-color: rgba(255, 255, 255, .85) !important;
+    border-color: rgba(15, 23, 42, .12) !important;
+    color: rgba(15, 23, 42, .92) !important;
+}
+
+/* focus */
+select.ps-input:focus {
+    outline: none;
+    box-shadow: var(--focus);
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+}
+
+/* dropdown options (limited by browser, but helps in many cases) */
+body[data-theme="dark"] select.ps-input option {
+    background: rgba(10, 14, 24, .98);
+    color: rgba(255, 255, 255, .92);
+}
+
+body[data-theme="light"] select.ps-input option {
+    background: #ffffff;
+    color: rgba(15, 23, 42, .92);
+}
+
+/* =========================
+   CATEGORIES PAGE
+========================= */
+.ps-categories {
+    padding-top: 88px;
+}
+
+.ps-catCard {
+    height: 150px;
+    padding: 16px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.ps-catCard:hover {
+    transform: translateY(-2px);
+    border-color: var(--border2);
+    background: color-mix(in srgb, #fff 4%, transparent);
+}
+
+.ps-catIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.ps-catIcon i {
+    font-size: 20px;
+    color: color-mix(in srgb, var(--primary) 85%, transparent);
+}
+
+.ps-catMeta {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.ps-catName {
+    font-weight: 950;
+    font-size: 18px;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-catDesc {
+    margin-top: 6px;
+    color: var(--muted);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-catCount {
+    margin-top: 12px;
+    font-weight: 900;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+    font-size: 12px;
+}
+
+.ps-catActions {
+    display: flex;
+    gap: 8px;
+}
+
+.ps-hint {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+/* =========================
+   EMPLOYEES PAGE
+========================= */
+.ps-employees {
+    padding-top: 88px;
+}
+
+.ps-empCard {
+    height: 170px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ps-empTop {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.ps-empAvatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 950;
+    color: white;
+    background: color-mix(in srgb, var(--primary) 85%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    flex: 0 0 auto;
+}
+
+.ps-empMeta {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.ps-empName {
+    font-weight: 950;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-empEmail {
+    color: var(--muted);
+    font-weight: 750;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.ps-badges {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.ps-badge {
+    font-size: 12px;
+    font-weight: 900;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--muted);
+}
+
+.ps-badge.ok {
+    color: color-mix(in srgb, var(--green) 92%, transparent);
+    border-color: color-mix(in srgb, var(--green) 22%, transparent);
+    background: color-mix(in srgb, var(--green) 10%, transparent);
+}
+
+.ps-badge.lock {
+    color: color-mix(in srgb, var(--red) 92%, transparent);
+    border-color: color-mix(in srgb, var(--red) 22%, transparent);
+    background: color-mix(in srgb, var(--red) 10%, transparent);
+}
+
+.ps-badge.warn {
+    color: color-mix(in srgb, #f59e0b 92%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 22%, transparent);
+    background: color-mix(in srgb, #f59e0b 10%, transparent);
+}
+
+.ps-empDivider {
+    height: 1px;
+    background: color-mix(in srgb, var(--border) 80%, transparent);
+    margin: 12px 0;
+}
+
+.ps-empActions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    color: var(--text);
+}
+
+.ps-empAct {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 900;
+    color: var(--text);
+    opacity: .9;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+}
+
+.ps-empAct i {
+    color: var(--muted);
+}
+
+.ps-empAct:hover {
+    opacity: 1;
+}
+
+.ps-empAct.right {
+    margin-left: auto;
+}
+
+/* Add/Edit modal info box */
+.ps-infoBox {
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    padding: 12px 12px;
+}
+
+.ps-infoBox__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 950;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+.ps-infoBox__desc {
+    margin-top: 8px;
+    color: var(--muted);
+    font-weight: 750;
+    font-size: 12px;
+}
+
+/* =========================
+   CUSTOMERS PAGE
+========================= */
+.ps-customers {
+    padding-top: 88px;
+}
+
+.ps-sort {
+    height: 46px;
+    border-radius: 14px;
+}
+
+.ps-cusCard {
+    height: 178px;
+
+    padding: 15px;
+    padding-bottom: 25px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    backdrop-filter: none !important;
+}
+
+.ps-cusTop {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ps-cusAvatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 950;
+    color: white;
+    background: color-mix(in srgb, var(--cyan) 55%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cyan) 25%, transparent);
+    flex: 0 0 auto;
+}
+
+.ps-cusMeta {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.ps-cusName {
+    font-weight: 950;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-cusLine {
+    margin-top: 4px;
+    color: var(--muted);
+    font-weight: 750;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-cusDivider {
+    height: 1px;
+    background: color-mix(in srgb, var(--border) 80%, transparent);
+    margin: 12px 0;
+
+}
+
+.ps-cusBottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 20px !important;
+}
+
+.ps-cusStat {
+    display: grid;
+    gap: 4px;
+    color: var(--muted);
+    font-weight: 800;
+    font-size: 12px;
+}
+
+.ps-cusStat .v {
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+}
+
+.ps-cusRevenue .v {
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+.ps-cusActions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.ps-cusEye {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+}
+
+.ps-cusEye:hover {
+    color: var(--text);
+    border-color: var(--border2);
+}
+
+.ps-rank {
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 950;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--muted);
+}
+
+.ps-rank.vip {
+    color: color-mix(in srgb, #f59e0b 92%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 22%, transparent);
+    background: color-mix(in srgb, #f59e0b 10%, transparent);
+}
+
+/* history modal */
+.ps-history .ps-modal__body {
+    padding: 14px 14px 18px !important;
+}
+
+.ps-histHeader {
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    padding: 12px 12px;
+}
+
+.ps-histHeader .name {
+    font-weight: 950;
+    font-size: 16px;
+}
+
+.ps-histHeader .sub {
+    margin-top: 4px;
+    color: var(--muted);
+    font-weight: 750;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ps-histHeader .sum {
+    margin-top: 10px;
+    display: flex;
+    gap: 18px;
+    color: var(--muted);
+    font-weight: 850;
+}
+
+.ps-histHeader .sum b {
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+.ps-histList {
+    margin-top: 12px;
+    display: grid;
+    gap: 10px;
+}
+
+.ps-histItem {
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    padding: 12px 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ps-histItem .left {
+    min-width: 0;
+}
+
+.ps-histItem .code {
+    font-weight: 950;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+.ps-histItem .date {
+    margin-top: 4px;
+    color: var(--muted);
+    font-weight: 750;
+    font-size: 12px;
+}
+
+.ps-histItem .right {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ps-histItem .money {
+    font-weight: 950;
+    color: var(--text);
+}
+
+.ps-histItem .count {
+    margin-top: 4px;
+    color: var(--muted);
+    font-weight: 750;
+    font-size: 12px;
+}
+
+/* =========================
+   HOVER EFFECTS: Customers + Employees
+========================= */
+
+/* Common: smooth transitions */
+.ps-cusCard,
+.ps-empCard {
+    transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+    will-change: transform;
+}
+
+/* CARD hover */
+.ps-cusCard:hover,
+.ps-empCard:hover {
+    transform: translateY(-2px);
+    border-color: var(--border2);
+    background: color-mix(in srgb, #fff 4%, transparent);
+    box-shadow: var(--shadow);
+}
+
+/* Avatar glow on hover */
+.ps-cusCard:hover .ps-cusAvatar,
+.ps-empCard:hover .ps-empAvatar {
+    filter: drop-shadow(0 12px 22px rgba(0, 0, 0, .25));
+}
+
+/* Divider slightly brighter on hover */
+.ps-cusCard:hover .ps-cusDivider,
+.ps-empCard:hover .ps-empDivider {
+    background: color-mix(in srgb, var(--border2) 90%, transparent);
+}
+
+/* ===== Customers actions hover ===== */
+.ps-cusEye {
+    transition: transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease;
+}
+
+.ps-cusEye:hover {
+    transform: translateY(-1px);
+    border-color: var(--border2);
+    background: color-mix(in srgb, #fff 6%, transparent);
+    color: var(--text);
+}
+
+.ps-cusEye:active {
+    transform: translateY(0);
+}
+
+/* Make revenue pop a bit on hover */
+.ps-cusCard:hover .ps-cusRevenue .v {
+    text-shadow: 0 10px 26px rgba(59, 130, 246, .22);
+}
+
+/* ===== Employees actions hover ===== */
+.ps-empAct {
+    transition: transform .14s ease, color .14s ease, opacity .14s ease;
+}
+
+.ps-empAct:hover {
+    transform: translateY(-1px);
+    opacity: 1;
+}
+
+.ps-empAct:hover i {
+    color: color-mix(in srgb, var(--primary) 85%, transparent);
+}
+
+/* Delete icon on employee card */
+.ps-empAct[title="delete"]:hover i {
+    color: color-mix(in srgb, var(--red) 90%, transparent);
+}
+
+/* ===== Better focus for accessibility (keyboard) ===== */
+.ps-cusEye:focus,
+.ps-empAct:focus {
+    outline: none;
+    box-shadow: var(--focus);
+    border-radius: 12px;
+}
+
+/* =========================
+   REPORTS PAGE
+========================= */
+.ps-reports {
+    padding-top: 88px;
+}
+
+/* range buttons */
+.ps-rangebar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ps-rangebtn {
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    color: var(--text);
+    font-weight: 900;
+    font-size: 13px;
+    transition: transform .14s ease, border-color .14s ease, background .14s ease;
+}
+
+.ps-rangebtn:hover {
+    transform: translateY(-1px);
+    border-color: var(--border2);
+    background: color-mix(in srgb, #fff 5%, transparent);
+}
+
+.ps-rangebtn.active {
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+/* custom date box */
+.ps-filterBox {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    padding: 14px;
+}
+
+.ps-filterRow {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.ps-filterField {
+    min-width: 160px;
+}
+
+.ps-filterLabel {
+    color: var(--muted);
+    font-weight: 850;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.ps-date {
+    height: 42px !important;
+    border-radius: 14px !important;
+}
+
+/* KPI style for reports (no trend pill) */
+.ps-kpi--simple {
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+    padding-right: 14px !important;
+}
+
+/* donut chart container */
+.ps-chart--donut {
+    height: 260px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* legend */
+.ps-legend {
+    margin-top: 10px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    color: var(--muted);
+    font-weight: 850;
+    font-size: 12px;
+}
+
+.ps-legend .it {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ps-legend .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--muted);
+}
+
+/* order modal */
+.ps-orderModal .ps-modal__body {
+    padding: 14px 14px 6px !important;
+}
+
+.ps-orderMeta {
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    padding: 12px;
+}
+
+.ps-orderGrid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 14px;
+    align-items: center;
+}
+
+.ps-orderGrid .k {
+    color: var(--muted);
+    font-weight: 850;
+    font-size: 12px;
+}
+
+.ps-orderGrid .v {
+    color: var(--text);
+    font-weight: 900;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ps-orderItems {
+    margin-top: 12px;
+}
+
+.ps-orderItems .ttl {
+    font-weight: 950;
+    margin-bottom: 8px;
+}
+
+.ps-orderItem {
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    padding: 10px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.ps-orderItem i {
+    color: color-mix(in srgb, var(--primary) 85%, transparent);
+}
+
+.ps-orderItem .name {
+    font-weight: 900;
+}
+
+.ps-orderItem .qty {
+    margin-left: auto;
+    color: var(--muted);
+    font-weight: 850;
+}
+
+.ps-orderTotalRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ps-orderTotalLabel {
+    font-weight: 950;
+    font-size: 18px;
+}
+
+.ps-orderTotalValue {
+    font-weight: 950;
+    font-size: 18px;
+    color: color-mix(in srgb, var(--primary) 92%, transparent);
+}
+
+/* =========================
+   PROFILE PAGE
+========================= */
+.ps-profile {
+    padding-top: 88px;
+}
+
+.ps-profileHero {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px;
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.ps-profileHero__avatar {
+    width: 92px;
+    height: 92px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 950;
+    font-size: 34px;
+    color: #fff;
+    background: color-mix(in srgb, var(--primary) 85%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.ps-profileHero__meta {
+    min-width: 0;
+}
+
+.ps-profileHero__name {
+    font-weight: 950;
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.ps-profileHero__email {
+    color: var(--muted);
+    font-weight: 750;
+    margin-top: 4px;
+}
+
+.ps-profileHero__chips {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.ps-muted {
+    color: var(--muted);
+    font-weight: 750;
+    font-size: 13px;
+}
+
+/* tabs */
+.ps-profileTabs {
+    max-width: 980px;
+    margin: 18px auto 0;
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+    padding: 0 6px;
+}
+
+.ps-tab {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 900;
+    padding: 12px 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.ps-tab.active {
+    color: color-mix(in srgb, var(--primary) 90%, transparent);
+}
+
+.ps-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: color-mix(in srgb, var(--primary) 90%, transparent);
+    border-radius: 999px;
+}
+
+/* panel */
+.ps-profilePanel {
+    max-width: 980px;
+    margin: 18px auto 0;
+    padding: 18px;
+}
+
+/* password show/hide */
+.ps-inputWrap {
+    position: relative;
+}
+
+.ps-input--withBtn {
+    padding-right: 46px !important;
+}
+
+.ps-eye {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 3%, transparent);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+}
+
+.ps-eye:hover {
+    color: var(--text);
+    border-color: var(--border2);
+}
+
+/* strength meter */
+.ps-strength {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ps-strength__bar {
+    flex: 1 1 auto;
+    height: 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 2%, transparent);
+    overflow: hidden;
+}
+
+.ps-strength__fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary) 85%, transparent);
+    transition: width .18s ease;
+}
+
+.ps-strength__text {
+    min-width: 120px;
+    text-align: right;
+    color: var(--muted);
+    font-weight: 850;
+    font-size: 12px;
 }
