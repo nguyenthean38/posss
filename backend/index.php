@@ -34,6 +34,9 @@ require_once __DIR__ . '/controllers/StaffController.php';
 require_once __DIR__ . '/controllers/CategoryController.php';
 require_once __DIR__ . '/controllers/ProductController.php';
 require_once __DIR__ . '/controllers/CustomerController.php';
+require_once __DIR__ . '/controllers/PosController.php';
+require_once __DIR__ . '/controllers/ReportController.php';
+require_once __DIR__ . '/controllers/ProfileController.php';
 
 // Khởi tạo DB connection
 $database = new Database();
@@ -51,6 +54,9 @@ $staffCtrl = new StaffController($db);
 $categoryCtrl = new CategoryController($db);
 $productCtrl = new ProductController($db);
 $customerCtrl = new CustomerController($db);
+$posCtrl = new PosController($db);
+$reportCtrl = new ReportController($db);
+$profileCtrl = new ProfileController($db);
 
 // ================ ĐIỀU HƯỚNG ROUTES ================
 
@@ -107,6 +113,9 @@ elseif (preg_match('/^\/api\/staff\/(\d+)\/resend$/', $uri, $matches) && $method
     $staffCtrl->resendActivation($staffId);
 }
 // Danh mục sản phẩm
+elseif ($uri === '/api/categories/search' && $method === 'POST') {
+    $categoryCtrl->searchCategories($data);
+}
 elseif ($uri === '/api/categories' && $method === 'GET') {
     $categoryCtrl->index();
 }
@@ -126,6 +135,9 @@ elseif (preg_match('/^\/api\/categories\/(\d+)$/', $uri, $matches) && $method ==
     $categoryCtrl->destroy($categoryId);
 }
 // Sản phẩm (admin)
+elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 'GET') {
+    $productCtrl->show((int)$matches[1]);
+}
 elseif ($uri === '/api/products' && $method === 'GET') {
     $productCtrl->index();
 }
@@ -142,6 +154,12 @@ elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 
 }
 
 // Khách hàng — route cụ thể trước GET /api/customers/{id}
+elseif (preg_match('/^\/api\/customers\/(\d+)\/history$/', $uri, $matches) && $method === 'GET') {
+    $customerCtrl->history((int)$matches[1]);
+}
+elseif (preg_match('/^\/api\/customers\/orders\/(\d+)$/', $uri, $matches) && $method === 'GET') {
+    $customerCtrl->orderDetail((int)$matches[1]);
+}
 // UC-20 - Tra cứu khách hàng theo SĐT
 elseif ($uri === '/api/customers/search-by-phone' && $method === 'GET') {
     $customerCtrl->searchByPhone();
@@ -154,6 +172,26 @@ elseif (preg_match('/^\/api\/customers\/(\d+)$/', $uri, $matches) && $method ===
 elseif ($uri === '/api/customers' && $method === 'POST') {
     $customerCtrl->store($data);
 }
+
+// Profile
+elseif ($uri === '/api/profile' && $method === 'GET') { $profileCtrl->getMyProfile(); }
+elseif ($uri === '/api/profile' && $method === 'PUT') { $profileCtrl->updateProfile($data); }
+elseif ($uri === '/api/profile/avatar' && $method === 'POST') { $profileCtrl->uploadAvatar(); }
+
+// POS
+elseif ($uri === '/api/pos/session' && $method === 'POST') { $posCtrl->initSession(); }
+elseif ($uri === '/api/pos/cart/add' && $method === 'POST') { $posCtrl->addToCart($data); }
+elseif ($uri === '/api/pos/cart/item' && $method === 'PUT') { $posCtrl->updateItem($data); }
+elseif (preg_match('/^\/api\/pos\/cart\/item\/(\d+)$/', $uri, $matches) && $method === 'DELETE') { $posCtrl->removeItem((int)$matches[1]); }
+elseif ($uri === '/api/pos/calculate' && $method === 'POST') { $posCtrl->calculateChange($data); }
+elseif ($uri === '/api/pos/checkout' && $method === 'POST') { $posCtrl->checkout($data); }
+elseif (preg_match('/^\/api\/pos\/invoice\/(\d+)$/', $uri, $matches) && $method === 'GET') { $posCtrl->exportInvoice((int)$matches[1]); }
+
+// Reports
+elseif ($uri === '/api/reports/summary' && $method === 'GET') { $reportCtrl->getSummaryOverview(); }
+elseif ($uri === '/api/reports/orders' && $method === 'GET') { $reportCtrl->getOrdersByTimeline(); }
+elseif ($uri === '/api/reports/profit' && $method === 'GET') { $reportCtrl->getProfitAnalysis(); }
+elseif ($uri === '/api/reports/chart' && $method === 'GET') { $reportCtrl->getSalesChartData(); }
 
 // ====================================================
 // Trường hợp đường dẫn không hợp lệ

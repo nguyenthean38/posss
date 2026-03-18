@@ -38,6 +38,22 @@ class ProductController {
         Response::json($result);
     }
 
+    // [GET] /api/products/{id}
+    public function show($id) {
+        AuthMiddleware::checkAuth();
+        $id = (int)$id;
+        $product = $this->productModel->findById($id);
+        if (!$product) {
+            Response::json(["message" => "Sản phẩm không tồn tại"], 404);
+        }
+        $role = $_SESSION['role'] ?? 'staff';
+        if ($role !== 'admin') {
+            unset($product['import_price']);
+        }
+        $this->logModel->createLog($_SESSION['user_id'], 'view_product_detail', 'Xem chi tiết sản phẩm ID=' . $id);
+        Response::json($product);
+    }
+
     // [POST] /api/products
     public function store($data) {
         AuthMiddleware::checkAdmin();

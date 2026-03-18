@@ -107,5 +107,31 @@ class CustomerController {
             ], 404);
         }
     }
+
+    // [GET] /api/customers/{id}/history
+    public function history($id) {
+        AuthMiddleware::checkAuth();
+        $id = (int)$id;
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['pageSize']) ? max(1, (int)$_GET['pageSize']) : 20;
+
+        $history = $this->customerModel->getPurchaseHistory($id, $page, $limit);
+        $this->logModel->createLog($_SESSION['user_id'], 'view_customer_history', 'Xem lịch sử mua hàng khách hàng ID=' . $id);
+        Response::json($history);
+    }
+
+    // [GET] /api/customers/orders/{orderId}
+    public function orderDetail($orderId) {
+        AuthMiddleware::checkAuth();
+        $orderId = (int)$orderId;
+        $detail = $this->customerModel->getOrderDetail($orderId);
+        
+        if (!$detail) {
+            Response::json(["message" => "Không tìm thấy đơn hàng"], 404);
+        }
+
+        $this->logModel->createLog($_SESSION['user_id'], 'view_order_detail', 'Xem chi tiết đơn hàng ID=' . $orderId);
+        Response::json($detail);
+    }
 }
 

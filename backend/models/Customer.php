@@ -115,5 +115,65 @@ class Customer {
             'recent_orders' => $recentOrders,
         ];
     }
+
+    public function getPurchaseHistory($customerId, $page = 1, $limit = 20) {
+        $offset = ($page - 1) * $limit;
+        $sql = "SELECT id as order_id, created_at as date, total_amount as total, 
+                       (SELECT SUM(quantity) FROM order_details WHERE order_id = orders.id) as total_quantity
+                FROM orders
+                WHERE customer_id = :cid
+                ORDER BY created_at DESC
+                LIMIT :limit OFFSET :offset";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':cid', $customerId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $sqlCount = "SELECT COUNT(*) as total FROM orders WHERE customer_id = :cid";
+        $countStmt = $this->conn->prepare($sqlCount);
+        $countStmt->bindParam(':cid', $customerId, PDO::PARAM_INT);
+        $countStmt->execute();
+        $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        return [
+            'items' => $items,
+            'pagination' => [
+                'page' => (int)$page,
+                'limit' => (int)$limit,
+                'total' => $total,
+                'total_pages' => (int)ceil($total / $limit)
+            ]
+        ];
+    }
+
+    public function getOrderDetail($orderId) {
+        $sql = "SELECT od.product_id, p.product_name, od.quantity, od.unit_price, (od.quantity * od.unit_price) as total_price
+                FROM order_details od
+                JOIN products p ON p.id = od.product_id
+                WHERE od.order_id = :oid";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':oid', $orderId, PDO::PARAM_INT);
+        $stmt->execute();
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $sqlOrder = "SELECT customer_pay, change_amount as `change`, total_amount FROM orders WHERE id = :oid LIMIT 1";
+        $stmtOrder = $this->conn->prepare($sqlOrder);
+        $stmtOrder->bindParam(':oid', $orderId, PDO::PARAM_INT);
+        $stmtOrder->execute();
+        $order = $stmtOrder->fetch(PDO::FETCH_ASSOC);
+
+        if (!$order) {
+            return null;
+        }
+
+        return [
+            'products' => $products,
+            'customer_pay' => (float)$order['customer_pay'],
+            'change' => (float)$order['change'],
+            'total_amount' => (float)$order['total_amount']
+        ];
+    }
 }
 

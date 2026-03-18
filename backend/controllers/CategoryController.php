@@ -9,6 +9,17 @@ class CategoryController {
         $this->logModel = new Log($db);
     }
 
+    // [POST] /api/categories/search
+    public function searchCategories($data) {
+        AuthMiddleware::checkAdmin();
+        $page = isset($data['Page']) ? max(1, (int)$data['Page']) : (isset($data['page']) ? max(1, (int)$data['page']) : 1);
+        $limit = isset($data['PageSize']) ? max(1, (int)$data['PageSize']) : (isset($data['pageSize']) ? max(1, (int)$data['pageSize']) : 20);
+        $keyword = isset($data['Keyword']) ? trim($data['Keyword']) : (isset($data['keyword']) ? trim($data['keyword']) : '');
+        $result = $this->categoryModel->getList($page, $limit, $keyword);
+        $this->logModel->createLog($_SESSION['user_id'], 'search_categories', 'Tìm kiếm danh mục');
+        Response::json($result);
+    }
+
     // [GET] /api/categories
     public function index() {
         AuthMiddleware::checkAdmin();
