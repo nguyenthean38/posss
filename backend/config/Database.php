@@ -1,24 +1,43 @@
 <?php
 class Database {
-    private $host = "127.0.0.1";   // hoặc "localhost" cũng được
-    private $port = 3307;          // đúng với MySQL Workbench
-    private $db_name = "pos_system";
-    private $username = "root";
-    private $password = "";
-    public $conn;
+    private static $instance = null;
+    private $connection;
 
-    public function getConnection() {
-        $this->conn = null;
+    private function __construct() {
+        // Get config from environment or use defaults
+        $host = getenv('DB_HOST') ?: 'localhost';
+        $dbname = getenv('DB_NAME') ?: 'phonestore_pos';
+        $username = getenv('DB_USER') ?: 'root';
+        $password = getenv('DB_PASSWORD') ?: '';
 
         try {
-            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db_name};charset=utf8mb4";
-            $this->conn = new PDO($dsn, $this->username, $this->password);
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $exception) {
-            error_log("Connection error: " . $exception->getMessage());
-            die(json_encode(["message" => "Lỗi kết nối CSDL."]));
+            $this->connection = new PDO(
+                "mysql:host=$host;dbname=$dbname;charset=utf8mb4",
+                $username,
+                $password,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ]
+            );
+        } catch (PDOException $e) {
+            die("Database connection failed: " . $e->getMessage());
         }
+    }
 
-        return $this->conn;
+    public static function getConnection() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance->connection;
+    }
+
+    // Prevent cloning
+    private function __clone() {}
+
+    // Prevent unserialization
+    public function __wakeup() {
+        throw new Exception("Cannot unserialize singleton");
     }
 }

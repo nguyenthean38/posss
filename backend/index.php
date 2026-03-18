@@ -1,4 +1,32 @@
 <?php
+// Disable HTML error output - always return JSON
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
+// Set error handler to return JSON
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'message' => 'Server error: ' . $errstr,
+        'file' => basename($errfile),
+        'line' => $errline
+    ]);
+    exit;
+});
+
+// Set exception handler to return JSON
+set_exception_handler(function($exception) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'message' => 'Exception: ' . $exception->getMessage(),
+        'file' => basename($exception->getFile()),
+        'line' => $exception->getLine()
+    ]);
+    exit;
+});
+
 // CORS Headers cho phép Frontend (HTML/JS) gọi API
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");

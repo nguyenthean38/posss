@@ -1,14 +1,18 @@
+// Profile Module - Real API Integration
+import API from './api.js';
+import { requireAuth, getUser } from './auth.js';
+
 (() => {
+    requireAuth();
+
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
-    const KEY_PROFILE = "ps_profile";
-    const KEY_PASSWORD = "ps_password"; // mock password
 
     const i18n = {
         vi: {
             "page.profile": "Hồ sơ",
             "role.admin": "Quản trị viên",
-
+            "role.staff": "Nhân viên",
             "nav.dashboard": "Tổng quan",
             "nav.pos": "Bán hàng",
             "nav.products": "Sản phẩm",
@@ -19,22 +23,17 @@
             "nav.profile": "Hồ sơ",
             "nav.logout": "Đăng xuất",
             "nav.collapse": "Thu gọn",
-
             "tab.info": "Thông tin cá nhân",
             "tab.pwd": "Đổi mật khẩu",
-
             "form.name": "Tên nhân viên",
             "form.email": "Email",
             "form.phone": "Số điện thoại",
             "form.address": "Địa chỉ",
-
             "common.save": "Lưu",
-
             "pwd.current": "Mật khẩu hiện tại",
             "pwd.new": "Mật khẩu mới",
             "pwd.confirm": "Xác nhận mật khẩu",
             "pwd.btn": "Đổi mật khẩu",
-
             "toast.saved": "Đã lưu thông tin",
             "toast.pwdOk": "Đổi mật khẩu thành công",
             "toast.pwdWrong": "Mật khẩu hiện tại không đúng",
@@ -44,11 +43,12 @@
             "pw.medium": "Trung bình",
             "pw.strong": "Mạnh",
             "info.joined": "Tham gia",
+            "toast.error": "Có lỗi xảy ra",
         },
         en: {
             "page.profile": "Profile",
             "role.admin": "Administrator",
-
+            "role.staff": "Staff",
             "nav.dashboard": "Dashboard",
             "nav.pos": "Point of Sale",
             "nav.products": "Products",
@@ -59,22 +59,17 @@
             "nav.profile": "Profile",
             "nav.logout": "Logout",
             "nav.collapse": "Collapse",
-
             "tab.info": "Personal Information",
             "tab.pwd": "Change Password",
-
             "form.name": "Employee Name",
             "form.email": "Email",
             "form.phone": "Phone Number",
             "form.address": "Address",
-
             "common.save": "Save",
-
             "pwd.current": "Current Password",
             "pwd.new": "New Password",
             "pwd.confirm": "Confirm Password",
             "pwd.btn": "Change Password",
-
             "toast.saved": "Profile saved",
             "toast.pwdOk": "Password changed",
             "toast.pwdWrong": "Current password is incorrect",
@@ -84,6 +79,7 @@
             "pw.medium": "Medium",
             "pw.strong": "Strong",
             "info.joined": "Joined",
+            "toast.error": "An error occurred",
         }
     };
 
@@ -103,17 +99,14 @@
     function applyLang(lang) {
         document.documentElement.lang = lang;
         const dict = i18n[lang] || i18n.en;
-
         document.querySelectorAll("[data-i18n]").forEach(el => {
             const key = el.getAttribute("data-i18n");
             if (dict[key]) el.textContent = dict[key];
         });
-
         document.querySelectorAll(".ps-nav__item[data-tooltip]").forEach(a => {
             const span = a.querySelector("span[data-i18n]");
             if (span) a.setAttribute("data-tooltip", span.textContent.trim());
         });
-
         document.getElementById("langLabel").textContent = lang.toUpperCase();
         localStorage.setItem(KEY_LANG, lang);
     }
@@ -125,7 +118,6 @@
         if (icon) icon.className = theme === "dark" ? "bi bi-moon-stars" : "bi bi-brightness-high";
     }
 
-    // sidebar controls (same pattern)
     function initLayout() {
         const sidebar = document.getElementById("sidebar");
         const overlay = document.getElementById("overlay");
@@ -159,54 +151,41 @@
         });
     }
 
-    // seed profile/password
-    function seed() {
-        if (!localStorage.getItem(KEY_PROFILE)) {
-            localStorage.setItem(KEY_PROFILE, JSON.stringify({
-                name: "Administrator",
-                email: "admin@phonestore.com",
-                phone: "0901000000",
-                address: "HCM",
-                role: "Administrator",
-                joined: "2023-11-01"
-            }));
-        }
-        if (!localStorage.getItem(KEY_PASSWORD)) {
-            localStorage.setItem(KEY_PASSWORD, "admin12345"); // mock
-        }
-    }
-
-    const loadProfile = () => JSON.parse(localStorage.getItem(KEY_PROFILE) || "{}");
-    const saveProfile = (p) => localStorage.setItem(KEY_PROFILE, JSON.stringify(p));
-
     function initials(name) {
         const s = (name || "A").trim();
         if (s === "Administrator") return "AD";
         return (s[0] || "A").toUpperCase();
     }
 
-    function renderProfile() {
-        const p = loadProfile();
-        const init = initials(p.name);
+    async function renderProfile() {
+        try {
+            const user = getUser();
+            if (!user) return;
 
-        document.getElementById("heroAvatar").textContent = init;
-        document.getElementById("heroName").textContent = p.name || "—";
-        document.getElementById("heroEmail").textContent = p.email || "—";
-        const roleText = (p.role === "Admin" || p.role === "Administrator") ? t("role.admin") : p.role;
-        document.getElementById("heroRole").textContent = roleText;
-        document.getElementById("heroJoined").textContent = `${t("info.joined")}: ${p.joined || "—"}`;
+            const p = await API.profile.get();
+            const init = initials(p.name);
 
-        document.getElementById("topAvatar").textContent = init;
-        document.getElementById("topName").textContent = p.name || "—";
-        document.getElementById("topRole").textContent = roleText;
+            document.getElementById("heroAvatar").textContent = init;
+            document.getElementById("heroName").textContent = p.name || "—";
+            document.getElementById("heroEmail").textContent = p.email || "—";
+            const roleText = p.role === "Admin" ? t("role.admin") : t("role.staff");
+            document.getElementById("heroRole").textContent = roleText;
+            document.getElementById("heroJoined").textContent = `${t("info.joined")}: ${p.created_at?.split('T')[0] || "—"}`;
 
-        document.getElementById("fName").value = p.name || "";
-        document.getElementById("fEmail").value = p.email || "";
-        document.getElementById("fPhone").value = p.phone || "";
-        document.getElementById("fAddress").value = p.address || "";
+            document.getElementById("topAvatar").textContent = init;
+            document.getElementById("topName").textContent = p.name || "—";
+            document.getElementById("topRole").textContent = roleText;
+
+            document.getElementById("fName").value = p.name || "";
+            document.getElementById("fEmail").value = p.email || "";
+            document.getElementById("fPhone").value = p.phone || "";
+            document.getElementById("fAddress").value = p.address || "";
+        } catch (err) {
+            console.error('Render error:', err);
+            toast(t("toast.error"));
+        }
     }
 
-    // tabs
     function initTabs() {
         const tabs = document.querySelectorAll(".ps-tab");
         const panelInfo = document.getElementById("panelInfo");
@@ -224,18 +203,21 @@
         });
     }
 
-    // save info
-    function saveInfo() {
-        const p = loadProfile();
-        p.name = document.getElementById("fName").value.trim() || p.name;
-        p.phone = document.getElementById("fPhone").value.trim();
-        p.address = document.getElementById("fAddress").value.trim();
-        saveProfile(p);
-        renderProfile();
-        toast(t("toast.saved"));
+    async function saveInfo() {
+        try {
+            const name = document.getElementById("fName").value.trim();
+            const phone = document.getElementById("fPhone").value.trim();
+            const address = document.getElementById("fAddress").value.trim();
+
+            await API.profile.update({ name, phone, address });
+            renderProfile();
+            toast(t("toast.saved"));
+        } catch (err) {
+            console.error('Save error:', err);
+            toast(t("toast.error"));
+        }
     }
 
-    // password strength
     function scorePassword(pw) {
         const s = pw || "";
         let score = 0;
@@ -267,37 +249,39 @@
         input.type = input.type === "password" ? "text" : "password";
     }
 
-    function changePassword() {
-        const cur = document.getElementById("curPwd").value;
-        const nw = document.getElementById("newPwd").value;
-        const cf = document.getElementById("cfmPwd").value;
+    async function changePassword() {
+        try {
+            const cur = document.getElementById("curPwd").value;
+            const nw = document.getElementById("newPwd").value;
+            const cf = document.getElementById("cfmPwd").value;
 
-        const stored = localStorage.getItem(KEY_PASSWORD) || "";
-        if (cur !== stored) {
-            toast(t("toast.pwdWrong"));
-            return;
-        }
-        if (nw !== cf) {
-            toast(t("toast.pwdMismatch"));
-            return;
-        }
-        const sc = scorePassword(nw);
-        if (nw.length < 8 || sc < 2) {
-            toast(t("toast.pwdWeak"));
-            return;
-        }
+            if (nw !== cf) {
+                toast(t("toast.pwdMismatch"));
+                return;
+            }
+            const sc = scorePassword(nw);
+            if (nw.length < 8 || sc < 2) {
+                toast(t("toast.pwdWeak"));
+                return;
+            }
 
-        localStorage.setItem(KEY_PASSWORD, nw);
-        document.getElementById("curPwd").value = "";
-        document.getElementById("newPwd").value = "";
-        document.getElementById("cfmPwd").value = "";
-        updateStrength();
-        toast(t("toast.pwdOk"));
+            await API.profile.changePassword({ current_password: cur, new_password: nw });
+            document.getElementById("curPwd").value = "";
+            document.getElementById("newPwd").value = "";
+            document.getElementById("cfmPwd").value = "";
+            updateStrength();
+            toast(t("toast.pwdOk"));
+        } catch (err) {
+            console.error('Password error:', err);
+            if (err.message.includes('401') || err.message.includes('incorrect')) {
+                toast(t("toast.pwdWrong"));
+            } else {
+                toast(t("toast.error"));
+            }
+        }
     }
 
     function init() {
-        seed();
-
         const savedTheme = localStorage.getItem(KEY_THEME) || "dark";
         const savedLang = localStorage.getItem(KEY_LANG) || "vi";
         applyLang(savedLang);
@@ -308,7 +292,6 @@
         renderProfile();
 
         document.getElementById("btnSaveInfo")?.addEventListener("click", saveInfo);
-
         document.getElementById("newPwd")?.addEventListener("input", updateStrength);
         document.getElementById("btnChangePwd")?.addEventListener("click", changePassword);
 

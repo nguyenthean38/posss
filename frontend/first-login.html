@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng nhập lần đầu - PhoneStore POS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="assets/css/login.css" />
+</head>
+<body class="ps-body ps-noise" data-theme="dark">
+    <div class="container-login">
+        <div class="left-panel">
+            <div class="logo-section">
+                <div class="logo">
+                    <div class="ps-brand__icon mb-3"><i class="bi bi-cart3"></i></div>
+                </div>
+            </div>
+            <div class="title-section">
+                <h1>PHONESTORE<br />POS<br /><span style="font-size: 0.52em; opacity: 0.85; display: block; margin-top: 8px; font-weight: 500; letter-spacing: 2px;">ĐĂNG NHẬP LẦN ĐẦU</span></h1>
+            </div>
+            <div class="icon-circle">
+                <i class="bi bi-shield-check"></i>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="welcome-section">
+                <h2>KÍCH HOẠT TÀI KHOẢN</h2>
+                <p style="font-size: 0.9em; opacity: 0.8; margin-top: 8px;">Vui lòng đăng nhập bằng mật khẩu tạm thời</p>
+            </div>
+            <div class="login-form">
+                <form id="firstLoginForm">
+                    <div class="input-group">
+                        <div class="input-container">
+                            <i class="bi bi-envelope input-icon"></i>
+                            <input type="email" id="email" placeholder="Email" readonly />
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-container">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="password" id="password" placeholder="Mật khẩu tạm thời" />
+                            <i class="bi bi-eye password-toggle"></i>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" style="font-size: 0.85em; padding: 12px; margin-top: 16px;">
+                        <i class="bi bi-info-circle"></i> Mật khẩu tạm thời là MSSV trưởng nhóm (viết thường). Bạn sẽ được yêu cầu đổi mật khẩu sau khi đăng nhập.
+                    </div>
+
+                    <button class="login-btn" type="submit">XÁC NHẬN</button>
+                </form>
+            </div>
+
+            <div class="footer-text">
+                Link này chỉ có hiệu lực trong 1 phút kể từ khi được gửi.
+            </div>
+        </div>
+    </div>
+    <div class="snackbar" role="status" aria-live="polite"></div>
+    <script type="module">
+        import { api } from './assets/js/api.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+        const token = urlParams.get('token');
+
+        if (!email || !token) {
+            alert('Link không hợp lệ');
+            location.href = 'login.html';
+        }
+
+        document.getElementById('email').value = email;
+
+        function toast(msg) {
+            const el = document.querySelector('.snackbar');
+            if (!el) { alert(msg); return; }
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 2500);
+        }
+
+        // Password toggle
+        document.querySelector('.password-toggle').onclick = function() {
+            const input = document.getElementById('password');
+            const isPwd = input.type === 'password';
+            input.type = isPwd ? 'text' : 'password';
+            this.className = isPwd ? 'bi bi-eye-slash password-toggle' : 'bi bi-eye password-toggle';
+        };
+
+        document.getElementById('firstLoginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value.trim();
+
+            if (!password) {
+                toast('Vui lòng nhập mật khẩu tạm thời');
+                return;
+            }
+
+            const btn = document.querySelector('.login-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i>';
+
+            try {
+                const result = await api.firstLogin(email, password, token);
+                toast('Xác nhận thành công! Chuyển sang đổi mật khẩu...');
+                setTimeout(() => {
+                    location.href = 'init-password.html';
+                }, 1000);
+            } catch (error) {
+                toast(error.message || 'Đăng nhập thất bại');
+                btn.disabled = false;
+                btn.innerHTML = 'XÁC NHẬN';
+            }
+        };
+    </script>
+</body>
+</html>

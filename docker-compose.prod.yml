@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # MySQL Database (Production)
+  db:
+    image: mysql:8.0
+    container_name: phonestore_db_prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data_prod:/var/lib/mysql
+      - ./backend/database.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - phonestore_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    # Don't expose port in production
+    # ports:
+    #   - "3306:3306"
+
+  # PHP + Apache Backend (Production)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phonestore_backend_prod
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend:/var/www/html/backend:ro  # Read-only
+      - ./frontend:/var/www/html/frontend:ro  # Read-only
+      - uploads:/var/www/html/backend/uploads  # Writable uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_ENV: production
+      APP_DEBUG: false
+    networks:
+      - phonestore_network
+
+volumes:
+  db_data_prod:
+    driver: local
+  uploads:
+    driver: local
+
+networks:
+  phonestore_network:
+    driver: bridge
