@@ -126,6 +126,52 @@ class AuthController {
         Response::json(["message" => "Lỗi server"], 500);
     }
 
+    // [PUT] /api/auth/change-password
+    // UC-14: Đổi mật khẩu khi đã có mật khẩu hiện tại
+    public function changePassword($data) {
+        AuthMiddleware::checkAuth();
+
+        $currentPass = $data['current_password'] ?? '';
+        $newPass = $data['new_password'] ?? '';
+        $confirmPass = $data['confirm_password'] ?? '';
+
+        if (strlen($currentPass) === 0 || strlen($newPass) === 0 || strlen($confirmPass) === 0) {
+            Response::json(["message" => "Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới"], 400);
+        }
+
+        // Một số rule đơn giản cho mật khẩu mới
+        if (strlen($newPass) < 6) {
+            Response::json(["message" => "Mật khẩu mới phải từ 6 ký tự trở lên"], 400);
+        }
+        if ($newPass !== $confirmPass) {
+            Response::json(["message" => "Xác nhận mật khẩu mới không khớp"], 400);
+        }
+
+        $userId = $_SESSION['user_id'];
+
+        // Lấy thông tin user hiện tại để kiểm tra mật khẩu cũ
+        $stmt = $this->db->prepare("SELECT password_hash FROM users WHERE id = :id LIMIT 1");
+        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            Response::json(["message" => "Không tìm thấy người dùng"], 404);
+        }
+
+        if (!password_verify($currentPass, $row['password_hash'])) {
+            Response::json(["message" => "Mật khẩu hiện tại không đúng"], 401);
+        }
+
+        // Cập nhật mật khẩu mới
+        if ($this->userModel->updatePassword($userId, $newPass, false)) {
+            $this->logModel->createLog($userId, 'change_password', 'Đã đổi mật khẩu');
+            Response::json(["message" => "Đổi mật khẩu thành công"]);
+        }
+
+        Response::json(["message" => "Lỗi server khi đổi mật khẩu"], 500);
+    }
+
     // [POST] /api/auth/logout
     public function logout() {
         // Đảm bảo người dùng đang đăng nhập (đúng tiền điều kiện UC-06)
@@ -156,5 +202,101 @@ class AuthController {
 
         // FE nhận message này và tự chuyển hướng về trang đăng nhập
         Response::json(["message" => "Đã đăng xuất thành công!"]);
+    }
+
+    // [GET] /api/auth/me
+    // UC-12: Xem thông tin cá nhân
+    public function me() {
+        AuthMiddleware::checkAuth();
+
+        $userId = $_SESSION['user_id'];
+        $profile = $this->userModel->getProfileById($userId);
+
+        if (!$profile) {
+            Response::json(["message" => "Không tìm thấy thông tin người dùng"], 404);
+        }
+
+        // Ghi log xem hồ sơ cá nhân
+        $this->logModel->createLog($userId, 'view_profile', 'Xem thông tin cá nhân');
+
+        Response::json(['profile' => $profile]);
+    }
+
+    // [POST] /api/auth/profile
+    // UC-13: Cập nhật hồ sơ & ảnh đại diện
+    public function updateProfile() {
+        AuthMiddleware::checkAuth();
+
+        $userId = $_SESSION['user_id'];
+
+        // Lấy họ tên từ form-data
+        $fullName = isset($_POST['full_name']) ? trim($_POST['full_name']) : null;
+
+        // Xử lý upload ảnh đại diện (tùy chọn)
+        $avatarPath = null;
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+                Response::json(["message" => "Lỗi upload file ảnh đại diện"], 400);
+            }
+
+            $fileTmp = $_FILES['avatar']['tmp_name'];
+            $fileSize = $_FILES['avatar']['size'];
+            $fileName = $_FILES['avatar']['name'];
+
+            // Giới hạn dung lượng 2MB
+            $maxSize = 2 * 1024 * 1024;
+            if ($fileSize > $maxSize) {
+                Response::json(["message" => "Ảnh đại diện vượt quá 2MB"], 400);
+            }
+
+            // Kiểm tra định dạng JPG/PNG
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $fileTmp);
+            finfo_close($finfo);
+
+            $allowed = [
+                'image/jpeg' => '.jpg',
+                'image/png' => '.png',
+            ];
+
+            if (!isset($allowed[$mimeType])) {
+                Response::json(["message" => "Chỉ hỗ trợ ảnh JPG hoặc PNG"], 400);
+            }
+
+            $extension = $allowed[$mimeType];
+
+            // Tên file an toàn: user_{id}_timestamp_random.ext
+            $safeBaseName = 'user_' . $userId . '_' . time() . '_' . bin2hex(random_bytes(4));
+            $safeFileName = $safeBaseName . $extension;
+
+            $uploadDir = __DIR__ . '/../uploads/avatars';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            $targetPath = $uploadDir . '/' . $safeFileName;
+            if (!move_uploaded_file($fileTmp, $targetPath)) {
+                Response::json(["message" => "Không thể lưu ảnh đại diện trên server"], 500);
+            }
+
+            // Lưu đường dẫn tương đối để FE dùng
+            $avatarPath = 'uploads/avatars/' . $safeFileName;
+        }
+
+        if ($fullName === null && $avatarPath === null) {
+            Response::json(["message" => "Không có dữ liệu nào để cập nhật"], 400);
+        }
+
+        if ($this->userModel->updateProfile($userId, $fullName, $avatarPath)) {
+            $this->logModel->createLog($userId, 'update_profile', 'Cập nhật hồ sơ cá nhân');
+
+            $updated = $this->userModel->getProfileById($userId);
+            Response::json([
+                "message" => "Cập nhật hồ sơ thành công",
+                "profile" => $updated
+            ]);
+        }
+
+        Response::json(["message" => "Lỗi server khi cập nhật hồ sơ"], 500);
     }
 }

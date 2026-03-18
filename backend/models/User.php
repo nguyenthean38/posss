@@ -9,6 +9,7 @@ class User {
     public $password_hash;
     public $role;
     public $avatar;
+    public $phone;
     public $is_first_login;
     public $status;
     public $created_at;
@@ -59,6 +60,8 @@ class User {
         $this->password_hash = $row['password_hash'];
         $this->role = $row['role'];
         $this->avatar = $row['avatar'] ?? null;
+        // Cột phone có thể chưa tồn tại trong DB, nên chỉ gán nếu có
+        $this->phone = $row['phone'] ?? null;
         $this->is_first_login = $row['is_first_login'];
         $this->status = $row['status'];
         $this->created_at = $row['created_at'] ?? null;
@@ -93,6 +96,128 @@ class User {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':pwd', $pwd);
         $stmt->bindParam(':id', $user_id);
+        return $stmt->execute();
+    }
+
+    // Cập nhật trạng thái tài khoản (active / locked)
+    public function updateStatus($user_id, $status) {
+        $allowed = ['active', 'locked'];
+        if (!in_array($status, $allowed, true)) {
+            return false;
+        }
+        $query = "UPDATE " . $this->table_name . " SET status = :status WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':id', $user_id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    // Lấy thông tin chi tiết một nhân viên theo id (không bao gồm mật khẩu)
+    public function getStaffById($id) {
+        // Không select cột phone vì ERD hiện tại chưa chắc có, FE có thể dùng null
+        $sql = "SELECT id, full_name, email, role, status, is_first_login, avatar, created_at
+                FROM " . $this->table_name . "
+                WHERE id = :id AND role = 'staff' LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    // Lấy danh sách nhân viên với filter tìm kiếm / phân trang cơ bản
+    public function getStaffList($page = 1, $limit = 20, $emailKeyword = '', $status = null) {
+        $offset = ($page - 1) * $limit;
+
+        $where = "WHERE role = 'staff'";
+        $params = [];
+
+        if ($emailKeyword !== '') {
+            $where .= " AND email LIKE :email";
+            $params[':email'] = '%' . $emailKeyword . '%';
+        }
+
+        if ($status !== null && $status !== '') {
+            $where .= " AND status = :status";
+            $params[':status'] = $status;
+        }
+
+        $sql = "SELECT id, full_name, email, role, status, is_first_login 
+                FROM " . $this->table_name . " 
+                $where
+                ORDER BY id DESC
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Lấy tổng số bản ghi để FE phân trang
+        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " " . $where;
+        $countStmt = $this->conn->prepare($countSql);
+        foreach ($params as $key => $value) {
+            $countStmt->bindValue($key, $value);
+        }
+        $countStmt->execute();
+        $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        return [
+            'items' => $rows,
+            'pagination' => [
+                'page' => (int)$page,
+                'limit' => (int)$limit,
+                'total' => $total,
+                'total_pages' => (int)ceil($total / $limit)
+            ]
+        ];
+    }
+
+    // Lấy thông tin hồ sơ cá nhân cho user hiện tại (không bao gồm mật khẩu)
+    public function getProfileById($id) {
+        // Tùy ERD thực tế, có thể bổ sung thêm phone/address sau khi có cột
+        $sql = "SELECT id, full_name, email, role, status, avatar, created_at
+                FROM " . $this->table_name . "
+                WHERE id = :id LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    // Cập nhật hồ sơ cá nhân (họ tên + avatar)
+    public function updateProfile($id, $fullName = null, $avatarPath = null) {
+        $fields = [];
+        $params = [':id' => $id];
+
+        if ($fullName !== null && $fullName !== '') {
+            $fields[] = 'full_name = :full_name';
+            $params[':full_name'] = $fullName;
+        }
+
+        if ($avatarPath !== null) {
+            $fields[] = 'avatar = :avatar';
+            $params[':avatar'] = $avatarPath;
+        }
+
+        if (empty($fields)) {
+            // Không có gì để cập nhật
+            return false;
+        }
+
+        $sql = "UPDATE " . $this->table_name . " SET " . implode(', ', $fields) . " WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
         return $stmt->execute();
     }
 }

@@ -74,4 +74,103 @@ class StaffController {
         }
         Response::json(["message" => "Lỗi server tạo Token/Mail"], 500);
     }
+
+    // [GET] /api/staff
+    // UC-08: Xem danh sách nhân viên (Admin only)
+    public function listStaff() {
+        AuthMiddleware::checkAdmin();
+
+        // Lấy tham số phân trang + filter từ query string
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 20;
+        $emailKeyword = isset($_GET['email']) ? trim($_GET['email']) : '';
+        $status = isset($_GET['status']) ? trim($_GET['status']) : null;
+
+        $result = $this->userModel->getStaffList($page, $limit, $emailKeyword, $status);
+
+        // Ghi log xem danh sách nhân viên
+        $this->logModel->createLog($_SESSION['user_id'], 'view_staff_list', 'Xem danh sách nhân viên');
+
+        Response::json($result);
+    }
+
+    // [GET] /api/staff/{id}
+    // UC-09: Xem chi tiết nhân viên (Admin only)
+    public function showStaffDetail($staffId) {
+        AuthMiddleware::checkAdmin();
+
+        $staffId = (int)$staffId;
+        if ($staffId <= 0) {
+            Response::json(["message" => "ID nhân viên không hợp lệ"], 400);
+        }
+
+        $staff = $this->userModel->getStaffById($staffId);
+        if (!$staff) {
+            Response::json(["message" => "Nhân viên không tồn tại"], 404);
+        }
+
+        // Lấy lịch sử đăng nhập / thao tác gần đây (có thể lọc theo action nếu muốn)
+        $logs = $this->logModel->getLogsByUser($staffId, 20);
+
+        $this->logModel->createLog($_SESSION['user_id'], 'view_staff_detail', 'Xem chi tiết nhân viên ID=' . $staffId);
+
+        Response::json([
+            'staff' => $staff,
+            'logs' => $logs,
+        ]);
+    }
+
+    // [PATCH] /api/staff/{id}/lock
+    // UC-10: Khóa tài khoản nhân viên
+    public function lockStaff($staffId) {
+        AuthMiddleware::checkAdmin();
+
+        $staffId = (int)$staffId;
+        if ($staffId <= 0) {
+            Response::json(["message" => "ID nhân viên không hợp lệ"], 400);
+        }
+
+        $staff = $this->userModel->getStaffById($staffId);
+        if (!$staff) {
+            Response::json(["message" => "Nhân viên không tồn tại"], 404);
+        }
+
+        if ($staff['status'] === 'locked') {
+            Response::json(["message" => "Tài khoản đã ở trạng thái khóa"], 200);
+        }
+
+        if ($this->userModel->updateStatus($staffId, 'locked')) {
+            $this->logModel->createLog($_SESSION['user_id'], 'lock_staff', 'Khóa tài khoản nhân viên ID=' . $staffId);
+            Response::json(["message" => "Khóa tài khoản thành công"]);
+        }
+
+        Response::json(["message" => "Lỗi server khi khóa tài khoản"], 500);
+    }
+
+    // [PATCH] /api/staff/{id}/unlock
+    // UC-10: Mở khóa tài khoản nhân viên
+    public function unlockStaff($staffId) {
+        AuthMiddleware::checkAdmin();
+
+        $staffId = (int)$staffId;
+        if ($staffId <= 0) {
+            Response::json(["message" => "ID nhân viên không hợp lệ"], 400);
+        }
+
+        $staff = $this->userModel->getStaffById($staffId);
+        if (!$staff) {
+            Response::json(["message" => "Nhân viên không tồn tại"], 404);
+        }
+
+        if ($staff['status'] === 'active') {
+            Response::json(["message" => "Tài khoản đã ở trạng thái hoạt động"], 200);
+        }
+
+        if ($this->userModel->updateStatus($staffId, 'active')) {
+            $this->logModel->createLog($_SESSION['user_id'], 'unlock_staff', 'Mở khóa tài khoản nhân viên ID=' . $staffId);
+            Response::json(["message" => "Mở khóa tài khoản thành công"]);
+        }
+
+        Response::json(["message" => "Lỗi server khi mở khóa tài khoản"], 500);
+    }
 }
