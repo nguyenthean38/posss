@@ -1,5 +1,5 @@
 // Products Module - Real API Integration
-import API from './api.js';
+import API from './api.js?v=3';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -212,8 +212,8 @@ import { requireAuth } from './auth.js';
         return `
       <div class="ps-actions">
         <button class="ps-actBtn" data-act="view" title="View"><i class="bi bi-eye"></i></button>
-        <button class="ps-actBtn" data-act="edit" title="Edit"><i class="bi bi-pencil-square"></i></button>
-        <button class="ps-actBtn danger" data-act="del" title="Delete"><i class="bi bi-trash3"></i></button>
+        <button class="ps-actBtn admin-only" data-act="edit" title="Edit"><i class="bi bi-pencil-square"></i></button>
+        <button class="ps-actBtn danger admin-only" data-act="del" title="Delete"><i class="bi bi-trash3"></i></button>
       </div>
     `;
     }
@@ -237,7 +237,7 @@ import { requireAuth } from './auth.js';
           <td style="font-weight:900">${p.name}</td>
           <td style="color:var(--muted); font-weight:800">${p.barcode || ""}</td>
           <td><span class="ps-pill">${p.category || ""}</span></td>
-          <td class="text-end" style="color:var(--muted); font-weight:800">${fmtVND(p.cost)}</td>
+          <td class="text-end admin-only" style="color:var(--muted); font-weight:800">${fmtVND(p.cost)}</td>
           <td class="text-end" style="font-weight:900">${fmtVND(p.price)}</td>
           <td class="text-center"><span class="ps-stock ${stockClass(p.stock)}">${p.stock}</span></td>
           <td class="text-center">${rowActions(p)}</td>
@@ -309,15 +309,15 @@ import { requireAuth } from './auth.js';
             <div class="ps-view__value">${p.category || "-"}</div>
             <div class="ps-view__label" data-i18n="view.type">${t("view.type")}</div>
             <div class="ps-view__value">${p.type || "-"}</div>
-            <div class="ps-view__label" data-i18n="view.cost">${t("view.cost")}</div>
-            <div class="ps-view__value">${fmtVND(p.cost)}</div>
+            <div class="ps-view__label admin-only" data-i18n="view.cost">${t("view.cost")}</div>
+            <div class="ps-view__value admin-only">${fmtVND(p.cost)}</div>
             <div class="ps-view__label" data-i18n="view.price">${t("view.price")}</div>
             <div class="ps-view__value">${fmtVND(p.price)}</div>
             <div class="ps-view__label" data-i18n="view.stock">${t("view.stock")}</div>
             <div class="ps-view__value">${p.stock}</div>
           </div>
-          <div class="ps-view__divider"></div>
-          <div class="ps-view__profit">
+          <div class="ps-view__divider admin-only"></div>
+          <div class="ps-view__profit admin-only">
             <div class="ps-view__label" data-i18n="view.profit">${t("view.profit")}</div>
             <div class="v">${fmtVND(profit)}</div>
           </div>
@@ -327,7 +327,7 @@ import { requireAuth } from './auth.js';
             bootstrap.Modal.getOrCreateInstance(document.getElementById("viewModal")).show();
         } catch (err) {
             console.error('View error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"));
         }
     }
 
@@ -425,3 +425,4 @@ import { requireAuth } from './auth.js';
 
     init();
 })();
+

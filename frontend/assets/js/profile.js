@@ -1,5 +1,5 @@
 // Profile Module - Real API Integration
-import API from './api.js';
+import API from './api.js?v=3';
 import { requireAuth, getUser } from './auth.js';
 
 (() => {
@@ -304,3 +304,4 @@ import { requireAuth, getUser } from './auth.js';
 
     init();
 })();
+

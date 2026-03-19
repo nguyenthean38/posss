@@ -26,7 +26,7 @@ class ApiClient {
 
         try {
             const response = await fetch(url, config);
-            
+
             // Xử lý response
             let data;
             const contentType = response.headers.get('content-type');
@@ -40,13 +40,13 @@ class ApiClient {
             if (response.status === 401) {
                 // Clear user info
                 sessionStorage.removeItem('ps_user');
-                
+
                 // Redirect to login if not already there
-                if (!window.location.pathname.includes('login.html') && 
+                if (!window.location.pathname.includes('login.html') &&
                     !window.location.pathname.includes('first-login.html')) {
                     window.location.replace('login.html');
                 }
-                
+
                 throw new Error(data.message || 'Phiên đăng nhập đã hết hạn');
             }
 
@@ -123,10 +123,10 @@ class ApiClient {
     async changePassword(currentPassword, newPassword, confirmPassword) {
         return this.request('/api/auth/change-password', {
             method: 'PUT',
-            body: JSON.stringify({ 
-                current_password: currentPassword, 
-                new_password: newPassword, 
-                confirm_password: confirmPassword 
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
             })
         });
     }
@@ -352,3 +352,45 @@ class ApiClient {
 
 // Export singleton instance
 export const api = new ApiClient();
+// Add backward compatibility wrappers for nested API structures expected by existing modules
+api.categories = {
+    getAll: async (params) => { const r = await api.getCategories(params); return r.items || r; },
+    getById: (id) => api.getCategory(id),
+    create: (data) => api.createCategory(data),
+    update: (id, data) => api.updateCategory(id, data),
+    delete: (id) => api.deleteCategory(id)
+};
+api.customers = {
+    getAll: async (params) => { const r = await api.request('/api/customers' + (params && Object.keys(params).length ? '?' + new URLSearchParams(params).toString() : '')); return r.items || r; },
+    getById: (id) => api.getCustomer(id),
+    create: (data) => api.createCustomer(data),
+    update: (id, data) => api.request(`/api/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => api.request(`/api/customers/${id}`, { method: 'DELETE' }),
+    getHistory: (id, params) => api.getCustomerHistory(id, params)
+};
+api.products = {
+    getAll: async (params) => { const r = await api.getProducts(params); return r.items || r; },
+    getById: (id) => api.getProduct(id),
+    create: (data) => api.createProduct(data),
+    update: (id, data) => api.updateProduct(id, data),
+    delete: (id) => api.deleteProduct(id)
+};
+api.profile = {
+    get: () => api.getProfile(),
+    update: (data) => api.updateProfile(data),
+    changePassword: (data) => api.changePassword(data.current_password, data.new_password, data.confirm_password || data.new_password)
+};
+api.reports = {
+    getDashboard: () => api.getReportSummary(),
+    getSummary: (from, to) => {
+        let params = {};
+        if (from) params.from = from;
+        if (to) params.to = to;
+        return api.getReportSummary(params);
+    }
+};
+api.pos = {
+    getOrderById: (id) => api.getOrderDetail(id)
+};
+
+export default api;

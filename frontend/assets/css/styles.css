@@ -2850,3 +2850,8 @@ body[data-theme="light"] select.ps-input option {
     font-weight: 850;
     font-size: 12px;
 }
+
+/* ===== RBAC Admin Only Mask ===== */
+body:not([data-role="admin"]) .admin-only {
+    display: none !important;
+}

@@ -1,5 +1,4 @@
-// Dashboard Module - Real API Integration
-import API from './api.js';
+import api from './api.js?v=3';
 import { requireAuth, getUser } from './auth.js';
 
 (() => {
@@ -267,19 +266,19 @@ import { requireAuth, getUser } from './auth.js';
 
     async function loadDashboard() {
         try {
-            const data = await API.reports.getDashboard();
+            const data = await api.getReportSummary();
 
             // Update KPIs
-            document.querySelector('[data-i18n="kpi.revenue"]').closest('.ps-kpi').querySelector('.ps-kpi__value').innerHTML = 
+            document.querySelector('[data-i18n="kpi.revenue"]').closest('.ps-kpi').querySelector('.ps-kpi__value').innerHTML =
                 `${fmtVND(data.total_revenue)} <span class="ps-currency"></span>`;
-            
-            document.querySelector('[data-i18n="kpi.orders"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent = 
+
+            document.querySelector('[data-i18n="kpi.orders"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent =
                 data.total_orders || 0;
-            
-            document.querySelector('[data-i18n="kpi.products"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent = 
+
+            document.querySelector('[data-i18n="kpi.products"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent =
                 data.total_products || 0;
-            
-            document.querySelector('[data-i18n="kpi.customers"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent = 
+
+            document.querySelector('[data-i18n="kpi.customers"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent =
                 data.total_customers || 0;
 
             // Update trends
@@ -338,3 +337,4 @@ import { requireAuth, getUser } from './auth.js';
 
     init();
 })();
+

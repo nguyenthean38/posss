@@ -14,8 +14,8 @@ class CustomerController {
     public function store($data) {
         AuthMiddleware::checkAuth();
 
-        $fullName = isset($data['full_name']) ? trim($data['full_name']) : '';
-        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : '';
+        $fullName = isset($data['full_name']) ? trim($data['full_name']) : (isset($data['name']) ? trim($data['name']) : '');
+        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : (isset($data['phone']) ? trim($data['phone']) : '');
         $address = isset($data['address']) ? trim($data['address']) : null;
 
         if ($fullName === '' || $phone === '') {
@@ -43,6 +43,57 @@ class CustomerController {
         }
 
         Response::json(["message" => "Lỗi server khi tạo khách hàng"], 500);
+    }
+
+    // [GET] /api/customers
+    public function index() {
+        AuthMiddleware::checkAuth();
+        
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 20;
+        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        
+        $result = $this->customerModel->getList($page, $limit, $keyword);
+        Response::json($result);
+    }
+
+    // [PUT] /api/customers/{id}
+    public function update($id, $data) {
+        AuthMiddleware::checkAuth();
+        $id = (int)$id;
+        $fullName = isset($data['full_name']) ? trim($data['full_name']) : '';
+        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : '';
+        $address = isset($data['address']) ? trim($data['address']) : null;
+
+        if ($fullName === '' || $phone === '') {
+            Response::json(["message" => "Họ tên và SĐT không được để trống"], 400);
+        }
+
+        if ($this->customerModel->existsByPhone($phone, $id)) {
+            Response::json(["message" => "Số điện thoại đã tồn tại"], 400);
+        }
+
+        if ($this->customerModel->update($id, $fullName, $phone, $address)) {
+            $this->logModel->createLog($_SESSION['user_id'], 'update_customer', 'Cập nhật khách hàng ID=' . $id);
+            Response::json(["message" => "Cập nhật thành công"]);
+        }
+        Response::json(["message" => "Lỗi server"], 500);
+    }
+
+    // [DELETE] /api/customers/{id}
+    public function destroy($id) {
+        AuthMiddleware::checkAuth();
+        $id = (int)$id;
+        try {
+            if ($this->customerModel->delete($id)) {
+                $this->logModel->createLog($_SESSION['user_id'], 'delete_customer', 'Xóa khách hàng ID=' . $id);
+                Response::json(["message" => "Xóa thành công"]);
+            } else {
+                Response::json(["message" => "Không thể xóa"], 400);
+            }
+        } catch(Exception $e) {
+            Response::json(["message" => "Không thể xóa khách hàng đã có lịch sử đổi trả/mua hàng"], 400);
+        }
     }
 
     // [GET] /api/customers/{id}

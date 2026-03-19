@@ -4,7 +4,7 @@ class Mailer {
     public static function sendLoginLink($email, $token) {
         $subject = "Link đăng nhập hệ thống POS";
         // Trong thực tế, URL này sẽ trỏ tới Route của Frontend
-        $loginUrl = "http://localhost/frontend/login.html?token=" . $token . "&email=" . urlencode($email);
+        $loginUrl = "http://localhost:8080/frontend/first-login.html?token=" . $token . "&email=" . urlencode($email);
         
         $message = "Chào bạn,\r\n";
         $message .= "Tài khoản của bạn đã được tạo. Vui lòng sử dụng đường link dưới đây để đăng nhập lần đầu.\r\n";

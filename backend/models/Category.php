@@ -20,7 +20,7 @@ class Category {
             $params[':kw'] = '%' . $keyword . '%';
         }
 
-        $sql = "SELECT id, category_name, created_at 
+        $sql = "SELECT id, category_name 
                 FROM " . $this->table_name . " 
                 $where
                 ORDER BY id DESC
@@ -55,7 +55,7 @@ class Category {
     }
 
     public function findById($id) {
-        $sql = "SELECT id, category_name, created_at 
+        $sql = "SELECT id, category_name 
                 FROM " . $this->table_name . " 
                 WHERE id = :id LIMIT 1";
         $stmt = $this->conn->prepare($sql);
@@ -80,8 +80,8 @@ class Category {
     }
 
     public function create($name) {
-        $sql = "INSERT INTO " . $this->table_name . " (category_name, created_at) 
-                VALUES (:name, NOW())";
+        $sql = "INSERT INTO " . $this->table_name . " (category_name) 
+                VALUES (:name)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':name', $name);
         if ($stmt->execute()) {

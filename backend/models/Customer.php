@@ -8,6 +8,66 @@ class Customer {
         $this->conn = $db;
     }
 
+    // Lấy danh sách khách hàng
+    public function getList($page = 1, $limit = 20, $keyword = '') {
+        $offset = ($page - 1) * $limit;
+        $where = 'WHERE 1 = 1';
+        $params = [];
+
+        if ($keyword !== '') {
+            $where .= ' AND (full_name LIKE :kw OR phone_number LIKE :kw)';
+            $params[':kw'] = '%' . $keyword . '%';
+        }
+
+        $sql = "SELECT id, full_name, phone_number, address
+                FROM " . $this->table_name . "
+                $where
+                ORDER BY id DESC
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+        foreach ($params as $k => $v) { $stmt->bindValue($k, $v); }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " " . $where;
+        $countStmt = $this->conn->prepare($countSql);
+        foreach ($params as $k => $v) { $countStmt->bindValue($k, $v); }
+        $countStmt->execute();
+        $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        return [
+            'items' => $items,
+            'pagination' => [
+                'page' => (int)$page,
+                'limit' => (int)$limit,
+                'total' => $total,
+                'total_pages' => (int)ceil($total / $limit),
+            ],
+        ];
+    }
+
+    public function update($id, $fullName, $phoneNumber, $address) {
+        $sql = "UPDATE " . $this->table_name . "
+                SET full_name = :full_name, phone_number = :phone, address = :address
+                WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':full_name', $fullName);
+        $stmt->bindParam(':phone', $phoneNumber);
+        $stmt->bindParam(':address', $address);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function delete($id) {
+        $sql = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
     // Tìm khách hàng theo số điện thoại (UC-20)
     public function findByPhone($phoneNumber) {
         $sql = "SELECT id, full_name, phone_number, address

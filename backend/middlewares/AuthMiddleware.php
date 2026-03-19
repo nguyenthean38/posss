@@ -11,7 +11,9 @@ class AuthMiddleware {
         // UC-07 Chặn thao tác nếu chưa đổi mật khẩu lần đầu (ngoại trừ đổi mật khẩu)
         // Request_uri cho phép gọi logout hoặc init-password
         $allowedUris = ['/api/auth/init-password', '/api/auth/logout'];
-        $uri = explode('?', $_SERVER['REQUEST_URI'])[0];
+        
+        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $uri = str_replace(['/backend/index.php', '/backend'], '', $uri);
         
         if (isset($_SESSION['is_first_login']) && $_SESSION['is_first_login'] === true) {
             if (!in_array($uri, $allowedUris)) {

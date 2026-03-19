@@ -3,7 +3,7 @@
  * Backend dùng PHP Session, không dùng JWT
  * Cookie PHPSESSID được browser tự động quản lý
  */
-import { api } from './api.js';
+import { api } from './api.js?v=3';
 
 const STORAGE_KEY = "ps_user";
 
@@ -76,6 +76,31 @@ export async function requireAuth(redirectTo = "login.html") {
     throw new Error("Chưa đăng nhập");
   }
   
+  // Instant RBAC UI application
+  document.body.setAttribute('data-role', user.role);
+  if (user.role !== 'admin') {
+      document.querySelectorAll('a[href="categories.html"], a[href="employees.html"]').forEach(el => el.style.display = 'none');
+  }
+  
+  // Update Topbar Profile UI
+  function applyUserTopBar(u) {
+      if (!u) return;
+      const nameStr = u.full_name || u.name || "User";
+      let initials = "US";
+      const parts = nameStr.trim().split(" ");
+      if (parts.length > 1) {
+          initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      } else if (nameStr.length >= 2) {
+          initials = nameStr.substring(0, 2).toUpperCase();
+      }
+      const roleStr = u.role === 'admin' ? "Administrator" : "Nhân viên";
+      
+      document.querySelectorAll('.ps-user__name').forEach(el => el.textContent = nameStr);
+      document.querySelectorAll('.ps-user__role').forEach(el => el.textContent = roleStr);
+      document.querySelectorAll('.ps-user__avatar').forEach(el => el.textContent = initials);
+  }
+  applyUserTopBar(user);
+  
   // Real check: Verify với server qua API
   try {
     const response = await api.getMe();
@@ -88,6 +113,11 @@ export async function requireAuth(redirectTo = "login.html") {
         role: response.profile.role,
         is_first_login: response.profile.is_first_login
       });
+      document.body.setAttribute('data-role', response.profile.role);
+      if (response.profile.role !== 'admin') {
+          document.querySelectorAll('a[href="categories.html"], a[href="employees.html"]').forEach(el => el.style.display = 'none');
+      }
+      applyUserTopBar(response.profile);
     }
     return user;
   } catch (error) {
@@ -108,9 +138,11 @@ export async function bootstrap() {
 export function getCurrentUser() {
   return _loadUser();
 }
+export const getUser = getCurrentUser;
 
 // Check if user is admin
 export function isAdmin() {
   const user = _loadUser();
   return user && user.role === 'admin';
 }
+

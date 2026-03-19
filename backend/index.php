@@ -67,13 +67,18 @@ require_once __DIR__ . '/controllers/ReportController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
 
 // Khởi tạo DB connection
-$database = new Database();
-$db = $database->getConnection();
+// Khởi tạo DB connection
+$db = Database::getConnection();
 
 // Lấy Body Payload (JSON Parse)
 $data = json_decode(file_get_contents("php://input"), true);
 // Parse đường dẫn Path parameters /api/staff/{id}/resend
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Loại bỏ các tiền tố thư mục khỏi URI để match đúng với các routes (vd: /api/auth/login)
+$uri = str_replace('/backend/index.php', '', $uri);
+$uri = preg_replace('/^\/backend/', '', $uri);
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Init Controller Instances
@@ -196,9 +201,21 @@ elseif ($uri === '/api/customers/search-by-phone' && $method === 'GET') {
 elseif (preg_match('/^\/api\/customers\/(\d+)$/', $uri, $matches) && $method === 'GET') {
     $customerCtrl->show((int)$matches[1]);
 }
+// Cập nhật khách hàng
+elseif (preg_match('/^\/api\/customers\/(\d+)$/', $uri, $matches) && $method === 'PUT') {
+    $customerCtrl->update((int)$matches[1], $data);
+}
+// Xóa khách hàng
+elseif (preg_match('/^\/api\/customers\/(\d+)$/', $uri, $matches) && $method === 'DELETE') {
+    $customerCtrl->destroy((int)$matches[1]);
+}
 // UC-21 - Tạo khách hàng mới (khi thanh toán lần đầu)
 elseif ($uri === '/api/customers' && $method === 'POST') {
     $customerCtrl->store($data);
+}
+// Lấy danh sách khách hàng
+elseif ($uri === '/api/customers' && $method === 'GET') {
+    $customerCtrl->index();
 }
 
 // Profile

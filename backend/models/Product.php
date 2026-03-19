@@ -25,7 +25,7 @@ class Product {
             $params[':category_id'] = (int)$categoryId;
         }
 
-        $sql = "SELECT id, category_id, product_name, barcode, import_price, selling_price, stock_quantity, created_at
+        $sql = "SELECT id, category_id, product_name, barcode, import_price, selling_price, stock_quantity
                 FROM " . $this->table_name . "
                 $where
                 ORDER BY id DESC
@@ -60,7 +60,7 @@ class Product {
     }
 
     public function findById($id) {
-        $sql = "SELECT id, category_id, product_name, barcode, import_price, selling_price, stock_quantity, created_at
+        $sql = "SELECT id, category_id, product_name, barcode, import_price, selling_price, stock_quantity
                 FROM " . $this->table_name . "
                 WHERE id = :id LIMIT 1";
         $stmt = $this->conn->prepare($sql);
@@ -86,8 +86,8 @@ class Product {
 
     public function create($categoryId, $name, $barcode, $importPrice, $sellingPrice, $stockQuantity) {
         $sql = "INSERT INTO " . $this->table_name . "
-                (category_id, product_name, barcode, import_price, selling_price, stock_quantity, created_at)
-                VALUES (:category_id, :product_name, :barcode, :import_price, :selling_price, :stock_quantity, NOW())";
+                (category_id, product_name, barcode, import_price, selling_price, stock_quantity)
+                VALUES (:category_id, :product_name, :barcode, :import_price, :selling_price, :stock_quantity)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':category_id', $categoryId, PDO::PARAM_INT);
         $stmt->bindParam(':product_name', $name);

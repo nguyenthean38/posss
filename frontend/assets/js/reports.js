@@ -1,5 +1,5 @@
 // Reports Module - Real API Integration
-import API from './api.js';
+import API from './api.js?v=3';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -438,3 +438,4 @@ import { requireAuth } from './auth.js';
 
     init();
 })();
+

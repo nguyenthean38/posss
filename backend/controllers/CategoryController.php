@@ -57,7 +57,7 @@ class CategoryController {
     public function store($data) {
         AuthMiddleware::checkAdmin();
 
-        $name = isset($data['category_name']) ? trim($data['category_name']) : '';
+        $name = isset($data['category_name']) ? trim($data['category_name']) : (isset($data['name']) ? trim($data['name']) : '');
         if ($name === '') {
             Response::json(["message" => "Tên danh mục không được để trống"], 400);
         }
@@ -88,7 +88,7 @@ class CategoryController {
             Response::json(["message" => "ID danh mục không hợp lệ"], 400);
         }
 
-        $name = isset($data['category_name']) ? trim($data['category_name']) : '';
+        $name = isset($data['category_name']) ? trim($data['category_name']) : (isset($data['name']) ? trim($data['name']) : '');
         if ($name === '') {
             Response::json(["message" => "Tên danh mục không được để trống"], 400);
         }

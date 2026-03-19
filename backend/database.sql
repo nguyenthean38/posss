@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS pos_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE pos_system;
+CREATE DATABASE IF NOT EXISTS phonestore_pos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE phonestore_pos;
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,6 +35,10 @@ CREATE TABLE logs (
 -- The password_hash here is generated using password_hash('admin', PASSWORD_DEFAULT)
 INSERT INTO users (full_name, email, password_hash, role, is_first_login, status) 
 VALUES ('Administrator', 'admin@gmail.com', '$2y$10$wE/.71W/W9/1A5R0tH79.OX/K2b4U6C4.0lW1d15Q3wZ//c1rM2I6', 'admin', FALSE, 'active');
+
+-- Insert default staff account (staff@gmail.com/admin)
+INSERT INTO users (full_name, email, password_hash, role, is_first_login, status) 
+VALUES ('Staff Member', 'staff@gmail.com', '$2y$10$wE/.71W/W9/1A5R0tH79.OX/K2b4U6C4.0lW1d15Q3wZ//c1rM2I6', 'staff', FALSE, 'active');
 
 -- BẢNG QUẢN LÝ SẢN PHẨM & DANH MỤC
 CREATE TABLE categories (

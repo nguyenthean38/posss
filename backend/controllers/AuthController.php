@@ -39,7 +39,7 @@ class AuthController {
                 Response::json(["message" => "Vui lòng đăng nhập bằng link trong email!"], 403);
             }
 
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) { session_start(); }
             $_SESSION['user_id'] = $this->userModel->id;
             $_SESSION['role'] = $this->userModel->role;
             $_SESSION['is_first_login'] = (bool)$this->userModel->is_first_login;
@@ -95,7 +95,7 @@ class AuthController {
         if (password_verify($tmpPassword, $this->userModel->password_hash)) {
             $this->tokenModel->markAsUsed($tokenId);
             
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) { session_start(); }
             $_SESSION['user_id'] = $this->userModel->id;
             $_SESSION['role'] = $this->userModel->role;
             $_SESSION['is_first_login'] = true; // Bắt buộc chuyển UC-04

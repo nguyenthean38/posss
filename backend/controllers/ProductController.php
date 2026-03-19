@@ -58,12 +58,12 @@ class ProductController {
     public function store($data) {
         AuthMiddleware::checkAdmin();
 
-        $categoryId = isset($data['category_id']) ? (int)$data['category_id'] : 0;
-        $name = isset($data['product_name']) ? trim($data['product_name']) : '';
+        $categoryId = isset($data['category_id']) ? (int)$data['category_id'] : (isset($data['category']) ? (int)$data['category'] : 0);
+        $name = isset($data['product_name']) ? trim($data['product_name']) : (isset($data['name']) ? trim($data['name']) : '');
         $barcode = isset($data['barcode']) ? trim($data['barcode']) : '';
-        $importPrice = isset($data['import_price']) ? (float)$data['import_price'] : 0;
-        $sellingPrice = isset($data['selling_price']) ? (float)$data['selling_price'] : 0;
-        $stockQuantity = isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : 0;
+        $importPrice = isset($data['import_price']) ? (float)$data['import_price'] : (isset($data['cost']) ? (float)$data['cost'] : 0);
+        $sellingPrice = isset($data['selling_price']) ? (float)$data['selling_price'] : (isset($data['price']) ? (float)$data['price'] : 0);
+        $stockQuantity = isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : (isset($data['stock']) ? (int)$data['stock'] : 0);
 
         if ($categoryId <= 0 || $name === '' || $barcode === '' || $importPrice < 0 || $sellingPrice < 0) {
             Response::json(["message" => "Dữ liệu sản phẩm không hợp lệ"], 400);
@@ -107,12 +107,12 @@ class ProductController {
             Response::json(["message" => "Sản phẩm không tồn tại"], 404);
         }
 
-        $categoryId = isset($data['category_id']) ? (int)$data['category_id'] : $product['category_id'];
-        $name = isset($data['product_name']) ? trim($data['product_name']) : $product['product_name'];
+        $categoryId = isset($data['category_id']) ? (int)$data['category_id'] : (isset($data['category']) ? (int)$data['category'] : $product['category_id']);
+        $name = isset($data['product_name']) ? trim($data['product_name']) : (isset($data['name']) ? trim($data['name']) : $product['product_name']);
         $barcode = isset($data['barcode']) ? trim($data['barcode']) : $product['barcode'];
-        $importPrice = isset($data['import_price']) ? (float)$data['import_price'] : (float)$product['import_price'];
-        $sellingPrice = isset($data['selling_price']) ? (float)$data['selling_price'] : (float)$product['selling_price'];
-        $stockQuantity = isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : (int)$product['stock_quantity'];
+        $importPrice = isset($data['import_price']) ? (float)$data['import_price'] : (isset($data['cost']) ? (float)$data['cost'] : (float)$product['import_price']);
+        $sellingPrice = isset($data['selling_price']) ? (float)$data['selling_price'] : (isset($data['price']) ? (float)$data['price'] : (float)$product['selling_price']);
+        $stockQuantity = isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : (isset($data['stock']) ? (int)$data['stock'] : (int)$product['stock_quantity']);
 
         if ($categoryId <= 0 || $name === '' || $barcode === '' || $importPrice < 0 || $sellingPrice < 0) {
             Response::json(["message" => "Dữ liệu sản phẩm không hợp lệ"], 400);
