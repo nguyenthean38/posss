@@ -225,24 +225,31 @@ import { requireAuth } from './auth.js';
             const countEl = document.getElementById("prodCount");
 
             const data = await API.products.getAll();
-            const list = data.filter(p =>
-                !q || p.name.toLowerCase().includes(q) || (p.barcode || "").toLowerCase().includes(q)
-            );
+            const list = data.filter(p => {
+                const n = p.product_name || p.name || "";
+                return !q || n.toLowerCase().includes(q) || (p.barcode || "").toLowerCase().includes(q);
+            });
 
             if (countEl) countEl.textContent = `(${list.length})`;
             if (!tbody) return;
 
-            tbody.innerHTML = list.map(p => `
+            tbody.innerHTML = list.map(p => {
+                const n = p.product_name || p.name;
+                const cat = p.category_name || p.category || "";
+                const cost = p.import_price ?? p.cost ?? 0;
+                const price = p.selling_price ?? p.price ?? 0;
+                const stock = p.stock_quantity ?? p.stock ?? 0;
+                return `
         <tr data-id="${p.id}">
-          <td style="font-weight:900">${p.name}</td>
+          <td style="font-weight:900">${n}</td>
           <td style="color:var(--muted); font-weight:800">${p.barcode || ""}</td>
-          <td><span class="ps-pill">${p.category || ""}</span></td>
-          <td class="text-end admin-only" style="color:var(--muted); font-weight:800">${fmtVND(p.cost)}</td>
-          <td class="text-end" style="font-weight:900">${fmtVND(p.price)}</td>
-          <td class="text-center"><span class="ps-stock ${stockClass(p.stock)}">${p.stock}</span></td>
+          <td><span class="ps-pill">${cat}</span></td>
+          <td class="text-end admin-only" style="color:var(--muted); font-weight:800">${fmtVND(cost)}</td>
+          <td class="text-end" style="font-weight:900">${fmtVND(price)}</td>
+          <td class="text-center"><span class="ps-stock ${stockClass(stock)}">${stock}</span></td>
           <td class="text-center">${rowActions(p)}</td>
         </tr>
-      `).join("");
+      `}).join("");
 
             tbody.querySelectorAll("tr").forEach(tr => {
                 const id = tr.dataset.id;
@@ -275,13 +282,13 @@ import { requireAuth } from './auth.js';
 
             document.getElementById("modalTitle").textContent = t("prod.modalEdit");
             document.getElementById("prodId").value = p.id;
-            document.getElementById("fName").value = p.name || "";
+            document.getElementById("fName").value = p.product_name || p.name || "";
             document.getElementById("fBarcode").value = p.barcode || "";
             document.getElementById("fType").value = p.type || "phone";
-            document.getElementById("fCost").value = p.cost ?? "";
-            document.getElementById("fPrice").value = p.price ?? "";
-            document.getElementById("fCategory").value = p.category || "";
-            document.getElementById("fStock").value = p.stock ?? "";
+            document.getElementById("fCost").value = p.import_price ?? p.cost ?? "";
+            document.getElementById("fPrice").value = p.selling_price ?? p.price ?? "";
+            document.getElementById("fCategory").value = p.category_id || p.category || "";
+            document.getElementById("fStock").value = p.stock_quantity ?? p.stock ?? "";
 
             bootstrap.Modal.getOrCreateInstance(document.getElementById("productModal")).show();
         } catch (err) {
@@ -295,26 +302,32 @@ import { requireAuth } from './auth.js';
             const p = await API.products.getById(id);
             if (!p) return;
 
-            const profit = (Number(p.price || 0) - Number(p.cost || 0));
+            const cost = p.import_price ?? p.cost ?? 0;
+            const price = p.selling_price ?? p.price ?? 0;
+            const stock = p.stock_quantity ?? p.stock ?? 0;
+            const name = p.product_name || p.name;
+            const cat = p.category_name || p.category || "-";
+
+            const profit = (Number(price) - Number(cost));
             const viewBody = document.getElementById("viewBody");
             viewBody.innerHTML = `
         <div class="ps-view__hero">
           <div class="ps-view__icon"><i class="bi ${iconByType(p)}"></i></div>
-          <div class="ps-view__name">${p.name}</div>
+          <div class="ps-view__name">${name}</div>
           <div class="ps-view__barcode">${p.barcode || "-"}</div>
         </div>
         <div class="ps-view__card">
           <div class="ps-view__grid">
             <div class="ps-view__label" data-i18n="view.category">${t("view.category")}</div>
-            <div class="ps-view__value">${p.category || "-"}</div>
+            <div class="ps-view__value">${cat}</div>
             <div class="ps-view__label" data-i18n="view.type">${t("view.type")}</div>
             <div class="ps-view__value">${p.type || "-"}</div>
             <div class="ps-view__label admin-only" data-i18n="view.cost">${t("view.cost")}</div>
-            <div class="ps-view__value admin-only">${fmtVND(p.cost)}</div>
+            <div class="ps-view__value admin-only">${fmtVND(cost)}</div>
             <div class="ps-view__label" data-i18n="view.price">${t("view.price")}</div>
-            <div class="ps-view__value">${fmtVND(p.price)}</div>
+            <div class="ps-view__value">${fmtVND(price)}</div>
             <div class="ps-view__label" data-i18n="view.stock">${t("view.stock")}</div>
-            <div class="ps-view__value">${p.stock}</div>
+            <div class="ps-view__value">${stock}</div>
           </div>
           <div class="ps-view__divider admin-only"></div>
           <div class="ps-view__profit admin-only">
@@ -338,20 +351,20 @@ import { requireAuth } from './auth.js';
     async function save() {
         try {
             const id = document.getElementById("prodId").value.trim();
-            const name = document.getElementById("fName").value.trim();
+            const product_name = document.getElementById("fName").value.trim();
             const barcode = document.getElementById("fBarcode").value.trim();
             const type = document.getElementById("fType").value;
-            const category = document.getElementById("fCategory").value.trim();
-            const cost = parseNumber(document.getElementById("fCost").value);
-            const price = parseNumber(document.getElementById("fPrice").value);
-            const stock = parseNumber(document.getElementById("fStock").value);
+            const category_id = Number(document.getElementById("fCategory").value);
+            const import_price = parseNumber(document.getElementById("fCost").value);
+            const selling_price = parseNumber(document.getElementById("fPrice").value);
+            const stock_quantity = parseNumber(document.getElementById("fStock").value);
 
-            if (!name || !barcode || !category || cost <= 0 || price <= 0) {
+            if (!product_name || !barcode || !category_id || import_price <= 0 || selling_price <= 0) {
                 toast(t("toast.invalid"));
                 return;
             }
 
-            const data = { name, barcode, type, category, cost, price, stock };
+            const data = { product_name, barcode, type, category_id, import_price, selling_price, stock_quantity };
 
             if (id) {
                 await API.products.update(id, data);
@@ -408,12 +421,25 @@ import { requireAuth } from './auth.js';
         return "bi-box-seam";
     }
 
+    async function loadCategories() {
+        try {
+            const data = await API.categories.getAll();
+            const fCat = document.getElementById("fCategory");
+            if (!fCat) return;
+            fCat.innerHTML = `<option value="" disabled selected>Chọn danh mục</option>` +
+                data.map(c => `<option value="${c.id}">${c.category_name}</option>`).join("");
+        } catch(err) {
+            console.error('Load categories error', err);
+        }
+    }
+
     function init() {
         const savedTheme = localStorage.getItem(KEY_THEME) || "dark";
         const savedLang = localStorage.getItem(KEY_LANG) || "vi";
         applyLang(savedLang);
         setTheme(savedTheme);
 
+        loadCategories();
         initLayout();
 
         document.getElementById("searchInput")?.addEventListener("input", render);

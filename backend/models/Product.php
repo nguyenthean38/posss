@@ -16,19 +16,20 @@ class Product {
         $params = [];
 
         if ($keyword !== '') {
-            $where .= ' AND (product_name LIKE :kw OR barcode LIKE :kw)';
+            $where .= ' AND (p.product_name LIKE :kw OR p.barcode LIKE :kw)';
             $params[':kw'] = '%' . $keyword . '%';
         }
 
         if ($categoryId !== null && $categoryId !== '') {
-            $where .= ' AND category_id = :category_id';
+            $where .= ' AND p.category_id = :category_id';
             $params[':category_id'] = (int)$categoryId;
         }
 
-        $sql = "SELECT id, category_id, product_name, barcode, import_price, selling_price, stock_quantity
-                FROM " . $this->table_name . "
+        $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode, p.import_price, p.selling_price, p.stock_quantity
+                FROM " . $this->table_name . " p
+                LEFT JOIN categories c ON p.category_id = c.id
                 $where
-                ORDER BY id DESC
+                ORDER BY p.id DESC
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($sql);
@@ -40,7 +41,7 @@ class Product {
         $stmt->execute();
         $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " " . $where;
+        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " p " . $where;
         $countStmt = $this->conn->prepare($countSql);
         foreach ($params as $k => $v) {
             $countStmt->bindValue($k, $v);
@@ -60,9 +61,10 @@ class Product {
     }
 
     public function findById($id) {
-        $sql = "SELECT id, category_id, product_name, barcode, import_price, selling_price, stock_quantity
-                FROM " . $this->table_name . "
-                WHERE id = :id LIMIT 1";
+        $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode, p.import_price, p.selling_price, p.stock_quantity
+                FROM " . $this->table_name . " p
+                LEFT JOIN categories c ON p.category_id = c.id
+                WHERE p.id = :id LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
