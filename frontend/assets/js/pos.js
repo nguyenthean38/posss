@@ -1,7 +1,7 @@
 /**
  * POS Module - Real API Integration
  */
-import { api } from './api.js?v=3';
+import { api } from './api.js?v=5';
 import { requireAuth, getCurrentUser } from './auth.js';
 
 (() => {

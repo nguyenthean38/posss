@@ -16,14 +16,19 @@ class Category {
         $params = [];
 
         if ($keyword !== '') {
-            $where .= ' AND category_name LIKE :kw';
+            $where .= ' AND c.category_name LIKE :kw';
             $params[':kw'] = '%' . $keyword . '%';
         }
 
-        $sql = "SELECT id, category_name 
-                FROM " . $this->table_name . " 
+        $sql = "SELECT c.id, c.category_name AS name, c.description, c.icon,
+                       c.created_at, u.full_name AS created_by_name,
+                       COUNT(p.id) AS product_count
+                FROM " . $this->table_name . " c
+                LEFT JOIN products p ON p.category_id = c.id
+                LEFT JOIN users u ON c.created_by = u.id
                 $where
-                ORDER BY id DESC
+                GROUP BY c.id, c.category_name, c.description, c.icon, c.created_at, u.full_name
+                ORDER BY c.id DESC
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($sql);
@@ -35,7 +40,7 @@ class Category {
         $stmt->execute();
         $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " " . $where;
+        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " c " . $where;
         $countStmt = $this->conn->prepare($countSql);
         foreach ($params as $k => $v) {
             $countStmt->bindValue($k, $v);
@@ -46,18 +51,24 @@ class Category {
         return [
             'items' => $items,
             'pagination' => [
-                'page' => (int)$page,
-                'limit' => (int)$limit,
-                'total' => $total,
+                'page'        => (int)$page,
+                'limit'       => (int)$limit,
+                'total'       => $total,
                 'total_pages' => (int)ceil($total / $limit),
             ],
         ];
     }
 
     public function findById($id) {
-        $sql = "SELECT id, category_name 
-                FROM " . $this->table_name . " 
-                WHERE id = :id LIMIT 1";
+        $sql = "SELECT c.id, c.category_name AS name, c.description, c.icon,
+                       c.created_at, u.full_name AS created_by_name,
+                       COUNT(p.id) AS product_count
+                FROM " . $this->table_name . " c
+                LEFT JOIN products p ON p.category_id = c.id
+                LEFT JOIN users u ON c.created_by = u.id
+                WHERE c.id = :id
+                GROUP BY c.id, c.category_name, c.description, c.icon, c.created_at, u.full_name
+                LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -79,22 +90,39 @@ class Category {
         return $stmt->rowCount() > 0;
     }
 
-    public function create($name) {
-        $sql = "INSERT INTO " . $this->table_name . " (category_name) 
-                VALUES (:name)";
+    public function create($name, $description = null, $icon = 'other', $createdBy = null) {
+        $sql = "INSERT INTO " . $this->table_name . " (category_name, description, icon, created_by)
+                VALUES (:name, :description, :icon, :created_by)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':icon', $icon);
+        $stmt->bindParam(':created_by', $createdBy, PDO::PARAM_INT);
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
         return false;
     }
 
-    public function update($id, $name) {
-        $sql = "UPDATE " . $this->table_name . " SET category_name = :name WHERE id = :id";
+    public function update($id, $name, $description = null, $icon = null) {
+        $fields = ['category_name = :name'];
+        $params = [':name' => $name, ':id' => $id];
+
+        if ($description !== null) {
+            $fields[] = 'description = :description';
+            $params[':description'] = $description;
+        }
+
+        if ($icon !== null) {
+            $fields[] = 'icon = :icon';
+            $params[':icon'] = $icon;
+        }
+
+        $sql = "UPDATE " . $this->table_name . " SET " . implode(', ', $fields) . " WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
         return $stmt->execute();
     }
 
@@ -114,4 +142,3 @@ class Category {
         return $stmt->execute();
     }
 }
-

@@ -1,5 +1,5 @@
 // Reports Module - Real API Integration
-import API from './api.js?v=3';
+import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -321,39 +321,57 @@ import { requireAuth } from './auth.js';
     async function refreshAll() {
         try {
             const from = ymd(rangeFrom);
-            const to = ymd(rangeTo);
-            const data = await API.reports.getSummary(from, to);
+            const to   = ymd(rangeTo);
 
-            document.getElementById("kpiRevenue").textContent = fmtVND(data.revenue);
-            document.getElementById("kpiProfit").textContent = fmtVND(data.profit);
-            document.getElementById("kpiOrders").textContent = String(data.orders);
-            document.getElementById("kpiItems").textContent = String(data.items_sold);
+            // [1] Summary KPIs - backend: TotalRevenue, OrderCount, TotalProductsSold, CustomerCount
+            const summary = await API.reports.getSummary(from, to);
+            document.getElementById("kpiRevenue").textContent = fmtVND(summary.TotalRevenue);
+            document.getElementById("kpiOrders").textContent  = String(summary.OrderCount || 0);
+            document.getElementById("kpiItems").textContent   = String(summary.TotalProductsSold || 0);
 
+            // [2] Profit - admin only, from /api/reports/profit
+            try {
+                const profit = await API.request(`/api/reports/profit?fromDate=${from}&toDate=${to}`);
+                document.getElementById("kpiProfit").textContent = fmtVND(profit.NetProfit);
+            } catch (_) {
+                document.getElementById("kpiProfit").textContent = "—";
+            }
+
+            // [3] Orders list - backend: items[{OrderId, Date, CustomerName, TotalAmount}]
+            const ordersResp = await API.request(`/api/reports/orders?fromDate=${from}&toDate=${to}&page=1&pageSize=20`);
+            const orders = ordersResp.items || [];
             const tb = document.getElementById("orderTbody");
-            tb.innerHTML = (data.recent_orders || []).slice(0, 20).map(o => `
-          <tr>
-            <td><a class="ps-link" href="javascript:void(0)">${o.id}</a></td>
-            <td>${dateYMD(o.created_at)}</td>
-            <td>${o.customer_name || "-"}</td>
-            <td>${o.employee_name || "-"}</td>
-            <td class="text-end" style="font-weight:900">${fmtVND(o.total)}</td>
-            <td class="text-center">
-              <button class="ps-actBtn" data-id="${o.id}" title="view"><i class="bi bi-eye"></i></button>
-            </td>
-          </tr>
-        `).join("");
+            tb.innerHTML = orders.length
+                ? orders.map(o => `
+                    <tr>
+                        <td><a class="ps-link" href="javascript:void(0)">#${o.OrderId}</a></td>
+                        <td>${o.Date || "-"}</td>
+                        <td>${o.CustomerName || "Khách lẻ"}</td>
+                        <td>-</td>
+                        <td class="text-end" style="font-weight:900">${fmtVND(o.TotalAmount)}</td>
+                        <td class="text-center">
+                            <button class="ps-actBtn" data-id="${o.OrderId}" title="view"><i class="bi bi-eye"></i></button>
+                        </td>
+                    </tr>`).join("")
+                : `<tr><td colspan="6" class="text-center" style="opacity:.5">Không có đơn hàng trong khoảng thời gian này</td></tr>`;
 
             tb.querySelectorAll(".ps-actBtn").forEach(btn => {
                 btn.addEventListener("click", () => openOrder(btn.dataset.id));
             });
 
-            const model = {
-                daily: (data.daily_revenue || []).map(d => ({ label: labelDay(d.date), value: d.revenue })),
-                catLabels: (data.category_breakdown || []).map(c => c.name),
-                catValues: (data.category_breakdown || []).map(c => c.revenue),
-            };
-
-            buildCharts(model);
+            // [4] Charts - /api/reports/chart?type=revenue&period=day
+            try {
+                const chartData = await API.request(`/api/reports/chart?type=revenue&period=day&fromDate=${from}&toDate=${to}`);
+                const model = {
+                    daily:     (chartData || []).map(d => ({ label: labelDay(d.label), value: parseFloat(d.value) || 0 })),
+                    catLabels: [],
+                    catValues: [],
+                };
+                destroyCharts();
+                buildCharts(model);
+            } catch (_) {
+                buildCharts({ daily: [], catLabels: [], catValues: [] });
+            }
         } catch (err) {
             console.error('Refresh error:', err);
         }
@@ -361,34 +379,32 @@ import { requireAuth } from './auth.js';
 
     async function openOrder(orderId) {
         try {
+            // GET /api/customers/orders/{orderId} -> { products, customer_pay, change, total_amount }
             const o = await API.pos.getOrderById(orderId);
             if (!o) return;
 
             const title = document.getElementById("orderModalTitle");
-            title.textContent = `${t("modal.orderDetail")} - ${o.id}`;
+            title.textContent = `${t("modal.orderDetail")} #${orderId}`;
 
             const body = document.getElementById("orderModalBody");
             body.innerHTML = `
-          <div class="ps-orderMeta">
-            <div class="ps-orderGrid">
-              <div class="k">${t("table.date")}</div><div class="v">${dateYMD(o.created_at)}</div>
-              <div class="k">${t("table.customer")}</div><div class="v">${o.customer_name || "-"}</div>
-              <div class="k">${t("table.employee")}</div><div class="v">${o.employee_name || "-"}</div>
-            </div>
-          </div>
           <div class="ps-orderItems">
             <div class="ttl">${t("modal.products")}</div>
-            ${(o.items || []).map(it => `
+            ${(o.products || []).map(it => `
                 <div class="ps-orderItem">
                   <i class="bi bi-box-seam"></i>
-                  <div class="name">${it.product_name || it.product_id}</div>
-                  <div class="qty">x${it.quantity || 0}</div>
-                </div>
-              `).join("")}
+                  <div class="name">${it.product_name || "-"}</div>
+                  <div class="qty">x${it.quantity || 0} &times; ${fmtVND(it.unit_price)}</div>
+                </div>`).join("")}
           </div>
-        `;
+          <div class="ps-orderMeta mt-2">
+            <div class="ps-orderGrid">
+              <div class="k">Khách đưa</div><div class="v">${fmtVND(o.customer_pay)}</div>
+              <div class="k">Tiền thối</div><div class="v">${fmtVND(o.change)}</div>
+            </div>
+          </div>`;
 
-            document.getElementById("orderModalTotal").textContent = fmtVND(o.total);
+            document.getElementById("orderModalTotal").textContent = fmtVND(o.total_amount);
             bootstrap.Modal.getOrCreateInstance(document.getElementById("orderModal")).show();
         } catch (err) {
             console.error('Order error:', err);

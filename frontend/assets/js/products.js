@@ -1,5 +1,5 @@
 // Products Module - Real API Integration
-import API from './api.js?v=3';
+import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -69,6 +69,7 @@ import { requireAuth } from './auth.js';
             "common.delete": "Xóa",
             "confirm.deleteText": "Bạn có chắc muốn xóa sản phẩm này?",
             "view.profit": "Lợi nhuận",
+            "view.createdAt": "Ngày tạo",
             "toast.error": "Có lỗi xảy ra",
         },
         en: {
@@ -127,6 +128,7 @@ import { requireAuth } from './auth.js';
             "view.cost": "Cost",
             "view.price": "Price",
             "view.stock": "Stock",
+            "view.createdAt": "Created At",
             "toast.error": "An error occurred",
         }
     };
@@ -309,6 +311,7 @@ import { requireAuth } from './auth.js';
             const cat = p.category_name || p.category || "-";
 
             const profit = (Number(price) - Number(cost));
+            const createdAt = p.created_at ? p.created_at.substring(0, 10) : "-";
             const viewBody = document.getElementById("viewBody");
             viewBody.innerHTML = `
         <div class="ps-view__hero">
@@ -328,6 +331,8 @@ import { requireAuth } from './auth.js';
             <div class="ps-view__value">${fmtVND(price)}</div>
             <div class="ps-view__label" data-i18n="view.stock">${t("view.stock")}</div>
             <div class="ps-view__value">${stock}</div>
+            <div class="ps-view__label" data-i18n="view.createdAt">${t("view.createdAt")}</div>
+            <div class="ps-view__value">${createdAt}</div>
           </div>
           <div class="ps-view__divider admin-only"></div>
           <div class="ps-view__profit admin-only">

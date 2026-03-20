@@ -4,8 +4,11 @@ FROM php:8.2-apache
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
-# Enable Apache modules
-RUN a2enmod rewrite headers
+# Enable Apache modules (env: PassEnv DB_* tới PHP)
+RUN a2enmod rewrite headers env
+
+# Copy custom Apache VirtualHost config
+COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 
 # Install additional tools
 RUN apt-get update && apt-get install -y \

@@ -89,7 +89,7 @@ class AuthController {
 
         $tokenId = $this->tokenModel->findValidToken($token, $this->userModel->id);
         if (!$tokenId) {
-            Response::json(["message" => "Token không hợp lệ hoặc đã hết hạn!"], 400);
+            Response::json(["message" => "Link kích hoạt đã hết hạn hoặc đã được dùng rồi. Vui lòng liên hệ Admin để gửi lại email mới!"], 400);
         }
 
         if (password_verify($tmpPassword, $this->userModel->password_hash)) {

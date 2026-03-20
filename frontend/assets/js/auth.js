@@ -3,7 +3,7 @@
  * Backend dùng PHP Session, không dùng JWT
  * Cookie PHPSESSID được browser tự động quản lý
  */
-import { api } from './api.js?v=3';
+import { api } from './api.js?v=5';
 
 const STORAGE_KEY = "ps_user";
 

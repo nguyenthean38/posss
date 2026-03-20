@@ -61,8 +61,8 @@ class CustomerController {
     public function update($id, $data) {
         AuthMiddleware::checkAuth();
         $id = (int)$id;
-        $fullName = isset($data['full_name']) ? trim($data['full_name']) : '';
-        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : '';
+        $fullName = isset($data['full_name']) ? trim($data['full_name']) : (isset($data['name']) ? trim($data['name']) : '');
+        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : (isset($data['phone']) ? trim($data['phone']) : '');
         $address = isset($data['address']) ? trim($data['address']) : null;
 
         if ($fullName === '' || $phone === '') {

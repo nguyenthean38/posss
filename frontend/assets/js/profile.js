@@ -1,5 +1,5 @@
 // Profile Module - Real API Integration
-import API from './api.js?v=3';
+import API from './api.js?v=5';
 import { requireAuth, getUser } from './auth.js';
 
 (() => {
@@ -163,20 +163,22 @@ import { requireAuth, getUser } from './auth.js';
             if (!user) return;
 
             const p = await API.profile.get();
-            const init = initials(p.name);
+            const name = p.full_name || p.name || "";
+            const init = initials(name);
 
             document.getElementById("heroAvatar").textContent = init;
-            document.getElementById("heroName").textContent = p.name || "—";
+            document.getElementById("heroName").textContent = name || "—";
             document.getElementById("heroEmail").textContent = p.email || "—";
-            const roleText = p.role === "Admin" ? t("role.admin") : t("role.staff");
+            const roleText = (p.role === "admin" || p.role === "Admin") ? t("role.admin") : t("role.staff");
             document.getElementById("heroRole").textContent = roleText;
-            document.getElementById("heroJoined").textContent = `${t("info.joined")}: ${p.created_at?.split('T')[0] || "—"}`;
+            const joinedDate = (p.created_at || "").split("T")[0] || (p.created_at || "").substring(0, 10) || "—";
+            document.getElementById("heroJoined").textContent = `${t("info.joined")}: ${joinedDate}`;
 
             document.getElementById("topAvatar").textContent = init;
-            document.getElementById("topName").textContent = p.name || "—";
+            document.getElementById("topName").textContent = name || "—";
             document.getElementById("topRole").textContent = roleText;
 
-            document.getElementById("fName").value = p.name || "";
+            document.getElementById("fName").value = name;
             document.getElementById("fEmail").value = p.email || "";
             document.getElementById("fPhone").value = p.phone || "";
             document.getElementById("fAddress").value = p.address || "";
@@ -205,11 +207,11 @@ import { requireAuth, getUser } from './auth.js';
 
     async function saveInfo() {
         try {
-            const name = document.getElementById("fName").value.trim();
-            const phone = document.getElementById("fPhone").value.trim();
-            const address = document.getElementById("fAddress").value.trim();
+            const full_name = document.getElementById("fName").value.trim();
+            const phone     = document.getElementById("fPhone").value.trim();
+            const address   = document.getElementById("fAddress").value.trim();
 
-            await API.profile.update({ name, phone, address });
+            await API.profile.update({ full_name, phone, address });
             renderProfile();
             toast(t("toast.saved"));
         } catch (err) {

@@ -38,6 +38,7 @@ services:
         condition: service_healthy
     environment:
       DB_HOST: db
+      DB_PORT: "3306"
       DB_NAME: phonestore_pos
       DB_USER: phonestore
       DB_PASSWORD: phonestore123
