@@ -26,7 +26,7 @@ class AuthController {
 
         // Tìm user theo username (phần trước @ của email)
         if (!$this->userModel->findByUsername($username)) {
-            Response::json(["message" => "Tài khoản không tồn tại!"], 401);
+            Response::json(["message" => "Tài khoản '$username' không tồn tại!"], 401);
         }
 
         if ($this->userModel->status === 'locked') {

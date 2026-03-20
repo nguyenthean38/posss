@@ -34,11 +34,11 @@ CREATE TABLE logs (
 -- Insert default admin account (admin/admin)
 -- The password_hash here is generated using password_hash('admin', PASSWORD_DEFAULT)
 INSERT INTO users (full_name, email, password_hash, role, is_first_login, status) 
-VALUES ('Administrator', 'admin@gmail.com', '$2y$10$wE/.71W/W9/1A5R0tH79.OX/K2b4U6C4.0lW1d15Q3wZ//c1rM2I6', 'admin', FALSE, 'active');
+VALUES ('Administrator', 'admin@gmail.com', '$2y$10$ydAvUtj6VYouejFkXdCM.O4aW.0zJXmN3880z5U2sJFktUh20J.rK', 'admin', FALSE, 'active');
 
 -- Insert default staff account (staff@gmail.com/admin)
 INSERT INTO users (full_name, email, password_hash, role, is_first_login, status) 
-VALUES ('Staff Member', 'staff@gmail.com', '$2y$10$wE/.71W/W9/1A5R0tH79.OX/K2b4U6C4.0lW1d15Q3wZ//c1rM2I6', 'staff', FALSE, 'active');
+VALUES ('Staff Member', 'staff@gmail.com', '$2y$10$ydAvUtj6VYouejFkXdCM.O4aW.0zJXmN3880z5U2sJFktUh20J.rK', 'staff', FALSE, 'active');
 
 -- BẢNG QUẢN LÝ SẢN PHẨM & DANH MỤC
 CREATE TABLE categories (
