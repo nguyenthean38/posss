@@ -92,7 +92,14 @@ class AuthController {
             Response::json(["message" => "Link kích hoạt đã hết hạn hoặc đã được dùng rồi. Vui lòng liên hệ Admin để gửi lại email mới!"], 400);
         }
 
-        if (password_verify($tmpPassword, $this->userModel->password_hash)) {
+        $hash = $this->userModel->password_hash;
+        if ($hash === null || $hash === '') {
+            Response::json(["message" => "Tài khoản chưa có mật khẩu tạm. Liên hệ Admin."], 401);
+        }
+
+        // Nhiều dạng nhập (normalize đặc tả, trim, hoặc hash cũ trước khi normalize)
+        $verified = $this->verifyStaffTempPassword((string)$tmpPassword, $hash);
+        if ($verified) {
             $this->tokenModel->markAsUsed($tokenId);
             
             if (session_status() === PHP_SESSION_NONE) { session_start(); }
@@ -104,6 +111,27 @@ class AuthController {
             Response::json(["message" => "Xác nhận thành công. Vui lòng đổi mật khẩu!", "require_password_change" => true]);
         }
         Response::json(["message" => "Sai mật khẩu tạm thời!"], 401);
+    }
+
+    /**
+     * So khớp mật khẩu tạm với bcrypt đã lưu (tương thích nhiều cách hash cũ).
+     */
+    private function verifyStaffTempPassword(string $input, string $hash): bool {
+        // Chỉ biến thể từ input người dùng (không thêm MSSV cứng — tránh chấp nhận mọi input khi hash trùng MSSV)
+        $candidates = array_unique(array_filter([
+            User::normalizeTempPassword($input),
+            trim($input),
+            $input,
+        ], static function ($v) {
+            return $v !== null && $v !== '';
+        }));
+
+        foreach ($candidates as $plain) {
+            if (password_verify($plain, $hash)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // [PUT] /api/auth/init-password

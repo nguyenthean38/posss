@@ -42,6 +42,8 @@ services:
       DB_NAME: phonestore_pos
       DB_USER: phonestore
       DB_PASSWORD: phonestore123
+      # MSSV mật khẩu tạm nhân viên (đặc tả) — override khi cần
+      STAFF_TEMP_PASSWORD: "52300003"
     networks:
       - phonestore_network
 

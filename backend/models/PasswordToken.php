@@ -12,8 +12,8 @@ class PasswordToken {
         $raw_token = bin2hex(random_bytes(32)); // Mã ngẫu nhiên không đoán được
         $token_hash = hash('sha256', $raw_token);
         
-        // Hạn sử dụng trong 15 phút
-        $expires_at = date("Y-m-d H:i:s", strtotime('+15 minutes'));
+        // Hạn sử dụng trong 1 phút (theo đặc tả đề bài)
+        $expires_at = date("Y-m-d H:i:s", strtotime('+1 minute'));
 
         $query = "INSERT INTO " . $this->table_name . " 
                   (user_id, token_hash, expires_at, is_used) 

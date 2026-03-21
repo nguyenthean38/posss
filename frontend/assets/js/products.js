@@ -1,5 +1,5 @@
 // Products Module - Real API Integration
-import API from './api.js?v=5';
+import API from './api.js?v=6';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -40,17 +40,10 @@ import { requireAuth } from './auth.js';
             "prod.modalView": "Chi tiết sản phẩm",
             "prod.fName": "Tên sản phẩm",
             "prod.fBarcode": "Mã vạch",
-            "prod.fType": "Loại",
             "prod.fCost": "Giá nhập",
             "prod.fPrice": "Giá bán",
             "prod.fCategory": "Danh mục",
             "prod.fStock": "Tồn kho",
-            "type.phone": "Điện thoại",
-            "type.earbuds": "Tai nghe",
-            "type.case": "Ốp lưng",
-            "type.charger": "Sạc",
-            "type.cable": "Cáp",
-            "type.accessory": "Phụ kiện",
             "common.cancel": "Hủy",
             "common.save": "Lưu",
             "common.close": "Đóng",
@@ -60,7 +53,6 @@ import { requireAuth } from './auth.js';
             "confirm.delete": "Xóa sản phẩm này?",
             "view.name": "Tên",
             "view.barcode": "Mã vạch",
-            "view.type": "Loại",
             "view.category": "Danh mục",
             "view.cost": "Giá nhập",
             "view.price": "Giá bán",
@@ -103,17 +95,10 @@ import { requireAuth } from './auth.js';
             "prod.modalView": "Product details",
             "prod.fName": "Product name",
             "prod.fBarcode": "Barcode",
-            "prod.fType": "Type",
             "prod.fCost": "Cost",
             "prod.fPrice": "Price",
             "prod.fCategory": "Category",
             "prod.fStock": "Stock",
-            "type.phone": "Phone",
-            "type.earbuds": "Earbuds",
-            "type.case": "Case",
-            "type.charger": "Charger",
-            "type.cable": "Cable",
-            "type.accessory": "Accessory",
             "common.cancel": "Cancel",
             "common.save": "Save",
             "common.close": "Close",
@@ -123,7 +108,6 @@ import { requireAuth } from './auth.js';
             "confirm.delete": "Delete this product?",
             "view.name": "Name",
             "view.barcode": "Barcode",
-            "view.type": "Type",
             "view.category": "Category",
             "view.cost": "Cost",
             "view.price": "Price",
@@ -270,7 +254,6 @@ import { requireAuth } from './auth.js';
         document.getElementById("prodId").value = "";
         document.getElementById("fName").value = "";
         document.getElementById("fBarcode").value = "";
-        document.getElementById("fType").value = "phone";
         document.getElementById("fCost").value = "";
         document.getElementById("fPrice").value = "";
         document.getElementById("fCategory").value = "";
@@ -286,7 +269,6 @@ import { requireAuth } from './auth.js';
             document.getElementById("prodId").value = p.id;
             document.getElementById("fName").value = p.product_name || p.name || "";
             document.getElementById("fBarcode").value = p.barcode || "";
-            document.getElementById("fType").value = p.type || "phone";
             document.getElementById("fCost").value = p.import_price ?? p.cost ?? "";
             document.getElementById("fPrice").value = p.selling_price ?? p.price ?? "";
             document.getElementById("fCategory").value = p.category_id || p.category || "";
@@ -315,7 +297,7 @@ import { requireAuth } from './auth.js';
             const viewBody = document.getElementById("viewBody");
             viewBody.innerHTML = `
         <div class="ps-view__hero">
-          <div class="ps-view__icon"><i class="bi ${iconByType(p)}"></i></div>
+          <div class="ps-view__icon"><i class="bi ${iconByCategory(p)}"></i></div>
           <div class="ps-view__name">${name}</div>
           <div class="ps-view__barcode">${p.barcode || "-"}</div>
         </div>
@@ -323,8 +305,6 @@ import { requireAuth } from './auth.js';
           <div class="ps-view__grid">
             <div class="ps-view__label" data-i18n="view.category">${t("view.category")}</div>
             <div class="ps-view__value">${cat}</div>
-            <div class="ps-view__label" data-i18n="view.type">${t("view.type")}</div>
-            <div class="ps-view__value">${p.type || "-"}</div>
             <div class="ps-view__label admin-only" data-i18n="view.cost">${t("view.cost")}</div>
             <div class="ps-view__value admin-only">${fmtVND(cost)}</div>
             <div class="ps-view__label" data-i18n="view.price">${t("view.price")}</div>
@@ -358,7 +338,6 @@ import { requireAuth } from './auth.js';
             const id = document.getElementById("prodId").value.trim();
             const product_name = document.getElementById("fName").value.trim();
             const barcode = document.getElementById("fBarcode").value.trim();
-            const type = document.getElementById("fType").value;
             const category_id = Number(document.getElementById("fCategory").value);
             const import_price = parseNumber(document.getElementById("fCost").value);
             const selling_price = parseNumber(document.getElementById("fPrice").value);
@@ -369,7 +348,7 @@ import { requireAuth } from './auth.js';
                 return;
             }
 
-            const data = { product_name, barcode, type, category_id, import_price, selling_price, stock_quantity };
+            const data = { product_name, barcode, category_id, import_price, selling_price, stock_quantity };
 
             if (id) {
                 await API.products.update(id, data);
@@ -407,32 +386,30 @@ import { requireAuth } from './auth.js';
         }
     }
 
-    function iconByType(p) {
-        const type = (p.type || "").toLowerCase();
-        const MAP = {
-            phone: "bi-phone",
-            earbuds: "bi-headphones",
-            case: "bi-shield-check",
-            charger: "bi-plug",
-            cable: "bi-link-45deg",
-            accessory: "bi-box-seam",
-        };
-        if (MAP[type]) return MAP[type];
-        const n = (p.name || "").toLowerCase();
-        if (n.includes("ốp") || n.includes("case")) return MAP.case;
-        if (n.includes("cáp") || n.includes("lightning") || n.includes("usb")) return MAP.cable;
-        if (n.includes("sạc") || n.includes("charger")) return MAP.charger;
-        if (n.includes("tai nghe") || n.includes("airpods") || n.includes("buds")) return MAP.earbuds;
+    /** Icon theo tên danh mục (API không có trường type) */
+    function iconByCategory(p) {
+        const cat = String(p.category_name || p.category || "").toLowerCase();
+        if (cat.includes("điện thoại") || cat.includes("phone")) return "bi-phone";
+        if (cat.includes("tai") || cat.includes("earbud") || cat.includes("headphone")) return "bi-headphones";
+        if (cat.includes("ốp") || cat.includes("case")) return "bi-shield-check";
+        if (cat.includes("sạc") || cat.includes("charger")) return "bi-plug";
+        if (cat.includes("cáp") || cat.includes("cable") || cat.includes("usb")) return "bi-link-45deg";
+        const n = String(p.product_name || p.name || "").toLowerCase();
+        if (n.includes("ốp") || n.includes("case")) return "bi-shield-check";
+        if (n.includes("cáp") || n.includes("lightning") || n.includes("usb")) return "bi-link-45deg";
+        if (n.includes("sạc") || n.includes("charger")) return "bi-plug";
+        if (n.includes("tai nghe") || n.includes("airpods") || n.includes("buds")) return "bi-headphones";
         return "bi-box-seam";
     }
 
     async function loadCategories() {
         try {
-            const data = await API.categories.getAll();
+            const data = await API.categories.getAll({ limit: 200 });
             const fCat = document.getElementById("fCategory");
             if (!fCat) return;
+            const label = (c) => c.name || c.category_name || ("#" + c.id);
             fCat.innerHTML = `<option value="" disabled selected>Chọn danh mục</option>` +
-                data.map(c => `<option value="${c.id}">${c.category_name}</option>`).join("");
+                data.map(c => `<option value="${c.id}">${label(c)}</option>`).join("");
         } catch(err) {
             console.error('Load categories error', err);
         }
