@@ -173,6 +173,12 @@ class ApiClient {
         });
     }
 
+    async deleteStaff(id) {
+        return this.request(`/api/staff/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
     // ==================== PRODUCTS ====================
 
     async getProducts(params = {}) {
@@ -355,14 +361,17 @@ export const api = new ApiClient();
 // Add backward compatibility wrappers for nested API structures expected by existing modules
 api.categories = {
     getAll: async (params) => { const r = await api.getCategories(params); return r.items || r; },
-    getById: (id) => api.getCategory(id),
+    getById: async (id) => { const r = await api.getCategory(id); return r.category || r; },
     create: (data) => api.createCategory(data),
     update: (id, data) => api.updateCategory(id, data),
     delete: (id) => api.deleteCategory(id)
 };
 api.customers = {
-    getAll: async (params) => { const r = await api.request('/api/customers' + (params && Object.keys(params).length ? '?' + new URLSearchParams(params).toString() : '')); return r.items || r; },
-    getById: (id) => api.getCustomer(id),
+    getAll: async (params) => {
+        const r = await api.request('/api/customers' + (params && Object.keys(params).length ? '?' + new URLSearchParams(params).toString() : ''));
+        return r.items || r;
+    },
+    getById: async (id) => { const r = await api.getCustomer(id); return r.customer || r; },
     create: (data) => api.createCustomer(data),
     update: (id, data) => api.request(`/api/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id) => api.request(`/api/customers/${id}`, { method: 'DELETE' }),
@@ -376,16 +385,23 @@ api.products = {
     delete: (id) => api.deleteProduct(id)
 };
 api.profile = {
-    get: () => api.getProfile(),
+    get: async () => { const r = await api.getProfile(); return r.profile || r; },
     update: (data) => api.updateProfile(data),
     changePassword: (data) => api.changePassword(data.current_password, data.new_password, data.confirm_password || data.new_password)
 };
 api.reports = {
-    getDashboard: () => api.getReportSummary(),
-    getSummary: (from, to) => {
-        let params = {};
-        if (from) params.from = from;
-        if (to) params.to = to;
+    getDashboard: (timeline) => {
+        const params = {};
+        if (timeline) params.timeline = timeline;
+        return api.getReportSummary(params);
+    },
+    getSummary: (from, to, timeline) => {
+        const params = {};
+        if (timeline) { params.timeline = timeline; }
+        else {
+            if (from) params.fromDate = from;
+            if (to)   params.toDate   = to;
+        }
         return api.getReportSummary(params);
     }
 };

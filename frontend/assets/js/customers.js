@@ -1,5 +1,5 @@
 // Customers Module - Real API Integration
-import API from './api.js?v=3';
+import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -252,14 +252,6 @@ import { requireAuth } from './auth.js';
         }
     }
 
-    function openAdd() {
-        document.getElementById("cusModalTitle").textContent = t("cus.modalAdd");
-        document.getElementById("cusId").value = "";
-        document.getElementById("fName").value = "";
-        document.getElementById("fPhone").value = "";
-        document.getElementById("fAddress").value = "";
-    }
-
     async function openEdit(id) {
         try {
             const c = await API.customers.getById(id);
@@ -290,11 +282,13 @@ import { requireAuth } from './auth.js';
 
             const data = { name, phone, address };
 
-            if (id) {
-                await API.customers.update(id, data);
-            } else {
-                await API.customers.create(data);
+            if (!id) {
+                // Khách hàng chỉ được tạo qua POS checkout, không cho tạo thủ công
+                toast(t("toast.error"));
+                return;
             }
+
+            await API.customers.update(id, data);
 
             render();
             toast(t("toast.saved"));
@@ -390,7 +384,6 @@ import { requireAuth } from './auth.js';
 
         document.getElementById("searchInput")?.addEventListener("input", render);
         document.getElementById("sortSelect")?.addEventListener("change", render);
-        document.getElementById("btnAdd")?.addEventListener("click", openAdd);
         document.getElementById("btnSave")?.addEventListener("click", save);
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
 

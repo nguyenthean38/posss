@@ -28,9 +28,26 @@ set_exception_handler(function($exception) {
 });
 
 // CORS Headers cho phép Frontend (HTML/JS) gọi API
-header("Access-Control-Allow-Origin: *");
+$allowedOrigins = [
+    'http://127.0.0.1:8080',   // Docker (truy cập trực tiếp)
+    'http://localhost:8080',    // Docker (localhost)
+    'http://127.0.0.1:8888',   // XAMPP / Apache port tùy chỉnh
+    'http://localhost:8888',
+    'http://127.0.0.1:5500',   // VS Code Live Server
+    'http://localhost:5500',    // VS Code Live Server
+    'http://127.0.0.1:3000',   // Dev server khác
+    'http://localhost:3000',
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins, true)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+} else {
+    // Fallback cho Postman / không có Origin
+    header("Access-Control-Allow-Origin: http://127.0.0.1:8080");
+}
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Methods: POST, GET, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 // Xử lý preflight request của CORS
@@ -41,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Gọi các file Config & Core
 require_once __DIR__ . '/config/Database.php';
+require_once __DIR__ . '/config/AppConfig.php';
 require_once __DIR__ . '/core/Response.php';
 require_once __DIR__ . '/core/Mailer.php';
 
@@ -145,6 +163,14 @@ elseif (preg_match('/^\/api\/staff\/(\d+)\/resend$/', $uri, $matches) && $method
     $staffId = $matches[1];
     $staffCtrl->resendActivation($staffId);
 }
+elseif (preg_match('/^\/api\/staff\/(\d+)\/sales$/', $uri, $matches) && $method === 'GET') {
+    $staffId = (int)$matches[1];
+    $staffCtrl->showStaffSales($staffId);
+}
+elseif (preg_match('/^\/api\/staff\/(\d+)$/', $uri, $matches) && $method === 'DELETE') {
+    $staffId = (int)$matches[1];
+    $staffCtrl->deleteStaff($staffId);
+}
 // Danh mục sản phẩm
 elseif ($uri === '/api/categories/search' && $method === 'POST') {
     $categoryCtrl->searchCategories($data);
@@ -186,7 +212,7 @@ elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 
     $productCtrl->destroy($productId);
 }
 
-// Khách hàng — route cụ thể trước GET /api/customers/{id}
+// Khách hàng — route cụ thể trước GET /aphp -S localhost:8000pi/customers/{id}
 elseif (preg_match('/^\/api\/customers\/(\d+)\/history$/', $uri, $matches) && $method === 'GET') {
     $customerCtrl->history((int)$matches[1]);
 }
@@ -237,6 +263,7 @@ elseif ($uri === '/api/reports/summary' && $method === 'GET') { $reportCtrl->get
 elseif ($uri === '/api/reports/orders' && $method === 'GET') { $reportCtrl->getOrdersByTimeline(); }
 elseif ($uri === '/api/reports/profit' && $method === 'GET') { $reportCtrl->getProfitAnalysis(); }
 elseif ($uri === '/api/reports/chart' && $method === 'GET') { $reportCtrl->getSalesChartData(); }
+elseif ($uri === '/api/reports/categories' && $method === 'GET') { $reportCtrl->getCategoryBreakdown(); }
 
 // ====================================================
 // Trường hợp đường dẫn không hợp lệ

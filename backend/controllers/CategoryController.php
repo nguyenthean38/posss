@@ -57,7 +57,11 @@ class CategoryController {
     public function store($data) {
         AuthMiddleware::checkAdmin();
 
-        $name = isset($data['category_name']) ? trim($data['category_name']) : (isset($data['name']) ? trim($data['name']) : '');
+        $name        = isset($data['name'])          ? trim($data['name'])
+                     : (isset($data['category_name']) ? trim($data['category_name']) : '');
+        $description = isset($data['description'])   ? trim($data['description']) : null;
+        $icon        = isset($data['icon'])           ? trim($data['icon'])        : 'other';
+
         if ($name === '') {
             Response::json(["message" => "Tên danh mục không được để trống"], 400);
         }
@@ -66,12 +70,12 @@ class CategoryController {
             Response::json(["message" => "Tên danh mục đã tồn tại"], 400);
         }
 
-        $newId = $this->categoryModel->create($name);
+        $newId = $this->categoryModel->create($name, $description ?: null, $icon, $_SESSION['user_id']);
         if ($newId) {
             $this->logModel->createLog($_SESSION['user_id'], 'create_category', 'Tạo danh mục ID=' . $newId);
             $category = $this->categoryModel->findById($newId);
             Response::json([
-                "message" => "Tạo danh mục thành công",
+                "message"  => "Tạo danh mục thành công",
                 "category" => $category
             ], 201);
         }
@@ -88,7 +92,11 @@ class CategoryController {
             Response::json(["message" => "ID danh mục không hợp lệ"], 400);
         }
 
-        $name = isset($data['category_name']) ? trim($data['category_name']) : (isset($data['name']) ? trim($data['name']) : '');
+        $name        = isset($data['name'])          ? trim($data['name'])
+                     : (isset($data['category_name']) ? trim($data['category_name']) : '');
+        $description = isset($data['description'])   ? trim($data['description']) : null;
+        $icon        = isset($data['icon'])           ? trim($data['icon'])        : null;
+
         if ($name === '') {
             Response::json(["message" => "Tên danh mục không được để trống"], 400);
         }
@@ -102,11 +110,11 @@ class CategoryController {
             Response::json(["message" => "Tên danh mục đã tồn tại"], 400);
         }
 
-        if ($this->categoryModel->update($id, $name)) {
+        if ($this->categoryModel->update($id, $name, $description ?: null, $icon)) {
             $this->logModel->createLog($_SESSION['user_id'], 'update_category', 'Cập nhật danh mục ID=' . $id);
             $updated = $this->categoryModel->findById($id);
             Response::json([
-                "message" => "Cập nhật danh mục thành công",
+                "message"  => "Cập nhật danh mục thành công",
                 "category" => $updated
             ]);
         }

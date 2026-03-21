@@ -1,5 +1,5 @@
 // Categories Module - Real API Integration
-import API from './api.js?v=3';
+import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -50,6 +50,8 @@ import { requireAuth } from './auth.js';
             "view.desc": "Mô tả",
             "view.icon": "Icon",
             "view.count": "Số sản phẩm",
+            "view.createdAt": "Ngày tạo",
+            "view.createdBy": "Người tạo",
             "toast.error": "Có lỗi xảy ra",
         },
         en: {
@@ -92,6 +94,8 @@ import { requireAuth } from './auth.js';
             "view.desc": "Description",
             "view.icon": "Icon",
             "view.count": "Items",
+            "view.createdAt": "Created At",
+            "view.createdBy": "Created By",
             "toast.error": "An error occurred",
         }
     };
@@ -187,7 +191,7 @@ import { requireAuth } from './auth.js';
 
             const data = await API.categories.getAll();
             const list = data.filter(c =>
-                !q || c.name.toLowerCase().includes(q) || (c.description || "").toLowerCase().includes(q)
+                !q || (c.name || c.category_name || "").toLowerCase().includes(q)
             );
 
             if (countEl) countEl.textContent = `(${list.length})`;
@@ -195,13 +199,13 @@ import { requireAuth } from './auth.js';
 
             grid.innerHTML = list.map(c => {
                 const n = c.product_count || 0;
+                const name = c.name || c.category_name || "-";
                 return `
             <div class="col-12 col-md-6 col-xl-4">
               <div class="ps-card ps-catCard" data-id="${c.id}" role="button" tabindex="0">
                 <div class="ps-catIcon"><i class="bi ${iconClass(c.icon)}"></i></div>
                 <div class="ps-catMeta">
-                  <div class="ps-catName">${c.name}</div>
-                  <div class="ps-catDesc">${c.description || ""}</div>
+                  <div class="ps-catName">${name}</div>
                   <div class="ps-catCount">${n} ${t("cat.items")}</div>
                 </div>
                 <div class="ps-catActions">
@@ -243,7 +247,7 @@ import { requireAuth } from './auth.js';
 
             document.getElementById("catModalTitle").textContent = t("cat.modalEdit");
             document.getElementById("catId").value = c.id;
-            document.getElementById("fName").value = c.name || "";
+            document.getElementById("fName").value = c.name || c.category_name || "";
             document.getElementById("fDesc").value = c.description || "";
             document.getElementById("fIcon").value = c.icon || "other";
 
@@ -259,24 +263,29 @@ import { requireAuth } from './auth.js';
             const c = await API.categories.getById(id);
             if (!c) return;
 
+            const name = c.name || c.category_name || "-";
             const count = c.product_count || 0;
+            const desc = c.description || "-";
+            const createdAt = c.created_at ? c.created_at.substring(0, 10) : "-";
+            const createdBy = c.created_by_name || "-";
             const viewBody = document.getElementById("viewBody");
             viewBody.innerHTML = `
           <div class="ps-view__hero">
             <div class="ps-view__icon"><i class="bi ${iconClass(c.icon)}"></i></div>
-            <div class="ps-view__name">${c.name}</div>
-            <div class="ps-view__barcode">${c.description || ""}</div>
+            <div class="ps-view__name">${name}</div>
           </div>
           <div class="ps-view__card">
             <div class="ps-view__grid">
               <div class="ps-view__label">${t("view.name")}</div>
-              <div class="ps-view__value">${c.name}</div>
+              <div class="ps-view__value">${name}</div>
               <div class="ps-view__label">${t("view.desc")}</div>
-              <div class="ps-view__value">${c.description || "-"}</div>
-              <div class="ps-view__label">${t("view.icon")}</div>
-              <div class="ps-view__value">${c.icon}</div>
+              <div class="ps-view__value">${desc}</div>
               <div class="ps-view__label">${t("view.count")}</div>
               <div class="ps-view__value">${count}</div>
+              <div class="ps-view__label">${t("view.createdAt")}</div>
+              <div class="ps-view__value">${createdAt}</div>
+              <div class="ps-view__label">${t("view.createdBy")}</div>
+              <div class="ps-view__value">${createdBy}</div>
             </div>
           </div>
         `;

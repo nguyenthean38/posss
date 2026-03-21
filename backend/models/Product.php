@@ -25,7 +25,8 @@ class Product {
             $params[':category_id'] = (int)$categoryId;
         }
 
-        $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode, p.import_price, p.selling_price, p.stock_quantity
+        $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode,
+                       p.import_price, p.selling_price, p.stock_quantity, p.created_at
                 FROM " . $this->table_name . " p
                 LEFT JOIN categories c ON p.category_id = c.id
                 $where
@@ -61,7 +62,8 @@ class Product {
     }
 
     public function findById($id) {
-        $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode, p.import_price, p.selling_price, p.stock_quantity
+        $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode,
+                       p.import_price, p.selling_price, p.stock_quantity, p.created_at
                 FROM " . $this->table_name . " p
                 LEFT JOIN categories c ON p.category_id = c.id
                 WHERE p.id = :id LIMIT 1";

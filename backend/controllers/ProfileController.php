@@ -14,17 +14,31 @@ class ProfileController {
         AuthMiddleware::checkAuth();
         $userId = $_SESSION['user_id'];
         $profile = $this->userModel->getProfileById($userId);
-        Response::json($profile);
+        if (!$profile) {
+            Response::json(["message" => "Không tìm thấy thông tin người dùng"], 404);
+        }
+        Response::json(['profile' => $profile]);
     }
 
     public function updateProfile($data) {
         AuthMiddleware::checkAuth();
         $userId = $_SESSION['user_id'];
-        $fullName = isset($data['HoTen']) ? trim($data['HoTen']) : null;
-        
-        if ($this->userModel->updateProfile($userId, $fullName, null)) {
+
+        // Chấp nhận cả full_name lẫn HoTen để tương thích ngược
+        $fullName = isset($data['full_name']) ? trim($data['full_name'])
+                  : (isset($data['HoTen'])    ? trim($data['HoTen']) : null);
+        $phone   = isset($data['phone'])   ? trim($data['phone'])   : null;
+        $address = isset($data['address']) ? trim($data['address']) : null;
+
+        // Chuẩn hóa: chuỗi rỗng coi như không truyền
+        if ($fullName === '') $fullName = null;
+        if ($phone    === '') $phone    = null;
+        if ($address  === '') $address  = null;
+
+        if ($this->userModel->updateProfile($userId, $fullName, null, $phone, $address)) {
             $this->logModel->createLog($userId, 'update_profile', 'Cập nhật hồ sơ cá nhân');
-            Response::json(["message" => "Cập nhật thành công"]);
+            $updated = $this->userModel->getProfileById($userId);
+            Response::json(["message" => "Cập nhật thành công", "profile" => $updated]);
         } else {
             Response::json(["message" => "Không có gì thay đổi"], 400);
         }
@@ -55,7 +69,10 @@ class ProfileController {
                 $avatarPath = 'uploads/avatars/' . $safeFileName;
                 $this->userModel->updateProfile($userId, null, $avatarPath);
                 $this->logModel->createLog($userId, 'upload_avatar', 'Cập nhật ảnh đại diện');
-                Response::json(["ImageUrl" => $avatarPath, "Message" => "Cập nhật ảnh đại diện thành công"]);
+                Response::json([
+                    "message"  => "Cập nhật ảnh đại diện thành công",
+                    "ImageUrl" => $avatarPath
+                ]);
             }
         }
         Response::json(["message" => "Lỗi upload ảnh hoặc chưa chọn file"], 400);

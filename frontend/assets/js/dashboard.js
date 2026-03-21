@@ -1,4 +1,4 @@
-import api from './api.js?v=3';
+import api from './api.js?v=5';
 import { requireAuth, getUser } from './auth.js';
 
 (() => {
@@ -268,58 +268,66 @@ import { requireAuth, getUser } from './auth.js';
         try {
             const data = await api.getReportSummary();
 
-            // Update KPIs
-            document.querySelector('[data-i18n="kpi.revenue"]').closest('.ps-kpi').querySelector('.ps-kpi__value').innerHTML =
-                `${fmtVND(data.total_revenue)} <span class="ps-currency"></span>`;
+            // KPIs - backend trả TotalRevenue, OrderCount, TotalProductsSold, CustomerCount
+            const setKpi = (key, value) => {
+                const el = document.querySelector(`[data-i18n="${key}"]`)?.closest('.ps-kpi')?.querySelector('.ps-kpi__value');
+                if (el) el.textContent = value;
+            };
+            setKpi('kpi.revenue', fmtVND(data.TotalRevenue));
+            setKpi('kpi.orders', data.OrderCount || 0);
+            setKpi('kpi.products', data.TotalProductsSold || 0);
+            setKpi('kpi.customers', data.CustomerCount || 0);
 
-            document.querySelector('[data-i18n="kpi.orders"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent =
-                data.total_orders || 0;
-
-            document.querySelector('[data-i18n="kpi.products"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent =
-                data.total_products || 0;
-
-            document.querySelector('[data-i18n="kpi.customers"]').closest('.ps-kpi').querySelector('.ps-kpi__value').textContent =
-                data.total_customers || 0;
-
-            // Update trends
-            const trends = document.querySelectorAll('.ps-kpi__trend');
-            if (trends[0] && data.revenue_trend) {
-                trends[0].className = `ps-kpi__trend ${data.revenue_trend >= 0 ? 'up' : 'down'}`;
-                trends[0].innerHTML = `<i class="bi bi-arrow-${data.revenue_trend >= 0 ? 'up' : 'down'}-right"></i><span>${Math.abs(data.revenue_trend).toFixed(1)}%</span>`;
-            }
-            if (trends[1] && data.orders_trend) {
-                trends[1].className = `ps-kpi__trend ${data.orders_trend >= 0 ? 'up' : 'down'}`;
-                trends[1].innerHTML = `<i class="bi bi-arrow-${data.orders_trend >= 0 ? 'up' : 'down'}-right"></i><span>${Math.abs(data.orders_trend).toFixed(1)}%</span>`;
-            }
-
-            // Recent orders table
+            // Recent orders - backend trả RecentOrders[{OrderId, Date, CustomerName, TotalAmount}]
             const tbody = document.querySelector('.ps-table tbody');
-            if (tbody && data.recent_orders) {
-                tbody.innerHTML = data.recent_orders.slice(0, 5).map(o => `
-                    <tr>
-                        <td><a class="ps-link" href="#">${o.id}</a></td>
-                        <td>${o.customer_name || "-"}</td>
-                        <td class="text-end">${fmtVND(o.total)}</td>
-                    </tr>
-                `).join("");
+            if (tbody) {
+                const orders = data.RecentOrders || [];
+                tbody.innerHTML = orders.length
+                    ? orders.map(o => `
+                        <tr>
+                            <td><a class="ps-link" href="#">#${o.OrderId}</a></td>
+                            <td>${o.CustomerName || "Khách lẻ"}</td>
+                            <td class="text-end">${fmtVND(o.TotalAmount)}</td>
+                        </tr>`).join("")
+                    : `<tr><td colspan="3" class="text-center" style="opacity:.5">Chưa có đơn hàng</td></tr>`;
             }
 
-            // Top products
+            // Top products - backend trả TopProducts[{ProductName, TotalSold, TotalRevenue}]
             const topList = document.querySelector('.ps-toplist');
-            if (topList && data.top_products) {
-                topList.innerHTML = data.top_products.slice(0, 4).map((p, i) => `
-                    <div class="ps-topitem">
-                        <div class="ps-rank">${i + 1}</div>
-                        <div class="ps-topitem__meta">
-                            <div class="ps-topitem__name">${p.name}</div>
-                            <div class="ps-topitem__sub">${t("product.sold")} ${p.quantity_sold} ${t("product.items")}</div>
-                        </div>
-                        <div class="ps-topitem__value">${fmtVND(p.revenue)}</div>
-                    </div>
-                `).join("");
+            if (topList) {
+                const products = data.TopProducts || [];
+                topList.innerHTML = products.length
+                    ? products.map((p, i) => `
+                        <div class="ps-topitem">
+                            <div class="ps-rank">${i + 1}</div>
+                            <div class="ps-topitem__meta">
+                                <div class="ps-topitem__name">${p.ProductName}</div>
+                                <div class="ps-topitem__sub">${t("product.sold")} ${p.TotalSold} ${t("product.items")}</div>
+                            </div>
+                            <div class="ps-topitem__value">${fmtVND(p.TotalRevenue)}</div>
+                        </div>`).join("")
+                    : `<div class="ps-topitem" style="opacity:.5">Chưa có dữ liệu</div>`;
             }
 
-            buildCharts(data);
+            // Fetch chart data from /api/reports/chart
+            try {
+                const [chartRevenue, chartOrders] = await Promise.all([
+                    api.getReportChartData({ type: 'revenue', period: 'day' }),
+                    api.getReportChartData({ type: 'orders', period: 'day' }),
+                ]);
+                buildCharts({
+                    weekly_sales: {
+                        labels: chartRevenue.map(d => d.label),
+                        values: chartRevenue.map(d => parseFloat(d.value) || 0),
+                    },
+                    weekly_orders: {
+                        labels: chartOrders.map(d => d.label),
+                        values: chartOrders.map(d => parseInt(d.value) || 0),
+                    }
+                });
+            } catch (_) {
+                buildCharts({});
+            }
         } catch (err) {
             console.error('Dashboard load error:', err);
         }

@@ -1,0 +1,979 @@
+{
+  "info": {
+    "name": "PhoneStore POS API",
+    "_postman_id": "phonestore-pos-v1",
+    "description": "Bộ API đầy đủ cho hệ thống PhoneStore POS.\n\n**Hướng dẫn sử dụng:**\n1. Import file này vào Postman.\n2. Chỉnh biến `baseUrl` trong Collection Variables nếu cần.\n3. Chạy request **[AUTH] Login** trước – cookie `PHPSESSID` sẽ tự động được lưu.\n4. Tất cả request sau sẽ dùng lại cookie đó.\n\nMặc định: `admin@gmail.com / admin`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",    "value": "http://localhost:8080/backend/index.php", "type": "string" },
+    { "key": "adminEmail", "value": "admin@gmail.com",                          "type": "string" },
+    { "key": "adminPwd",   "value": "admin",                                    "type": "string" },
+    { "key": "staffEmail", "value": "staff@gmail.com",                          "type": "string" },
+    { "key": "staffPwd",   "value": "admin",                                    "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "[AUTH] Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has token or role', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('role');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPwd}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "[AUTH] Login (Staff)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{staffEmail}}\",\n  \"password\": \"{{staffPwd}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "[AUTH] Me (current user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has email', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] }
+          }
+        },
+        {
+          "name": "[AUTH] Verify Token (first login step 1)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newstaff@gmail.com\",\n  \"token\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/verify-token", "host": ["{{baseUrl}}"], "path": ["api", "auth", "verify-token"] }
+          }
+        },
+        {
+          "name": "[AUTH] First Login (set password)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newstaff@gmail.com\",\n  \"token\": \"123456\",\n  \"password\": \"NewPass@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/first-login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "first-login"] }
+          }
+        },
+        {
+          "name": "[AUTH] Init Password (after first login session)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_password\": \"NewPass@123\",\n  \"confirm_password\": \"NewPass@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/init-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "init-password"] }
+          }
+        },
+        {
+          "name": "[AUTH] Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"admin\",\n  \"new_password\": \"NewPass@123\",\n  \"confirm_password\": \"NewPass@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "change-password"] }
+          }
+        },
+        {
+          "name": "[AUTH] Logout",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "[PROFILE] Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has profile object', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('profile');",
+                  "    pm.expect(j.profile).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/profile", "host": ["{{baseUrl}}"], "path": ["api", "profile"] }
+          }
+        },
+        {
+          "name": "[PROFILE] Update Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Message ok', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.message).to.include('thành công');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Administrator\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 Đường ABC, TP.HCM\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/profile", "host": ["{{baseUrl}}"], "path": ["api", "profile"] }
+          }
+        },
+        {
+          "name": "[PROFILE] Upload Avatar",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "Image", "type": "file", "src": "/path/to/avatar.png" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/profile/avatar", "host": ["{{baseUrl}}"], "path": ["api", "profile", "avatar"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Staff (Admin only)",
+      "item": [
+        {
+          "name": "[STAFF] Get List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has items array', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/staff?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staff"],
+              "query": [
+                { "key": "page",   "value": "1" },
+                { "key": "limit",  "value": "20" },
+                { "key": "email",  "value": "", "disabled": true },
+                { "key": "status", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[STAFF] Create Staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Nguyen Van A\",\n  \"email\": \"nva@gmail.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/staff", "host": ["{{baseUrl}}"], "path": ["api", "staff"] }
+          }
+        },
+        {
+          "name": "[STAFF] Get By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/staff/2", "host": ["{{baseUrl}}"], "path": ["api", "staff", "2"] }
+          }
+        },
+        {
+          "name": "[STAFF] Lock Account",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/api/staff/2/lock", "host": ["{{baseUrl}}"], "path": ["api", "staff", "2", "lock"] }
+          }
+        },
+        {
+          "name": "[STAFF] Unlock Account",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/api/staff/2/unlock", "host": ["{{baseUrl}}"], "path": ["api", "staff", "2", "unlock"] }
+          }
+        },
+        {
+          "name": "[STAFF] Resend Token",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/staff/2/resend", "host": ["{{baseUrl}}"], "path": ["api", "staff", "2", "resend"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories (Admin only)",
+      "item": [
+        {
+          "name": "[CAT] Get List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has items', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/categories?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"],
+              "query": [
+                { "key": "page",  "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "q",     "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[CAT] Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('category has name/description/icon', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.category).to.have.property('name');",
+                  "    pm.expect(j.category).to.have.property('icon');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Điện thoại\",\n  \"description\": \"Các loại điện thoại di động\",\n  \"icon\": \"phone\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] }
+          }
+        },
+        {
+          "name": "[CAT] Get By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('category.name exists', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.category.name).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/categories/1", "host": ["{{baseUrl}}"], "path": ["api", "categories", "1"] }
+          }
+        },
+        {
+          "name": "[CAT] Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Điện thoại thông minh\",\n  \"description\": \"Smartphone các loại\",\n  \"icon\": \"phone-fill\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories/1", "host": ["{{baseUrl}}"], "path": ["api", "categories", "1"] }
+          }
+        },
+        {
+          "name": "[CAT] Delete Category",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/categories/1", "host": ["{{baseUrl}}"], "path": ["api", "categories", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "[PROD] Get List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has items', () => pm.expect(pm.response.json()).to.have.property('items'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "page",        "value": "1" },
+                { "key": "limit",       "value": "20" },
+                { "key": "q",           "value": "", "disabled": true },
+                { "key": "category_id", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[PROD] Create Product (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"product_name\": \"iPhone 15 Pro Max\",\n  \"barcode\": \"IP15PM256\",\n  \"import_price\": 25000000,\n  \"selling_price\": 30000000,\n  \"stock_quantity\": 10\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] }
+          }
+        },
+        {
+          "name": "[PROD] Get By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/products/1", "host": ["{{baseUrl}}"], "path": ["api", "products", "1"] }
+          }
+        },
+        {
+          "name": "[PROD] Update Product (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"product_name\": \"iPhone 15 Pro Max 256GB\",\n  \"barcode\": \"IP15PM256\",\n  \"import_price\": 25000000,\n  \"selling_price\": 31000000,\n  \"stock_quantity\": 8\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products/1", "host": ["{{baseUrl}}"], "path": ["api", "products", "1"] }
+          }
+        },
+        {
+          "name": "[PROD] Delete Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/products/1", "host": ["{{baseUrl}}"], "path": ["api", "products", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "[CUST] Get List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has items', () => pm.expect(pm.response.json()).to.have.property('items'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/customers?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"],
+              "query": [
+                { "key": "page",    "value": "1" },
+                { "key": "limit",   "value": "20" },
+                { "key": "keyword", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[CUST] Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Nguyen Thi B\",\n  \"phone_number\": \"0909123456\",\n  \"address\": \"456 Đường XYZ, Hà Nội\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/customers", "host": ["{{baseUrl}}"], "path": ["api", "customers"] }
+          }
+        },
+        {
+          "name": "[CUST] Get By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has customer object', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('customer');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/customers/1", "host": ["{{baseUrl}}"], "path": ["api", "customers", "1"] }
+          }
+        },
+        {
+          "name": "[CUST] Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Nguyen Thi B\",\n  \"phone_number\": \"0909123456\",\n  \"address\": \"789 Đường MNO, Đà Nẵng\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/customers/1", "host": ["{{baseUrl}}"], "path": ["api", "customers", "1"] }
+          }
+        },
+        {
+          "name": "[CUST] Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/customers/1", "host": ["{{baseUrl}}"], "path": ["api", "customers", "1"] }
+          }
+        },
+        {
+          "name": "[CUST] Search By Phone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 404', () => {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/search-by-phone?phone=0909123456",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "search-by-phone"],
+              "query": [{ "key": "phone", "value": "0909123456" }]
+            }
+          }
+        },
+        {
+          "name": "[CUST] Purchase History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/1/history?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "1", "history"],
+              "query": [
+                { "key": "page",     "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[CUST] Order Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/customers/orders/1", "host": ["{{baseUrl}}"], "path": ["api", "customers", "orders", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "POS",
+      "item": [
+        {
+          "name": "[POS] Init Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Session created', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('cart');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/pos/session", "host": ["{{baseUrl}}"], "path": ["api", "pos", "session"] }
+          }
+        },
+        {
+          "name": "[POS] Add to Cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Barcode\": \"IP15PM256\",\n  \"Quantity\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/pos/cart/add", "host": ["{{baseUrl}}"], "path": ["api", "pos", "cart", "add"] }
+          }
+        },
+        {
+          "name": "[POS] Update Cart Item",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ProductId\": 1,\n  \"NewQuantity\": 3\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/pos/cart/item", "host": ["{{baseUrl}}"], "path": ["api", "pos", "cart", "item"] }
+          }
+        },
+        {
+          "name": "[POS] Remove Cart Item",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/pos/cart/item/1", "host": ["{{baseUrl}}"], "path": ["api", "pos", "cart", "item", "1"] }
+          }
+        },
+        {
+          "name": "[POS] Calculate Change",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has TotalAmount and Change', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('TotalAmount');",
+                  "    pm.expect(j).to.have.property('Change');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"CustomerPay\": 50000000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/pos/calculate", "host": ["{{baseUrl}}"], "path": ["api", "pos", "calculate"] }
+          }
+        },
+        {
+          "name": "[POS] Checkout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 201', () => {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Has OrderId', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('OrderId');",
+                  "    // Save for invoice request",
+                  "    pm.collectionVariables.set('lastOrderId', j.OrderId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Phone\": \"0909123456\",\n  \"FullName\": \"Nguyen Thi B\",\n  \"Address\": \"456 Đường XYZ\",\n  \"CustomerPay\": 50000000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/pos/checkout", "host": ["{{baseUrl}}"], "path": ["api", "pos", "checkout"] }
+          }
+        },
+        {
+          "name": "[POS] Get Invoice (HTML)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type text/html', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/pos/invoice/{{lastOrderId}}", "host": ["{{baseUrl}}"], "path": ["api", "pos", "invoice", "{{lastOrderId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "[RPT] Summary – Today",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has TotalRevenue, OrderCount, CustomerCount', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('TotalRevenue');",
+                  "    pm.expect(j).to.have.property('OrderCount');",
+                  "    pm.expect(j).to.have.property('CustomerCount');",
+                  "    pm.expect(j).to.have.property('RecentOrders');",
+                  "    pm.expect(j).to.have.property('TopProducts');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/summary?timeline=today",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "summary"],
+              "query": [{ "key": "timeline", "value": "today" }]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Summary – Yesterday",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/summary?timeline=yesterday",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "summary"],
+              "query": [{ "key": "timeline", "value": "yesterday" }]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Summary – Last 7 Days",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/summary?timeline=7days",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "summary"],
+              "query": [{ "key": "timeline", "value": "7days" }]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Summary – This Month",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/summary?timeline=month",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "summary"],
+              "query": [{ "key": "timeline", "value": "month" }]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Summary – Custom Range",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/summary?fromDate=2026-01-01&toDate=2026-03-20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "summary"],
+              "query": [
+                { "key": "fromDate", "value": "2026-01-01" },
+                { "key": "toDate",   "value": "2026-03-20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Orders List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has items + pagination', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('items');",
+                  "    pm.expect(j).to.have.property('pagination');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/orders?fromDate=2026-01-01&toDate=2026-03-20&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "orders"],
+              "query": [
+                { "key": "fromDate",  "value": "2026-01-01" },
+                { "key": "toDate",    "value": "2026-03-20" },
+                { "key": "page",      "value": "1" },
+                { "key": "pageSize",  "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Profit (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has NetProfit', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('NetProfit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/profit?fromDate=2026-01-01&toDate=2026-03-20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "profit"],
+              "query": [
+                { "key": "fromDate", "value": "2026-01-01" },
+                { "key": "toDate",   "value": "2026-03-20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Chart – Revenue by Day",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/chart?type=revenue&period=day",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "chart"],
+              "query": [
+                { "key": "type",   "value": "revenue" },
+                { "key": "period", "value": "day" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Chart – Orders by Day",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/chart?type=orders&period=day",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "chart"],
+              "query": [
+                { "key": "type",   "value": "orders" },
+                { "key": "period", "value": "day" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[RPT] Chart – Revenue by Week",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/chart?type=revenue&period=week",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "chart"],
+              "query": [
+                { "key": "type",   "value": "revenue" },
+                { "key": "period", "value": "week" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

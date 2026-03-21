@@ -1,7 +1,7 @@
 /**
  * Employees Module - Real API Integration
  */
-import { api } from './api.js?v=3';
+import { api } from './api.js?v=6';
 import { requireAuth, isAdmin } from './auth.js';
 
 (() => {
@@ -11,6 +11,12 @@ import { requireAuth, isAdmin } from './auth.js';
     let employees = [];
     let pendingDeleteId = null;
     let viewEmployeeId = null;
+
+    /** Chưa đổi mật khẩu lần đầu — API có thể trả boolean hoặc 0/1 */
+    function needsFirstLoginPwd(e) {
+        const v = e?.is_first_login;
+        return v === true || v === 1 || v === '1';
+    }
 
     const i18n = {
         vi: {
@@ -58,6 +64,14 @@ import { requireAuth, isAdmin } from './auth.js';
             "view.pwdChanged": "Đổi mật khẩu",
             "view.yes": "Đã đổi",
             "view.no": "Chưa đổi",
+            "view.salesTitle": "Thông tin bán hàng",
+            "view.totalOrders": "Tổng đơn hàng",
+            "view.totalRevenue": "Tổng doanh thu",
+            "view.recentOrders": "Đơn hàng gần đây",
+            "view.orderId": "Đơn",
+            "view.customer": "Khách hàng",
+            "view.amount": "Tổng tiền",
+            "view.noOrders": "Chưa có đơn hàng nào",
             "confirm.deleteText": "Bạn có chắc muốn xóa nhân viên này?"
         },
         en: {
@@ -105,6 +119,14 @@ import { requireAuth, isAdmin } from './auth.js';
             "view.pwdChanged": "Password changed",
             "view.yes": "Yes",
             "view.no": "No",
+            "view.salesTitle": "Sales Information",
+            "view.totalOrders": "Total Orders",
+            "view.totalRevenue": "Total Revenue",
+            "view.recentOrders": "Recent Orders",
+            "view.orderId": "Order",
+            "view.customer": "Customer",
+            "view.amount": "Amount",
+            "view.noOrders": "No orders yet",
             "confirm.deleteText": "Delete this employee?"
         }
     };
@@ -227,7 +249,7 @@ import { requireAuth, isAdmin } from './auth.js';
 
         grid.innerHTML = list.map(e => {
             const badgeStatus = e.status === 'locked' ? "lock" : "ok";
-            const badgeWarn = !e.is_first_login ? `<span class="ps-badge warn">${t("emp.needPwd")}</span>` : "";
+            const badgeWarn = needsFirstLoginPwd(e) ? `<span class="ps-badge warn">${t("emp.needPwd")}</span>` : "";
             return `
                 <div class="col-12 col-md-6 col-xl-4">
                     <div class="ps-card ps-empCard" data-id="${e.id}">
@@ -250,6 +272,7 @@ import { requireAuth, isAdmin } from './auth.js';
                             <button class="ps-empAct" data-act="view"><i class="bi bi-eye"></i><span>${t("emp.view")}</span></button>
                             <button class="ps-empAct" data-act="lock"><i class="bi ${e.status === 'locked' ? "bi-unlock" : "bi-lock"}"></i><span>${e.status === 'locked' ? t("emp.unlock") : t("emp.lock")}</span></button>
                             <button class="ps-empAct right" data-act="email" title="email"><i class="bi bi-envelope"></i></button>
+                            <button class="ps-empAct right" data-act="delete" title="delete" style="color:var(--red)"><i class="bi bi-trash3"></i></button>
                         </div>
                     </div>
                 </div>
@@ -261,15 +284,20 @@ import { requireAuth, isAdmin } from './auth.js';
             card.querySelector('[data-act="view"]').addEventListener("click", () => openView(id));
             card.querySelector('[data-act="lock"]').addEventListener("click", () => toggleLock(id));
             card.querySelector('[data-act="email"]').addEventListener("click", () => resendEmail(id));
+            card.querySelector('[data-act="delete"]').addEventListener("click", () => openDelete(id));
         });
     }
 
-    function openView(id) {
+    async function openView(id) {
         const e = employees.find(x => x.id == id);
         if (!e) return;
         viewEmployeeId = id;
 
+        const fmtVND = (n) => (Number(n || 0)).toLocaleString("vi-VN") + "\u00A0₫";
+
         const viewBody = document.getElementById("viewBody");
+
+        // Hiển thị thông tin cơ bản ngay (không chờ sales API)
         viewBody.innerHTML = `
             <div class="ps-view__hero">
                 <div class="ps-view__icon" style="border-radius:999px;">
@@ -286,10 +314,14 @@ import { requireAuth, isAdmin } from './auth.js';
                     <div class="ps-view__value">${roleLabel(e.role)}</div>
                     <div class="ps-view__label">${t("view.pwdChanged")}</div>
                     <div class="ps-view__value">
-                        ${!e.is_first_login ? `<i class="bi bi-check2-square" style="color:var(--green)"></i> ${t("view.yes")}`
-                : `<i class="bi bi-x-square" style="color:var(--red)"></i> ${t("view.no")}`}
+                        ${needsFirstLoginPwd(e)
+                            ? `<i class="bi bi-x-square" style="color:var(--red)"></i> ${t("view.no")}`
+                            : `<i class="bi bi-check2-square" style="color:var(--green)"></i> ${t("view.yes")}`}
                     </div>
                 </div>
+            </div>
+            <div id="salesSection" style="margin-top:12px;opacity:.5">
+                <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> Đang tải doanh số...
             </div>
         `;
 
@@ -302,6 +334,48 @@ import { requireAuth, isAdmin } from './auth.js';
         btnEmail.onclick = () => resendEmail(id);
 
         bootstrap.Modal.getOrCreateInstance(document.getElementById("viewModal")).show();
+
+        // Load thông tin bán hàng bất đồng bộ
+        try {
+            const sales = await api.request(`/api/staff/${id}/sales`);
+            const ordersHtml = (sales.recent_orders || []).length
+                ? `<table style="width:100%;font-size:.82rem;border-collapse:collapse">
+                    <thead><tr>
+                        <th style="text-align:left;padding:4px 6px;opacity:.6">${t("view.orderId")}</th>
+                        <th style="text-align:left;padding:4px 6px;opacity:.6">${t("view.customer")}</th>
+                        <th style="text-align:right;padding:4px 6px;opacity:.6">${t("view.amount")}</th>
+                    </tr></thead>
+                    <tbody>
+                        ${sales.recent_orders.map(o => `
+                            <tr style="border-top:1px solid rgba(255,255,255,.07)">
+                                <td style="padding:4px 6px">#${o.OrderId}</td>
+                                <td style="padding:4px 6px">${o.CustomerName}</td>
+                                <td style="padding:4px 6px;text-align:right">${fmtVND(o.TotalAmount)}</td>
+                            </tr>`).join("")}
+                    </tbody>
+                   </table>`
+                : `<div style="opacity:.5;font-size:.85rem">${t("view.noOrders")}</div>`;
+
+            const salesSection = document.getElementById("salesSection");
+            if (salesSection) {
+                salesSection.style.opacity = "1";
+                salesSection.innerHTML = `
+                    <div class="ps-view__card">
+                        <div style="font-weight:600;margin-bottom:8px"><i class="bi bi-bar-chart-line" style="margin-right:6px"></i>${t("view.salesTitle")}</div>
+                        <div class="ps-view__grid" style="margin-bottom:10px">
+                            <div class="ps-view__label">${t("view.totalOrders")}</div>
+                            <div class="ps-view__value">${sales.total_orders || 0}</div>
+                            <div class="ps-view__label">${t("view.totalRevenue")}</div>
+                            <div class="ps-view__value">${fmtVND(sales.total_revenue)}</div>
+                        </div>
+                        <div style="font-size:.82rem;font-weight:600;margin-bottom:6px;opacity:.7">${t("view.recentOrders")}</div>
+                        ${ordersHtml}
+                    </div>`;
+            }
+        } catch (_) {
+            const salesSection = document.getElementById("salesSection");
+            if (salesSection) salesSection.remove();
+        }
     }
 
     function openAdd() {
@@ -359,6 +433,29 @@ import { requireAuth, isAdmin } from './auth.js';
         }
     }
 
+    function openDelete(id) {
+        const e = employees.find(x => x.id == id);
+        if (!e) return;
+        pendingDeleteId = id;
+        const textEl = document.getElementById("deleteText");
+        if (textEl) textEl.textContent = `${t("confirm.deleteText")} "${e.full_name}" (${e.email})`;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("deleteModal")).show();
+    }
+
+    async function confirmDelete() {
+        if (!pendingDeleteId) return;
+        try {
+            await api.deleteStaff(pendingDeleteId);
+            toast(t("toast.deleted"));
+            pendingDeleteId = null;
+            bootstrap.Modal.getInstance(document.getElementById("deleteModal"))?.hide();
+            await loadEmployees();
+        } catch (error) {
+            console.error('Delete staff error:', error);
+            toast(error.message || t("toast.error"));
+        }
+    }
+
     async function init() {
         // Check auth & admin
         try {
@@ -381,6 +478,7 @@ import { requireAuth, isAdmin } from './auth.js';
         document.getElementById("searchInput")?.addEventListener("input", render);
         document.getElementById("btnAdd")?.addEventListener("click", openAdd);
         document.getElementById("btnSave")?.addEventListener("click", save);
+        document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
 
         await loadEmployees();
     }

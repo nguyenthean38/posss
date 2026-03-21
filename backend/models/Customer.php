@@ -15,14 +15,21 @@ class Customer {
         $params = [];
 
         if ($keyword !== '') {
-            $where .= ' AND (full_name LIKE :kw OR phone_number LIKE :kw)';
+            $where .= ' AND (c.full_name LIKE :kw OR c.phone_number LIKE :kw)';
             $params[':kw'] = '%' . $keyword . '%';
         }
 
-        $sql = "SELECT id, full_name, phone_number, address
-                FROM " . $this->table_name . "
+        $sql = "SELECT c.id,
+                       c.full_name AS name,
+                       c.phone_number AS phone,
+                       c.address,
+                       COUNT(o.id) AS total_orders,
+                       COALESCE(SUM(o.total_amount), 0) AS total_revenue
+                FROM " . $this->table_name . " c
+                LEFT JOIN orders o ON o.customer_id = c.id
                 $where
-                ORDER BY id DESC
+                GROUP BY c.id
+                ORDER BY c.id DESC
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($sql);
@@ -32,7 +39,7 @@ class Customer {
         $stmt->execute();
         $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " " . $where;
+        $countSql = "SELECT COUNT(*) AS total FROM " . $this->table_name . " c " . $where;
         $countStmt = $this->conn->prepare($countSql);
         foreach ($params as $k => $v) { $countStmt->bindValue($k, $v); }
         $countStmt->execute();
@@ -70,7 +77,7 @@ class Customer {
 
     // Tìm khách hàng theo số điện thoại (UC-20)
     public function findByPhone($phoneNumber) {
-        $sql = "SELECT id, full_name, phone_number, address
+        $sql = "SELECT id, full_name AS name, phone_number AS phone, address
                 FROM " . $this->table_name . "
                 WHERE phone_number = :phone
                 LIMIT 1";
@@ -112,9 +119,16 @@ class Customer {
     }
 
     public function findById($id) {
-        $sql = "SELECT id, full_name, phone_number, address
-                FROM " . $this->table_name . "
-                WHERE id = :id
+        $sql = "SELECT c.id,
+                       c.full_name AS name,
+                       c.phone_number AS phone,
+                       c.address,
+                       COUNT(o.id) AS total_orders,
+                       COALESCE(SUM(o.total_amount), 0) AS total_revenue
+                FROM " . $this->table_name . " c
+                LEFT JOIN orders o ON o.customer_id = c.id
+                WHERE c.id = :id
+                GROUP BY c.id
                 LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);

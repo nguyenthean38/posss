@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../config/AppConfig.php';
+
 class User {
     private $conn;
     private $table_name = "users";
@@ -10,6 +12,7 @@ class User {
     public $role;
     public $avatar;
     public $phone;
+    public $address;
     public $is_first_login;
     public $status;
     public $created_at;
@@ -54,23 +57,33 @@ class User {
 
     // Đổ dữ liệu từ một dòng truy vấn vào các thuộc tính public
     private function hydrateFromRow(array $row): void {
-        $this->id = $row['id'];
-        $this->full_name = $row['full_name'];
-        $this->email = $row['email'];
-        $this->password_hash = $row['password_hash'];
-        $this->role = $row['role'];
-        $this->avatar = $row['avatar'] ?? null;
-        // Cột phone có thể chưa tồn tại trong DB, nên chỉ gán nếu có
-        $this->phone = $row['phone'] ?? null;
+        $this->id             = $row['id'];
+        $this->full_name      = $row['full_name'];
+        $this->email          = $row['email'];
+        $this->password_hash  = $row['password_hash'];
+        $this->role           = $row['role'];
+        $this->avatar         = $row['avatar'] ?? null;
+        $this->phone          = $row['phone'] ?? null;
+        $this->address        = $row['address'] ?? null;
         $this->is_first_login = $row['is_first_login'];
-        $this->status = $row['status'];
-        $this->created_at = $row['created_at'] ?? null;
+        $this->status         = $row['status'];
+        $this->created_at     = $row['created_at'] ?? null;
+    }
+
+    /**
+     * Chuẩn hóa MSSV/mật khẩu tạm theo đặc tả: viết thường (dùng khi hash và khi verify).
+     */
+    public static function normalizeTempPassword(string $raw): string {
+        $t = trim($raw);
+        return function_exists('mb_strtolower')
+            ? mb_strtolower($t, 'UTF-8')
+            : strtolower($t);
     }
 
     // Tạo nhân viên mới (tạo tài khoản chưa có password và mặc định chưa kích hoạt)
     public function createStaff($full_name, $email, $mssvTruongNhom) {
-        // Hash password mặc định là MSSV trưởng nhóm
-        $hashed_pwd = password_hash(strtolower($mssvTruongNhom), PASSWORD_DEFAULT);
+        $plain = self::normalizeTempPassword($mssvTruongNhom);
+        $hashed_pwd = password_hash($plain, PASSWORD_DEFAULT);
         
         $query = "INSERT INTO " . $this->table_name . " 
                   (full_name, email, password_hash, role, is_first_login, status) 
@@ -85,6 +98,21 @@ class User {
             return $this->conn->lastInsertId();
         }
         return false;
+    }
+
+    /**
+     * Đồng bộ lại password_hash với MSSV tạm hiện tại (AppConfig + normalize).
+     * Dùng khi Admin gửi lại email kích hoạt cho staff chưa hoàn tất đổi mật khẩu lần đầu.
+     */
+    public function resetStaffTempPasswordHash(int $userId): bool {
+        $plain = self::normalizeTempPassword(AppConfig::staffTempPassword());
+        $hashed = password_hash($plain, PASSWORD_DEFAULT);
+        $sql = "UPDATE " . $this->table_name . " SET password_hash = :pwd WHERE id = :id AND role = 'staff' LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':pwd', $hashed);
+        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
     }
 
     public function updatePassword($user_id, $newPassword, $isFirstLoginDone = false) {
@@ -181,8 +209,7 @@ class User {
 
     // Lấy thông tin hồ sơ cá nhân cho user hiện tại (không bao gồm mật khẩu)
     public function getProfileById($id) {
-        // Tùy ERD thực tế, có thể bổ sung thêm phone/address sau khi có cột
-        $sql = "SELECT id, full_name, email, role, status, avatar, created_at
+        $sql = "SELECT id, full_name, email, role, status, avatar, phone, address, created_at
                 FROM " . $this->table_name . "
                 WHERE id = :id LIMIT 1";
         $stmt = $this->conn->prepare($sql);
@@ -192,8 +219,8 @@ class User {
         return $row ?: null;
     }
 
-    // Cập nhật hồ sơ cá nhân (họ tên + avatar)
-    public function updateProfile($id, $fullName = null, $avatarPath = null) {
+    // Cập nhật hồ sơ cá nhân (họ tên + phone + address + avatar)
+    public function updateProfile($id, $fullName = null, $avatarPath = null, $phone = null, $address = null) {
         $fields = [];
         $params = [':id' => $id];
 
@@ -207,8 +234,17 @@ class User {
             $params[':avatar'] = $avatarPath;
         }
 
+        if ($phone !== null) {
+            $fields[] = 'phone = :phone';
+            $params[':phone'] = $phone;
+        }
+
+        if ($address !== null) {
+            $fields[] = 'address = :address';
+            $params[':address'] = $address;
+        }
+
         if (empty($fields)) {
-            // Không có gì để cập nhật
             return false;
         }
 

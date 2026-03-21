@@ -12,39 +12,95 @@ class ReportController {
         AuthMiddleware::checkAuth();
         $timeline = isset($_GET['timeline']) ? $_GET['timeline'] : '';
         $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '';
-        $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : '';
+        $toDate   = isset($_GET['toDate'])   ? $_GET['toDate']   : '';
 
         $where = "WHERE 1=1";
+        $useRange = false;
         if ($timeline === 'today') {
             $where .= " AND DATE(created_at) = CURDATE()";
-        } else if ($timeline === 'yesterday') {
+        } elseif ($timeline === 'yesterday') {
             $where .= " AND DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
-        } else if ($timeline === '7days') {
+        } elseif ($timeline === '7days') {
             $where .= " AND DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
-        } else if ($timeline === 'month') {
+        } elseif ($timeline === 'month') {
             $where .= " AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())";
-        } else if ($fromDate && $toDate) {
-            $where .= " AND DATE(created_at) BETWEEN :fd AND :td";
+        } elseif ($fromDate && $toDate) {
+            $where   .= " AND DATE(created_at) BETWEEN :fd AND :td";
+            $useRange = true;
         }
 
-        $sql = "SELECT COALESCE(SUM(total_amount), 0) as total_revenue, COUNT(id) as order_count,
-                       (SELECT COALESCE(SUM(quantity), 0) FROM order_details WHERE order_id IN (SELECT id FROM orders $where)) as total_products_sold
-                FROM orders $where";
+        // Bản WHERE có alias orders — tránh ambiguous created_at khi JOIN products (query [4])
+        $whereO = str_replace(
+            ['DATE(created_at)', 'MONTH(created_at)', 'YEAR(created_at)'],
+            ['DATE(o.created_at)', 'MONTH(o.created_at)', 'YEAR(o.created_at)'],
+            $where
+        );
+
+        // [1] Tổng doanh thu, số đơn, số sản phẩm bán (dùng JOIN tránh duplicate named params)
+        $sql = "SELECT COALESCE(SUM(o.total_amount), 0) AS total_revenue,
+                       COUNT(DISTINCT o.id) AS order_count,
+                       COALESCE(SUM(od.quantity), 0) AS total_products_sold
+                FROM orders o
+                LEFT JOIN order_details od ON od.order_id = o.id
+                " . $where;
 
         $stmt = $this->db->prepare($sql);
-        if ($fromDate && $toDate && $timeline === '') {
+        if ($useRange) {
             $stmt->bindParam(':fd', $fromDate);
             $stmt->bindParam(':td', $toDate);
         }
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // [2] Tổng số khách hàng (toàn bộ, không lọc thời gian)
+        $custCount = (int)$this->db->query("SELECT COUNT(*) FROM customers")->fetchColumn();
+
+        // [3] 5 đơn hàng gần nhất (theo bộ lọc thời gian hiện tại)
+        $recentSql = "SELECT o.id AS OrderId,
+                             DATE_FORMAT(o.created_at, '%Y-%m-%d %H:%i') AS Date,
+                             COALESCE(c.full_name, 'Khách lẻ') AS CustomerName,
+                             o.total_amount AS TotalAmount
+                      FROM orders o
+                      LEFT JOIN customers c ON o.customer_id = c.id
+                      $where
+                      ORDER BY o.created_at DESC
+                      LIMIT 5";
+        $recentStmt = $this->db->prepare($recentSql);
+        if ($useRange) {
+            $recentStmt->bindParam(':fd', $fromDate);
+            $recentStmt->bindParam(':td', $toDate);
+        }
+        $recentStmt->execute();
+        $recentOrders = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // [4] Top 4 sản phẩm bán chạy nhất (theo bộ lọc thời gian)
+        $topSql = "SELECT p.product_name AS ProductName,
+                          SUM(od.quantity) AS TotalSold,
+                          SUM(od.quantity * od.unit_price) AS TotalRevenue
+                   FROM order_details od
+                   JOIN products p ON od.product_id = p.id
+                   JOIN orders o ON od.order_id = o.id
+                   $whereO
+                   GROUP BY p.id, p.product_name
+                   ORDER BY TotalSold DESC
+                   LIMIT 4";
+        $topStmt = $this->db->prepare($topSql);
+        if ($useRange) {
+            $topStmt->bindParam(':fd', $fromDate);
+            $topStmt->bindParam(':td', $toDate);
+        }
+        $topStmt->execute();
+        $topProducts = $topStmt->fetchAll(PDO::FETCH_ASSOC);
+
         $this->logModel->createLog($_SESSION['user_id'], 'view_report_summary', 'Xem báo cáo tổng quan');
 
         Response::json([
-            'TotalRevenue' => (float)$result['total_revenue'],
-            'OrderCount' => (int)$result['order_count'],
-            'TotalProductsSold' => (int)$result['total_products_sold']
+            'TotalRevenue'      => (float)$result['total_revenue'],
+            'OrderCount'        => (int)$result['order_count'],
+            'TotalProductsSold' => (int)$result['total_products_sold'],
+            'CustomerCount'     => $custCount,
+            'RecentOrders'      => $recentOrders,
+            'TopProducts'       => $topProducts,
         ]);
     }
 
@@ -56,9 +112,14 @@ class ReportController {
         $limit = isset($_GET['pageSize']) ? max(1, (int)$_GET['pageSize']) : 20;
         $offset = ($page - 1) * $limit;
 
-        $sql = "SELECT o.id as OrderId, o.created_at as Date, c.full_name as CustomerName, o.total_amount as TotalAmount
+        $sql = "SELECT o.id as OrderId,
+                       DATE_FORMAT(o.created_at, '%d/%m/%Y %H:%i') as Date,
+                       COALESCE(c.full_name, 'Khách lẻ') as CustomerName,
+                       u.full_name as EmployeeName,
+                       o.total_amount as TotalAmount
                 FROM orders o
                 LEFT JOIN customers c ON o.customer_id = c.id
+                LEFT JOIN users u ON o.user_id = u.id
                 WHERE DATE(o.created_at) BETWEEN :fd AND :td
                 ORDER BY o.created_at DESC
                 LIMIT :limit OFFSET :offset";
@@ -118,28 +179,64 @@ class ReportController {
 
     public function getSalesChartData() {
         AuthMiddleware::checkAuth();
-        $type = isset($_GET['type']) ? $_GET['type'] : 'revenue';
-        $period = isset($_GET['period']) ? $_GET['period'] : 'day';
+        $type     = isset($_GET['type'])     ? $_GET['type']     : 'revenue';
+        $period   = isset($_GET['period'])   ? $_GET['period']   : 'day';
+        $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : date('Y-m-d', strtotime('-6 days'));
+        $toDate   = isset($_GET['toDate'])   ? $_GET['toDate']   : date('Y-m-d');
 
-        $groupSql = "";
-        if ($period === 'day') {
-            $groupSql = "DATE(created_at)";
-        } else if ($period === 'week') {
-            $groupSql = "YEARWEEK(created_at)";
+        $valSql = ($type === 'revenue') ? "COALESCE(SUM(total_amount), 0)" : "COUNT(id)";
+
+        if ($period === 'week') {
+            $sql = "SELECT DATE(MIN(created_at)) as label, $valSql as value
+                    FROM orders
+                    WHERE DATE(created_at) BETWEEN :fd AND :td
+                    GROUP BY YEARWEEK(created_at)
+                    ORDER BY YEARWEEK(created_at) ASC
+                    LIMIT 30";
         } else {
-            $groupSql = "DATE(created_at)";
+            $sql = "SELECT DATE(created_at) as label, $valSql as value
+                    FROM orders
+                    WHERE DATE(created_at) BETWEEN :fd AND :td
+                    GROUP BY DATE(created_at)
+                    ORDER BY DATE(created_at) ASC
+                    LIMIT 30";
         }
-
-        $valSql = "COUNT(id) as value";
-        if ($type === 'revenue') {
-            $valSql = "SUM(total_amount) as value";
-        }
-
-        $sql = "SELECT $groupSql as label, $valSql FROM orders GROUP BY label ORDER BY label ASC LIMIT 30";
         $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':fd', $fromDate);
+        $stmt->bindParam(':td', $toDate);
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         Response::json($data);
+    }
+
+    /**
+     * Doanh thu theo danh mục (biểu đồ donut báo cáo).
+     * [GET] /api/reports/categories?fromDate=&toDate=
+     */
+    public function getCategoryBreakdown() {
+        AuthMiddleware::checkAuth();
+        $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '2000-01-01';
+        $toDate   = isset($_GET['toDate'])   ? $_GET['toDate']   : date('Y-m-d');
+
+        $sql = "SELECT cat.category_name AS label,
+                       COALESCE(SUM(od.quantity * od.unit_price), 0) AS value
+                FROM order_details od
+                JOIN orders o ON od.order_id = o.id
+                JOIN products p ON od.product_id = p.id
+                JOIN categories cat ON p.category_id = cat.id
+                WHERE DATE(o.created_at) BETWEEN :fd AND :td
+                GROUP BY cat.id, cat.category_name
+                ORDER BY value DESC
+                LIMIT 10";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':fd', $fromDate);
+        $stmt->bindParam(':td', $toDate);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->logModel->createLog($_SESSION['user_id'], 'view_report_categories', 'Xem báo cáo theo danh mục');
+
+        Response::json($rows);
     }
 }

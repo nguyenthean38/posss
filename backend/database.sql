@@ -8,6 +8,8 @@ CREATE TABLE users (
     password_hash VARCHAR(255),
     role ENUM('admin', 'staff') NOT NULL DEFAULT 'staff',
     avatar VARCHAR(255),
+    phone VARCHAR(20) NULL,
+    address TEXT NULL,
     is_first_login BOOLEAN NOT NULL DEFAULT TRUE,
     status ENUM('active', 'locked') NOT NULL DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -34,16 +36,21 @@ CREATE TABLE logs (
 -- Insert default admin account (admin/admin)
 -- The password_hash here is generated using password_hash('admin', PASSWORD_DEFAULT)
 INSERT INTO users (full_name, email, password_hash, role, is_first_login, status) 
-VALUES ('Administrator', 'admin@gmail.com', '$2y$10$ydAvUtj6VYouejFkXdCM.O4aW.0zJXmN3880z5U2sJFktUh20J.rK', 'admin', FALSE, 'active');
+VALUES ('Administrator', 'admin@gmail.com', '$2y$10$wE/.71W/W9/1A5R0tH79.OX/K2b4U6C4.0lW1d15Q3wZ//c1rM2I6', 'admin', FALSE, 'active');
 
 -- Insert default staff account (staff@gmail.com/admin)
 INSERT INTO users (full_name, email, password_hash, role, is_first_login, status) 
-VALUES ('Staff Member', 'staff@gmail.com', '$2y$10$ydAvUtj6VYouejFkXdCM.O4aW.0zJXmN3880z5U2sJFktUh20J.rK', 'staff', FALSE, 'active');
+VALUES ('Staff Member', 'staff@gmail.com', '$2y$10$wE/.71W/W9/1A5R0tH79.OX/K2b4U6C4.0lW1d15Q3wZ//c1rM2I6', 'staff', FALSE, 'active');
 
 -- BẢNG QUẢN LÝ SẢN PHẨM & DANH MỤC
 CREATE TABLE categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(255) NOT NULL UNIQUE
+    category_name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT NULL,
+    icon VARCHAR(50) NOT NULL DEFAULT 'other',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_by INT NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE products (
@@ -54,6 +61,7 @@ CREATE TABLE products (
     import_price DECIMAL(10, 2) NOT NULL COMMENT 'Giá gốc ẩn với nhân viên',
     selling_price DECIMAL(10, 2) NOT NULL,
     stock_quantity INT NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
 );
 
