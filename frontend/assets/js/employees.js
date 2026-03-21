@@ -1,7 +1,7 @@
 /**
  * Employees Module - Real API Integration
  */
-import { api } from './api.js?v=6';
+import { api } from './api.js?v=5';
 import { requireAuth, isAdmin } from './auth.js';
 
 (() => {
@@ -11,12 +11,6 @@ import { requireAuth, isAdmin } from './auth.js';
     let employees = [];
     let pendingDeleteId = null;
     let viewEmployeeId = null;
-
-    /** Chưa đổi mật khẩu lần đầu — API có thể trả boolean hoặc 0/1 */
-    function needsFirstLoginPwd(e) {
-        const v = e?.is_first_login;
-        return v === true || v === 1 || v === '1';
-    }
 
     const i18n = {
         vi: {
@@ -249,7 +243,7 @@ import { requireAuth, isAdmin } from './auth.js';
 
         grid.innerHTML = list.map(e => {
             const badgeStatus = e.status === 'locked' ? "lock" : "ok";
-            const badgeWarn = needsFirstLoginPwd(e) ? `<span class="ps-badge warn">${t("emp.needPwd")}</span>` : "";
+            const badgeWarn = !e.is_first_login ? `<span class="ps-badge warn">${t("emp.needPwd")}</span>` : "";
             return `
                 <div class="col-12 col-md-6 col-xl-4">
                     <div class="ps-card ps-empCard" data-id="${e.id}">
@@ -314,9 +308,9 @@ import { requireAuth, isAdmin } from './auth.js';
                     <div class="ps-view__value">${roleLabel(e.role)}</div>
                     <div class="ps-view__label">${t("view.pwdChanged")}</div>
                     <div class="ps-view__value">
-                        ${needsFirstLoginPwd(e)
-                            ? `<i class="bi bi-x-square" style="color:var(--red)"></i> ${t("view.no")}`
-                            : `<i class="bi bi-check2-square" style="color:var(--green)"></i> ${t("view.yes")}`}
+                        ${!e.is_first_login
+                            ? `<i class="bi bi-check2-square" style="color:var(--green)"></i> ${t("view.yes")}`
+                            : `<i class="bi bi-x-square" style="color:var(--red)"></i> ${t("view.no")}`}
                     </div>
                 </div>
             </div>

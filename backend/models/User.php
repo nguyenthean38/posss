@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../config/AppConfig.php';
-
 class User {
     private $conn;
     private $table_name = "users";
@@ -70,20 +68,9 @@ class User {
         $this->created_at     = $row['created_at'] ?? null;
     }
 
-    /**
-     * Chuẩn hóa MSSV/mật khẩu tạm theo đặc tả: viết thường (dùng khi hash và khi verify).
-     */
-    public static function normalizeTempPassword(string $raw): string {
-        $t = trim($raw);
-        return function_exists('mb_strtolower')
-            ? mb_strtolower($t, 'UTF-8')
-            : strtolower($t);
-    }
-
     // Tạo nhân viên mới (tạo tài khoản chưa có password và mặc định chưa kích hoạt)
     public function createStaff($full_name, $email, $mssvTruongNhom) {
-        $plain = self::normalizeTempPassword($mssvTruongNhom);
-        $hashed_pwd = password_hash($plain, PASSWORD_DEFAULT);
+        $hashed_pwd = password_hash($mssvTruongNhom, PASSWORD_DEFAULT);
         
         $query = "INSERT INTO " . $this->table_name . " 
                   (full_name, email, password_hash, role, is_first_login, status) 
@@ -98,21 +85,6 @@ class User {
             return $this->conn->lastInsertId();
         }
         return false;
-    }
-
-    /**
-     * Đồng bộ lại password_hash với MSSV tạm hiện tại (AppConfig + normalize).
-     * Dùng khi Admin gửi lại email kích hoạt cho staff chưa hoàn tất đổi mật khẩu lần đầu.
-     */
-    public function resetStaffTempPasswordHash(int $userId): bool {
-        $plain = self::normalizeTempPassword(AppConfig::staffTempPassword());
-        $hashed = password_hash($plain, PASSWORD_DEFAULT);
-        $sql = "UPDATE " . $this->table_name . " SET password_hash = :pwd WHERE id = :id AND role = 'staff' LIMIT 1";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':pwd', $hashed);
-        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->rowCount() > 0;
     }
 
     public function updatePassword($user_id, $newPassword, $isFirstLoginDone = false) {

@@ -29,20 +29,13 @@ class ReportController {
             $useRange = true;
         }
 
-        // Bản WHERE có alias orders — tránh ambiguous created_at khi JOIN products (query [4])
-        $whereO = str_replace(
-            ['DATE(created_at)', 'MONTH(created_at)', 'YEAR(created_at)'],
-            ['DATE(o.created_at)', 'MONTH(o.created_at)', 'YEAR(o.created_at)'],
-            $where
-        );
-
         // [1] Tổng doanh thu, số đơn, số sản phẩm bán (dùng JOIN tránh duplicate named params)
         $sql = "SELECT COALESCE(SUM(o.total_amount), 0) AS total_revenue,
                        COUNT(DISTINCT o.id) AS order_count,
                        COALESCE(SUM(od.quantity), 0) AS total_products_sold
                 FROM orders o
                 LEFT JOIN order_details od ON od.order_id = o.id
-                " . $where;
+                " . str_replace("WHERE 1=1", "WHERE 1=1", $where);
 
         $stmt = $this->db->prepare($sql);
         if ($useRange) {
@@ -80,7 +73,7 @@ class ReportController {
                    FROM order_details od
                    JOIN products p ON od.product_id = p.id
                    JOIN orders o ON od.order_id = o.id
-                   $whereO
+                   $where
                    GROUP BY p.id, p.product_name
                    ORDER BY TotalSold DESC
                    LIMIT 4";
@@ -112,14 +105,9 @@ class ReportController {
         $limit = isset($_GET['pageSize']) ? max(1, (int)$_GET['pageSize']) : 20;
         $offset = ($page - 1) * $limit;
 
-        $sql = "SELECT o.id as OrderId,
-                       DATE_FORMAT(o.created_at, '%d/%m/%Y %H:%i') as Date,
-                       COALESCE(c.full_name, 'Khách lẻ') as CustomerName,
-                       u.full_name as EmployeeName,
-                       o.total_amount as TotalAmount
+        $sql = "SELECT o.id as OrderId, o.created_at as Date, c.full_name as CustomerName, o.total_amount as TotalAmount
                 FROM orders o
                 LEFT JOIN customers c ON o.customer_id = c.id
-                LEFT JOIN users u ON o.user_id = u.id
                 WHERE DATE(o.created_at) BETWEEN :fd AND :td
                 ORDER BY o.created_at DESC
                 LIMIT :limit OFFSET :offset";
@@ -208,35 +196,5 @@ class ReportController {
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         Response::json($data);
-    }
-
-    /**
-     * Doanh thu theo danh mục (biểu đồ donut báo cáo).
-     * [GET] /api/reports/categories?fromDate=&toDate=
-     */
-    public function getCategoryBreakdown() {
-        AuthMiddleware::checkAuth();
-        $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '2000-01-01';
-        $toDate   = isset($_GET['toDate'])   ? $_GET['toDate']   : date('Y-m-d');
-
-        $sql = "SELECT cat.category_name AS label,
-                       COALESCE(SUM(od.quantity * od.unit_price), 0) AS value
-                FROM order_details od
-                JOIN orders o ON od.order_id = o.id
-                JOIN products p ON od.product_id = p.id
-                JOIN categories cat ON p.category_id = cat.id
-                WHERE DATE(o.created_at) BETWEEN :fd AND :td
-                GROUP BY cat.id, cat.category_name
-                ORDER BY value DESC
-                LIMIT 10";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':fd', $fromDate);
-        $stmt->bindParam(':td', $toDate);
-        $stmt->execute();
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->logModel->createLog($_SESSION['user_id'], 'view_report_categories', 'Xem báo cáo theo danh mục');
-
-        Response::json($rows);
     }
 }

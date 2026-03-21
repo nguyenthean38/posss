@@ -1,5 +1,5 @@
 // Reports Module - Real API Integration
-import API from './api.js?v=6';
+import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
 
 (() => {
@@ -347,7 +347,7 @@ import { requireAuth } from './auth.js';
                         <td><a class="ps-link" href="javascript:void(0)">#${o.OrderId}</a></td>
                         <td>${o.Date || "-"}</td>
                         <td>${o.CustomerName || "Khách lẻ"}</td>
-                        <td>${o.EmployeeName || "-"}</td>
+                        <td>-</td>
                         <td class="text-end" style="font-weight:900">${fmtVND(o.TotalAmount)}</td>
                         <td class="text-center">
                             <button class="ps-actBtn" data-id="${o.OrderId}" title="view"><i class="bi bi-eye"></i></button>
@@ -359,18 +359,13 @@ import { requireAuth } from './auth.js';
                 btn.addEventListener("click", () => openOrder(btn.dataset.id));
             });
 
-            // [4] Charts - revenue line + category donut
+            // [4] Charts - /api/reports/chart?type=revenue&period=day
             try {
-                const [chartData, catRows] = await Promise.all([
-                    API.request(`/api/reports/chart?type=revenue&period=day&fromDate=${from}&toDate=${to}`),
-                    API.request(`/api/reports/categories?fromDate=${from}&toDate=${to}`).catch(() => [])
-                ]);
-                const catLabels = (catRows || []).map(r => r.label || "");
-                const catValues = (catRows || []).map(r => parseFloat(r.value) || 0);
+                const chartData = await API.request(`/api/reports/chart?type=revenue&period=day&fromDate=${from}&toDate=${to}`);
                 const model = {
                     daily:     (chartData || []).map(d => ({ label: labelDay(d.label), value: parseFloat(d.value) || 0 })),
-                    catLabels,
-                    catValues,
+                    catLabels: [],
+                    catValues: [],
                 };
                 destroyCharts();
                 buildCharts(model);

@@ -31,8 +31,6 @@ set_exception_handler(function($exception) {
 $allowedOrigins = [
     'http://127.0.0.1:8080',   // Docker (truy cập trực tiếp)
     'http://localhost:8080',    // Docker (localhost)
-    'http://127.0.0.1:8888',   // XAMPP / Apache port tùy chỉnh
-    'http://localhost:8888',
     'http://127.0.0.1:5500',   // VS Code Live Server
     'http://localhost:5500',    // VS Code Live Server
     'http://127.0.0.1:3000',   // Dev server khác
@@ -58,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Gọi các file Config & Core
 require_once __DIR__ . '/config/Database.php';
-require_once __DIR__ . '/config/AppConfig.php';
 require_once __DIR__ . '/core/Response.php';
 require_once __DIR__ . '/core/Mailer.php';
 
@@ -263,7 +260,6 @@ elseif ($uri === '/api/reports/summary' && $method === 'GET') { $reportCtrl->get
 elseif ($uri === '/api/reports/orders' && $method === 'GET') { $reportCtrl->getOrdersByTimeline(); }
 elseif ($uri === '/api/reports/profit' && $method === 'GET') { $reportCtrl->getProfitAnalysis(); }
 elseif ($uri === '/api/reports/chart' && $method === 'GET') { $reportCtrl->getSalesChartData(); }
-elseif ($uri === '/api/reports/categories' && $method === 'GET') { $reportCtrl->getCategoryBreakdown(); }
 
 // ====================================================
 // Trường hợp đường dẫn không hợp lệ

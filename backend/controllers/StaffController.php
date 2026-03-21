@@ -20,7 +20,7 @@ class StaffController {
 
         $fullName = $data['full_name'] ?? '';
         $email = $data['email'] ?? '';
-        $mssvTruongNhom = AppConfig::staffTempPassword(); // Một nguồn: AppConfig / env STAFF_TEMP_PASSWORD
+        $mssvTruongNhom = "52300003"; // Mật khẩu tạm thời mặc định
 
         if (empty($fullName) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             Response::json(["message" => "Thông tin không hợp lệ!"], 400);
@@ -40,7 +40,7 @@ class StaffController {
                 // UC-02: Gửi mail
                 $sent = Mailer::sendLoginLink($email, $token);
                 if($sent) {
-                    Response::json(["message" => "Tạo thành công, đã gửi kích hoạt link (hiệu lực 1 phút) tới hộp thư!"]);
+                    Response::json(["message" => "Tạo thành công, đã gửi kích hoạt link 1 phút tới hộp thư!"]);
                 } else {
                     $this->logModel->createLog($adminId, 'mail_error', "Gửi mail thất bại cho: " . $email);
                     Response::json(["message" => "Tạo tài khoản thành công nhưng không gửi được Email"], 201);
@@ -56,30 +56,18 @@ class StaffController {
         AuthMiddleware::checkAdmin();
         
         $this->tokenModel->voidOldTokens($staffId); // Hủy token cũ
-
-        $query = "SELECT email, role, is_first_login FROM users WHERE id = ?";
+        
+        // Cần truyền biến $email. Code nên fetch userby id nhưng tôi tạm mô phỏng (cần query by ID)
+        $query = "SELECT email FROM users WHERE id = ?";
         $stmt = $this->db->prepare($query);
         $stmt->execute([$staffId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$row) {
-            Response::json(["message" => "User không tồn tại!"], 404);
-        }
-
+        if (!$row) Response::json(["message" => "User không tồn tại!"], 404);
+        
         $email = $row['email'];
-        $role = $row['role'] ?? '';
-        $ifl = $row['is_first_login'] ?? 0;
-        $isFirstLogin = ($ifl === true || $ifl === 1 || $ifl === '1');
-
-        // Staff chưa đổi mật khẩu lần đầu: đồng bộ hash MSSV tạm với cấu hình hiện tại (tránh hash cũ sau đổi AppConfig)
-        if ($role === 'staff' && $isFirstLogin) {
-            if ($this->userModel->resetStaffTempPasswordHash((int)$staffId)) {
-                $this->logModel->createLog($_SESSION['user_id'], 'resend_sync_temp_pwd', 'Đã đồng bộ MK tạm khi gửi lại email staff ID=' . (int)$staffId);
-            }
-        }
-
         $token = $this->tokenModel->createToken($staffId);
-
+        
         if ($token && Mailer::sendLoginLink($email, $token)) {
             $this->logModel->createLog($_SESSION['user_id'], 'resend_email_staff', "Đã gửi lại link kích hoạt cho: " . $email);
             Response::json(["message" => "Gửi lại link kích hoạt thành công!"]);
