@@ -1,6 +1,7 @@
 // Categories Module - Real API Integration
 import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
+import { getCategoryIcon } from './assets.js';
 
 (() => {
     requireAuth();
@@ -172,15 +173,13 @@ import { requireAuth } from './auth.js';
     }
 
     function iconClass(icon) {
-        const MAP = {
-            phone: "bi-phone",
-            accessory: "bi-tag",
-            earbuds: "bi-headphones",
-            charger: "bi-battery-charging",
-            watch: "bi-smartwatch",
-            other: "bi-box-seam",
-        };
-        return MAP[icon] || "bi-tags";
+        const iconConfig = getCategoryIcon(icon || 'other');
+        return iconConfig.icon;
+    }
+    
+    function iconColor(icon) {
+        const iconConfig = getCategoryIcon(icon || 'other');
+        return iconConfig.color;
     }
 
     async function render() {
@@ -200,10 +199,11 @@ import { requireAuth } from './auth.js';
             grid.innerHTML = list.map(c => {
                 const n = c.product_count || 0;
                 const name = c.name || c.category_name || "-";
+                const color = iconColor(c.icon);
                 return `
             <div class="col-12 col-md-6 col-xl-4">
               <div class="ps-card ps-catCard" data-id="${c.id}" role="button" tabindex="0">
-                <div class="ps-catIcon"><i class="bi ${iconClass(c.icon)}"></i></div>
+                <div class="ps-catIcon"><i class="bi ${iconClass(c.icon)}" style="color: ${color};"></i></div>
                 <div class="ps-catMeta">
                   <div class="ps-catName">${name}</div>
                   <div class="ps-catCount">${n} ${t("cat.items")}</div>

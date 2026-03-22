@@ -1,6 +1,8 @@
 // Products Module - Real API Integration
 import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
+import { getProductImage, handleImageError } from './assets.js';
+import { getProductImage } from './assets.js';
 
 (() => {
     requireAuth();
@@ -315,6 +317,12 @@ import { requireAuth } from './auth.js';
             const viewBody = document.getElementById("viewBody");
             viewBody.innerHTML = `
         <div class="ps-view__hero">
+          <div class="ps-view__image" style="text-align: center; margin-bottom: 1rem;">
+            <img src="${getProductImage(p.image_url)}" 
+                 alt="${name}" 
+                 onerror="this.src='assets/images/product-placeholder.svg'"
+                 style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover;" />
+          </div>
           <div class="ps-view__icon"><i class="bi ${iconByType(p)}"></i></div>
           <div class="ps-view__name">${name}</div>
           <div class="ps-view__barcode">${p.barcode || "-"}</div>

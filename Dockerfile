@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
 
 # Configure PHP
 RUN echo "session.cookie_httponly = 1" >> /usr/local/etc/php/conf.d/session.ini \
+    && echo "session.cookie_samesite = Lax" >> /usr/local/etc/php/conf.d/session.ini \
     && echo "session.gc_maxlifetime = 3600" >> /usr/local/etc/php/conf.d/session.ini \
     && echo "upload_max_filesize = 10M" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size = 10M" >> /usr/local/etc/php/conf.d/uploads.ini \

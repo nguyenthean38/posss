@@ -4,6 +4,7 @@
  * Cookie PHPSESSID được browser tự động quản lý
  */
 import { api } from './api.js?v=5';
+import { getAvatarImage } from './assets.js';
 
 const STORAGE_KEY = "ps_user";
 
@@ -97,7 +98,15 @@ export async function requireAuth(redirectTo = "login.html") {
       
       document.querySelectorAll('.ps-user__name').forEach(el => el.textContent = nameStr);
       document.querySelectorAll('.ps-user__role').forEach(el => el.textContent = roleStr);
-      document.querySelectorAll('.ps-user__avatar').forEach(el => el.textContent = initials);
+      
+      // Update avatar - use image if available, otherwise use initials
+      document.querySelectorAll('.ps-user__avatar').forEach(el => {
+          if (u.avatar) {
+              el.innerHTML = `<img src="${getAvatarImage(u.avatar)}" alt="${nameStr}" onerror="this.innerHTML='${initials}'" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
+          } else {
+              el.textContent = initials;
+          }
+      });
   }
   applyUserTopBar(user);
   

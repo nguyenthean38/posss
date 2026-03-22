@@ -1,4 +1,7 @@
 <?php
+// Start session FIRST - before any output or headers
+session_start();
+
 // Disable HTML error output - always return JSON
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
@@ -59,8 +62,7 @@ require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/core/Response.php';
 require_once __DIR__ . '/core/Mailer.php';
 
-// Cấu hình Session cho Authentication
-session_start();
+// Session đã được start ở đầu file
 require_once __DIR__ . '/middlewares/AuthMiddleware.php';
 
 // Require Models

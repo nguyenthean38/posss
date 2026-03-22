@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none">
+  <circle cx="150" cy="150" r="140" fill="#f9fafb"/>
+  <g transform="translate(100, 100)">
+    <circle cx="20" cy="80" r="8" fill="#d1d5db"/>
+    <circle cx="80" cy="80" r="8" fill="#d1d5db"/>
+    <path d="M5 20h15l10 40h50l8-30H30" stroke="#d1d5db" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  <text x="150" y="240" font-family="Arial, sans-serif" font-size="18" fill="#6b7280" text-anchor="middle" font-weight="500">Giỏ hàng trống</text>
+</svg>

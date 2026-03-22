@@ -1,0 +1,52 @@
+{
+  "smartphone": {
+    "icon": "bi-phone",
+    "color": "#3b82f6",
+    "label": "Điện thoại"
+  },
+  "tablet": {
+    "icon": "bi-tablet",
+    "color": "#8b5cf6",
+    "label": "Máy tính bảng"
+  },
+  "laptop": {
+    "icon": "bi-laptop",
+    "color": "#06b6d4",
+    "label": "Laptop"
+  },
+  "watch": {
+    "icon": "bi-smartwatch",
+    "color": "#f59e0b",
+    "label": "Đồng hồ thông minh"
+  },
+  "headphone": {
+    "icon": "bi-headphones",
+    "color": "#ec4899",
+    "label": "Tai nghe"
+  },
+  "speaker": {
+    "icon": "bi-speaker",
+    "color": "#10b981",
+    "label": "Loa"
+  },
+  "charger": {
+    "icon": "bi-battery-charging",
+    "color": "#84cc16",
+    "label": "Sạc & cáp"
+  },
+  "case": {
+    "icon": "bi-phone-flip",
+    "color": "#6366f1",
+    "label": "Ốp lưng & bao da"
+  },
+  "screen": {
+    "icon": "bi-display",
+    "color": "#14b8a6",
+    "label": "Kính cường lực"
+  },
+  "other": {
+    "icon": "bi-box",
+    "color": "#64748b",
+    "label": "Phụ kiện khác"
+  }
+}
