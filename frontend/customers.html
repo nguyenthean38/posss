@@ -147,6 +147,16 @@
 
                     <label class="ps-label mt-3" data-i18n="cus.fAddress">Address</label>
                     <input class="ps-input" id="fAddress" placeholder="123 Nguyễn Huệ, Q1, HCM" />
+
+                    <!-- Avatar Upload (Optional) -->
+                    <div class="mt-3">
+                        <label class="ps-label">Ảnh đại diện <span style="color: var(--muted); font-size: 0.875rem;">(Tùy chọn)</span></label>
+                        <input class="ps-input" type="file" id="fAvatar" accept="image/*" />
+                        <small class="text-muted d-block mt-1">JPG, PNG, GIF, WEBP - Tối đa 2MB. Nếu không chọn, sẽ dùng ảnh mặc định.</small>
+                        <div id="avatarPreview" class="mt-2" style="display: none;">
+                            <img id="previewAvatar" src="" alt="Preview" style="max-width: 120px; max-height: 120px; border-radius: 50%; object-fit: cover;" />
+                        </div>
+                    </div>
                 </div>
 
                 <div class="ps-modal__footer d-flex gap-2">

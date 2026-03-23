@@ -191,6 +191,10 @@ class ApiClient {
     }
 
     async createProduct(data) {
+        // Check if data contains File (image upload)
+        if (data instanceof FormData) {
+            return this.upload('/api/products', data);
+        }
         return this.request('/api/products', {
             method: 'POST',
             body: JSON.stringify(data)
@@ -198,6 +202,26 @@ class ApiClient {
     }
 
     async updateProduct(id, data) {
+        // Check if data contains File (image upload)
+        if (data instanceof FormData) {
+            const url = `${this.baseUrl}/api/products/${id}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: data // Không set Content-Type, browser tự set
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Update failed');
+                }
+                return result;
+            } catch (error) {
+                console.error('Update failed:', error);
+                throw error;
+            }
+        }
         return this.request(`/api/products/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
@@ -259,8 +283,39 @@ class ApiClient {
     }
 
     async createCustomer(data) {
+        // Check if data contains File (avatar upload)
+        if (data instanceof FormData) {
+            return this.upload('/api/customers', data);
+        }
         return this.request('/api/customers', {
             method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateCustomer(id, data) {
+        // Check if data contains File (avatar upload)
+        if (data instanceof FormData) {
+            const url = `${this.baseUrl}/api/customers/${id}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: data // Không set Content-Type, browser tự set
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Update failed');
+                }
+                return result;
+            } catch (error) {
+                console.error('Update failed:', error);
+                throw error;
+            }
+        }
+        return this.request(`/api/customers/${id}`, {
+            method: 'PUT',
             body: JSON.stringify(data)
         });
     }
@@ -373,7 +428,7 @@ api.customers = {
     },
     getById: async (id) => { const r = await api.getCustomer(id); return r.customer || r; },
     create: (data) => api.createCustomer(data),
-    update: (id, data) => api.request(`/api/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    update: (id, data) => api.updateCustomer(id, data),
     delete: (id) => api.request(`/api/customers/${id}`, { method: 'DELETE' }),
     getHistory: (id, params) => api.getCustomerHistory(id, params)
 };

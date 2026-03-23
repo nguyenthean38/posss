@@ -69,6 +69,11 @@ class ProductController {
             Response::json(["message" => "Dữ liệu sản phẩm không hợp lệ"], 400);
         }
 
+        // Kiểm tra giá bán phải >= giá nhập (tránh bán lỗ)
+        if ($sellingPrice < $importPrice) {
+            Response::json(["message" => "Giá bán phải lớn hơn hoặc bằng giá nhập"], 400);
+        }
+
         // Kiểm tra danh mục tồn tại
         if (!$this->categoryModel->findById($categoryId)) {
             Response::json(["message" => "Danh mục không tồn tại"], 400);
@@ -79,7 +84,22 @@ class ProductController {
             Response::json(["message" => "Mã vạch đã tồn tại trong hệ thống"], 400);
         }
 
-        $newId = $this->productModel->create($categoryId, $name, $barcode, $importPrice, $sellingPrice, $stockQuantity);
+        // Upload ảnh sản phẩm (BẮT BUỘC)
+        $imagePath = null;
+        if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $imagePath = FileUpload::uploadImage($_FILES['image'], 'products', 'product_');
+            } catch (Exception $e) {
+                Response::json(["message" => $e->getMessage()], 400);
+            }
+        }
+
+        // Ảnh sản phẩm là BẮT BUỘC
+        if ($imagePath === null) {
+            Response::json(["message" => "Ảnh sản phẩm là bắt buộc"], 400);
+        }
+
+        $newId = $this->productModel->create($categoryId, $name, $barcode, $imagePath, $importPrice, $sellingPrice, $stockQuantity);
         if ($newId) {
             $this->logModel->createLog($_SESSION['user_id'], 'create_product', 'Tạo sản phẩm ID=' . $newId);
             $product = $this->productModel->findById($newId);
@@ -118,6 +138,11 @@ class ProductController {
             Response::json(["message" => "Dữ liệu sản phẩm không hợp lệ"], 400);
         }
 
+        // Kiểm tra giá bán phải >= giá nhập (tránh bán lỗ)
+        if ($sellingPrice < $importPrice) {
+            Response::json(["message" => "Giá bán phải lớn hơn hoặc bằng giá nhập"], 400);
+        }
+
         // Kiểm tra danh mục tồn tại
         if (!$this->categoryModel->findById($categoryId)) {
             Response::json(["message" => "Danh mục không tồn tại"], 400);
@@ -128,7 +153,21 @@ class ProductController {
             Response::json(["message" => "Mã vạch đã tồn tại trong hệ thống"], 400);
         }
 
-        if ($this->productModel->update($id, $categoryId, $name, $barcode, $importPrice, $sellingPrice, $stockQuantity)) {
+        // Upload ảnh mới nếu có
+        $imagePath = null;
+        if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $imagePath = FileUpload::uploadImage($_FILES['image'], 'products', 'product_');
+                // Xóa ảnh cũ nếu upload thành công
+                if ($imagePath && !empty($product['image'])) {
+                    FileUpload::deleteFile($product['image']);
+                }
+            } catch (Exception $e) {
+                Response::json(["message" => $e->getMessage()], 400);
+            }
+        }
+
+        if ($this->productModel->update($id, $categoryId, $name, $barcode, $imagePath, $importPrice, $sellingPrice, $stockQuantity)) {
             $this->logModel->createLog($_SESSION['user_id'], 'update_product', 'Cập nhật sản phẩm ID=' . $id);
             $updated = $this->productModel->findById($id);
             Response::json([

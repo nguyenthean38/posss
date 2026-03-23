@@ -261,6 +261,13 @@ import { requireAuth } from './auth.js';
             document.getElementById("fName").value = c.name || "";
             document.getElementById("fPhone").value = c.phone || "";
             document.getElementById("fAddress").value = c.address || "";
+            
+            // Clear avatar input and preview
+            const avatarInput = document.getElementById("fAvatar");
+            const avatarPreview = document.getElementById("avatarPreview");
+            if (avatarInput) avatarInput.value = "";
+            if (avatarPreview) avatarPreview.style.display = "none";
+            
             bootstrap.Modal.getOrCreateInstance(document.getElementById("cusModal")).show();
         } catch (err) {
             console.error('Edit error:', err);
@@ -274,13 +281,12 @@ import { requireAuth } from './auth.js';
             const name = (document.getElementById("fName").value || "").trim();
             const phone = (document.getElementById("fPhone").value || "").trim();
             const address = (document.getElementById("fAddress").value || "").trim();
+            const avatarFile = document.getElementById("fAvatar").files[0];
 
             if (!name || !phone) {
                 toast(t("toast.invalid"));
                 return;
             }
-
-            const data = { name, phone, address };
 
             if (!id) {
                 // Khách hàng chỉ được tạo qua POS checkout, không cho tạo thủ công
@@ -288,7 +294,20 @@ import { requireAuth } from './auth.js';
                 return;
             }
 
-            await API.customers.update(id, data);
+            // Sử dụng FormData nếu có file upload
+            if (avatarFile) {
+                const formData = new FormData();
+                formData.append('full_name', name);
+                formData.append('phone_number', phone);
+                formData.append('address', address);
+                formData.append('avatar', avatarFile);
+                
+                await API.customers.update(id, formData);
+            } else {
+                // Không có avatar mới, chỉ update thông tin
+                const data = { full_name: name, phone_number: phone, address };
+                await API.customers.update(id, data);
+            }
 
             render();
             toast(t("toast.saved"));
@@ -386,6 +405,24 @@ import { requireAuth } from './auth.js';
         document.getElementById("sortSelect")?.addEventListener("change", render);
         document.getElementById("btnSave")?.addEventListener("click", save);
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
+
+        // Avatar preview
+        document.getElementById("fAvatar")?.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            const preview = document.getElementById("avatarPreview");
+            const previewImg = document.getElementById("previewAvatar");
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = "none";
+            }
+        });
 
         render();
     }

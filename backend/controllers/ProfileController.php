@@ -24,9 +24,8 @@ class ProfileController {
         AuthMiddleware::checkAuth();
         $userId = $_SESSION['user_id'];
 
-        // Chấp nhận cả full_name lẫn HoTen để tương thích ngược
-        $fullName = isset($data['full_name']) ? trim($data['full_name'])
-                  : (isset($data['HoTen'])    ? trim($data['HoTen']) : null);
+        // Chuẩn hóa: chỉ chấp nhận snake_case (theo database schema)
+        $fullName = isset($data['full_name']) ? trim($data['full_name']) : null;
         $phone   = isset($data['phone'])   ? trim($data['phone'])   : null;
         $address = isset($data['address']) ? trim($data['address']) : null;
 
@@ -47,9 +46,12 @@ class ProfileController {
     public function uploadAvatar() {
         AuthMiddleware::checkAuth();
         $userId = $_SESSION['user_id'];
-        if (isset($_FILES['Image']) && $_FILES['Image']['error'] === UPLOAD_ERR_OK) {
-            $fileTmp = $_FILES['Image']['tmp_name'];
-            $fileSize = $_FILES['Image']['size'];
+        // Chuẩn hóa: chấp nhận cả 'Image' và 'avatar' để tương thích
+        $fileKey = isset($_FILES['avatar']) ? 'avatar' : (isset($_FILES['Image']) ? 'Image' : null);
+        
+        if ($fileKey && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
+            $fileTmp = $_FILES[$fileKey]['tmp_name'];
+            $fileSize = $_FILES[$fileKey]['size'];
             $maxSize = 2 * 1024 * 1024;
             if ($fileSize > $maxSize) Response::json(["message" => "Ảnh vượt quá 2MB"], 400);
 

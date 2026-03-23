@@ -40,14 +40,35 @@ export const ASSETS = {
  * Get product image with fallback
  */
 export function getProductImage(imageUrl) {
-    return imageUrl || ASSETS.placeholder.product;
+    if (!imageUrl) {
+        return ASSETS.placeholder.product;
+    }
+    
+    // Nếu đã là URL đầy đủ (http/https), trả về luôn
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+    
+    // Nếu là relative path, thêm backend URL
+    // Backend uploads folder: /backend/uploads/...
+    return `http://localhost:8080/backend/${imageUrl}`;
 }
 
 /**
  * Get avatar image with fallback
  */
 export function getAvatarImage(avatarUrl) {
-    return avatarUrl || ASSETS.placeholder.avatar;
+    if (!avatarUrl) {
+        return ASSETS.placeholder.avatar;
+    }
+    
+    // Nếu đã là URL đầy đủ (http/https), trả về luôn
+    if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+        return avatarUrl;
+    }
+    
+    // Nếu là relative path, thêm backend URL
+    return `http://localhost:8080/backend/${avatarUrl}`;
 }
 
 /**

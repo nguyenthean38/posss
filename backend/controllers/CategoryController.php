@@ -12,9 +12,10 @@ class CategoryController {
     // [POST] /api/categories/search
     public function searchCategories($data) {
         AuthMiddleware::checkAdmin();
-        $page = isset($data['Page']) ? max(1, (int)$data['Page']) : (isset($data['page']) ? max(1, (int)$data['page']) : 1);
-        $limit = isset($data['PageSize']) ? max(1, (int)$data['PageSize']) : (isset($data['pageSize']) ? max(1, (int)$data['pageSize']) : 20);
-        $keyword = isset($data['Keyword']) ? trim($data['Keyword']) : (isset($data['keyword']) ? trim($data['keyword']) : '');
+        // Chuẩn hóa: chỉ chấp nhận snake_case
+        $page = isset($data['page']) ? max(1, (int)$data['page']) : 1;
+        $limit = isset($data['pageSize']) ? max(1, (int)$data['pageSize']) : 20;
+        $keyword = isset($data['keyword']) ? trim($data['keyword']) : '';
         $result = $this->categoryModel->getList($page, $limit, $keyword);
         $this->logModel->createLog($_SESSION['user_id'], 'search_categories', 'Tìm kiếm danh mục');
         Response::json($result);
@@ -57,8 +58,8 @@ class CategoryController {
     public function store($data) {
         AuthMiddleware::checkAdmin();
 
-        $name        = isset($data['name'])          ? trim($data['name'])
-                     : (isset($data['category_name']) ? trim($data['category_name']) : '');
+        // Chuẩn hóa: chỉ chấp nhận 'category_name' (theo database schema)
+        $name        = isset($data['category_name']) ? trim($data['category_name']) : '';
         $description = isset($data['description'])   ? trim($data['description']) : null;
         $icon        = isset($data['icon'])           ? trim($data['icon'])        : 'other';
 
@@ -92,8 +93,8 @@ class CategoryController {
             Response::json(["message" => "ID danh mục không hợp lệ"], 400);
         }
 
-        $name        = isset($data['name'])          ? trim($data['name'])
-                     : (isset($data['category_name']) ? trim($data['category_name']) : '');
+        // Chuẩn hóa: chỉ chấp nhận 'category_name' (theo database schema)
+        $name        = isset($data['category_name']) ? trim($data['category_name']) : '';
         $description = isset($data['description'])   ? trim($data['description']) : null;
         $icon        = isset($data['icon'])           ? trim($data['icon'])        : null;
 

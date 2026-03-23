@@ -21,6 +21,9 @@
     --cyan: #22d3ee;
     --green: #22c55e;
     --red: #ef4444;
+    --orange: #ff6b35;
+    --pink: #ff6b9d;
+    --amber: #fbbf24;
 
     --focus: 0 0 0 4px rgba(59, 130, 246, .18);
 
@@ -428,14 +431,25 @@ body {
     display: grid;
     place-items: center;
     border: 1px solid var(--border);
-    background: color-mix(in srgb, #fff 3%, transparent);
+    background: linear-gradient(135deg, 
+        rgba(255, 107, 53, 0.1), 
+        rgba(255, 107, 157, 0.08));
     box-shadow: var(--shadowSoft);
     z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.ps-kpi:hover .ps-kpi__icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
 }
 
 .ps-kpi__icon i {
     font-size: 18px;
-    color: var(--text);
+    background: linear-gradient(135deg, #ff6b35, #ff6b9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .ps-kpi__body {
@@ -1430,24 +1444,53 @@ body[data-theme="light"] .ps-cart__footer {
     color: color-mix(in srgb, var(--primary) 92%, transparent);
 }
 
-/* primary button (reuse) */
+/* primary button (reuse) - E-commerce vibrant style */
 .ps-btn-primary {
     height: 52px;
     border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
-    background: color-mix(in srgb, var(--primary) 85%, transparent);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    background: linear-gradient(135deg, #ff6b35 0%, #ff6b9d 100%);
     color: white;
     font-weight: 900;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: var(--shadowSoft);
+    box-shadow: 0 10px 25px -8px rgba(255, 107, 53, 0.5);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.ps-btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.ps-btn-primary:hover::before {
+    left: 100%;
+}
+
+.ps-btn-primary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 15px 35px -8px rgba(255, 107, 53, 0.7);
+    filter: brightness(1.15);
+}
+
+.ps-btn-primary:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .ps-btn-primary:disabled {
     opacity: .55;
     cursor: not-allowed;
+    transform: none;
 }
 
 /* modal */
@@ -2854,4 +2897,256 @@ body[data-theme="light"] select.ps-input option {
 /* ===== RBAC Admin Only Mask ===== */
 body:not([data-role="admin"]) .admin-only {
     display: none !important;
+}
+
+
+/* =========================
+   E-COMMERCE ENHANCEMENTS - Vibrant Colors & Animations
+========================= */
+
+/* Enhanced product card hover with orange-pink gradient glow */
+.ps-product {
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ps-product:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: rgba(255, 107, 53, 0.4);
+    background: color-mix(in srgb, #fff 5%, transparent);
+    box-shadow: 0 15px 40px rgba(255, 107, 53, 0.2);
+}
+
+.ps-product__icon {
+    background: linear-gradient(135deg, 
+        rgba(255, 107, 53, 0.1), 
+        rgba(255, 107, 157, 0.08)) !important;
+    transition: all 0.3s ease;
+}
+
+.ps-product:hover .ps-product__icon {
+    transform: scale(1.15) rotate(-5deg);
+    box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+}
+
+/* Enhanced KPI cards with animated gradient background */
+.ps-kpi {
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.ps-kpi:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 20px 60px rgba(255, 107, 53, 0.15);
+    border-color: var(--border2);
+}
+
+.ps-kpi::after {
+    background:
+        radial-gradient(500px 120px at 20% 0%, rgba(255, 107, 53, 0.15), transparent 60%),
+        radial-gradient(450px 120px at 90% 30%, rgba(255, 107, 157, 0.12), transparent 55%),
+        radial-gradient(400px 100px at 50% 100%, rgba(251, 191, 36, 0.10), transparent 50%);
+    opacity: .65;
+    animation: kpiGlow 4s ease-in-out infinite;
+}
+
+@keyframes kpiGlow {
+    0%, 100% { opacity: .65; }
+    50% { opacity: .85; }
+}
+
+/* KPI icon with gradient text and hover animation */
+.ps-kpi__icon {
+    background: linear-gradient(135deg, 
+        rgba(255, 107, 53, 0.1), 
+        rgba(255, 107, 157, 0.08));
+    transition: all 0.3s ease;
+}
+
+.ps-kpi:hover .ps-kpi__icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+}
+
+.ps-kpi__icon i {
+    background: linear-gradient(135deg, #ff6b35, #ff6b9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Category cards with orange accent */
+.ps-catCard {
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ps-catCard:hover {
+    transform: translateY(-3px) scale(1.01);
+    border-color: rgba(255, 107, 53, 0.3);
+    background: color-mix(in srgb, #fff 5%, transparent);
+    box-shadow: 0 15px 40px rgba(255, 107, 53, 0.15);
+}
+
+.ps-catIcon {
+    background: linear-gradient(135deg, 
+        rgba(255, 107, 53, 0.08), 
+        rgba(255, 107, 157, 0.06)) !important;
+    transition: all 0.3s ease;
+}
+
+.ps-catCard:hover .ps-catIcon {
+    transform: scale(1.1) rotate(-3deg);
+    box-shadow: 0 8px 20px rgba(255, 107, 53, 0.25);
+}
+
+.ps-catIcon i {
+    background: linear-gradient(135deg, #ff6b35, #ff6b9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Employee & Customer cards with vibrant hover */
+.ps-empCard,
+.ps-cusCard {
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ps-empCard:hover,
+.ps-cusCard:hover {
+    transform: translateY(-3px) scale(1.01);
+    border-color: rgba(255, 107, 53, 0.25);
+    background: color-mix(in srgb, #fff 5%, transparent);
+    box-shadow: 0 15px 40px rgba(255, 107, 53, 0.12);
+}
+
+/* Add shimmer effect to buttons */
+@keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+.ps-btn-primary,
+.login-btn {
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+}
+
+/* Pulse animation for active nav items */
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 107, 53, 0); }
+}
+
+.ps-nav__item.active {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Floating animation for mascot */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.mascot {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Price tags with gradient */
+.ps-product__price,
+.ps-cartItem__price,
+.ps-kpi__value {
+    background: linear-gradient(135deg, #ff6b35, #ff6b9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Enhanced focus states with orange glow */
+.ps-input:focus,
+.ps-icon-btn:focus,
+.ps-chip:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.25);
+    border-color: rgba(255, 107, 53, 0.5);
+}
+
+/* Loading spinner with gradient */
+@keyframes spin-gradient {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spin {
+    background: linear-gradient(135deg, #ff6b35, #ff6b9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: spin-gradient 1s linear infinite;
+}
+
+/* Badge enhancements with vibrant colors */
+.ps-badge,
+.ps-stock,
+.ps-pill {
+    transition: all 0.2s ease;
+}
+
+.ps-badge:hover,
+.ps-stock:hover,
+.ps-pill:hover {
+    transform: scale(1.05);
+}
+
+/* VIP badge with gold gradient */
+.ps-rank.vip {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+/* Success states with green-orange gradient */
+.ps-badge.ok,
+.ps-stock.ok {
+    background: linear-gradient(135deg, 
+        rgba(34, 197, 94, 0.1), 
+        rgba(251, 191, 36, 0.05));
+}
+
+/* Warning states with amber-orange gradient */
+.ps-badge.warn,
+.ps-stock.low {
+    background: linear-gradient(135deg, 
+        rgba(251, 191, 36, 0.1), 
+        rgba(255, 107, 53, 0.05));
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+    .ps-kpi:hover,
+    .ps-product:hover,
+    .ps-catCard:hover,
+    .ps-empCard:hover,
+    .ps-cusCard:hover {
+        transform: translateY(-2px) scale(1.01);
+    }
+}
+
+/* Dark mode specific enhancements */
+body[data-theme="dark"] .ps-kpi::after {
+    opacity: .75;
+}
+
+body[data-theme="dark"] .ps-product:hover,
+body[data-theme="dark"] .ps-catCard:hover {
+    box-shadow: 0 15px 40px rgba(255, 107, 53, 0.25);
+}
+
+/* Light mode specific enhancements */
+body[data-theme="light"] .ps-kpi::after {
+    opacity: .55;
+}
+
+body[data-theme="light"] .ps-product:hover,
+body[data-theme="light"] .ps-catCard:hover {
+    box-shadow: 0 15px 40px rgba(255, 107, 53, 0.15);
 }

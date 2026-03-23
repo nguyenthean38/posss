@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/core/Response.php';
 require_once __DIR__ . '/core/Mailer.php';
+require_once __DIR__ . '/core/FileUpload.php';
 
 // Session đã được start ở đầu file
 require_once __DIR__ . '/middlewares/AuthMiddleware.php';
@@ -87,8 +88,17 @@ require_once __DIR__ . '/controllers/ProfileController.php';
 // Khởi tạo DB connection
 $db = Database::getConnection();
 
-// Lấy Body Payload (JSON Parse)
-$data = json_decode(file_get_contents("php://input"), true);
+// Lấy Body Payload
+// Nếu là multipart/form-data (có file upload) → dùng $_POST
+// Nếu là application/json → parse JSON từ php://input
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (strpos($contentType, 'multipart/form-data') !== false) {
+    // FormData: Lấy từ $_POST
+    $data = $_POST;
+} else {
+    // JSON: Parse từ php://input
+    $data = json_decode(file_get_contents("php://input"), true);
+}
 // Parse đường dẫn Path parameters /api/staff/{id}/resend
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 

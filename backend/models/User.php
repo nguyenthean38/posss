@@ -71,15 +71,17 @@ class User {
     // Tạo nhân viên mới (tạo tài khoản chưa có password và mặc định chưa kích hoạt)
     public function createStaff($full_name, $email, $mssvTruongNhom) {
         $hashed_pwd = password_hash($mssvTruongNhom, PASSWORD_DEFAULT);
+        $defaultAvatar = 'uploads/avatars/default-staff.png';
         
         $query = "INSERT INTO " . $this->table_name . " 
-                  (full_name, email, password_hash, role, is_first_login, status) 
-                  VALUES (:full_name, :email, :password_hash, 'staff', TRUE, 'active')";
+                  (full_name, email, password_hash, role, avatar, is_first_login, status) 
+                  VALUES (:full_name, :email, :password_hash, 'staff', :avatar, TRUE, 'active')";
         $stmt = $this->conn->prepare($query);
 
         $stmt->bindParam(':full_name', $full_name);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':password_hash', $hashed_pwd);
+        $stmt->bindParam(':avatar', $defaultAvatar);
 
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();

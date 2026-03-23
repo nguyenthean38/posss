@@ -1,7 +1,6 @@
 // Products Module - Real API Integration
 import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
-import { getProductImage, handleImageError } from './assets.js';
 import { getProductImage } from './assets.js';
 
 (() => {
@@ -245,6 +244,12 @@ import { getProductImage } from './assets.js';
                 const stock = p.stock_quantity ?? p.stock ?? 0;
                 return `
         <tr data-id="${p.id}">
+          <td style="width: 60px; padding: 0.5rem;">
+            <img src="${getProductImage(p.image)}" 
+                 alt="${n}" 
+                 onerror="this.src='assets/images/product-placeholder.svg'"
+                 style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;" />
+          </td>
           <td style="font-weight:900">${n}</td>
           <td style="color:var(--muted); font-weight:800">${p.barcode || ""}</td>
           <td><span class="ps-pill">${cat}</span></td>
@@ -277,6 +282,12 @@ import { getProductImage } from './assets.js';
         document.getElementById("fPrice").value = "";
         document.getElementById("fCategory").value = "";
         document.getElementById("fStock").value = "";
+        
+        // Clear image input and preview
+        const imageInput = document.getElementById("fImage");
+        const imagePreview = document.getElementById("imagePreview");
+        if (imageInput) imageInput.value = "";
+        if (imagePreview) imagePreview.style.display = "none";
     }
 
     async function openEdit(id) {
@@ -293,6 +304,12 @@ import { getProductImage } from './assets.js';
             document.getElementById("fPrice").value = p.selling_price ?? p.price ?? "";
             document.getElementById("fCategory").value = p.category_id || p.category || "";
             document.getElementById("fStock").value = p.stock_quantity ?? p.stock ?? "";
+
+            // Clear image input and preview
+            const imageInput = document.getElementById("fImage");
+            const imagePreview = document.getElementById("imagePreview");
+            if (imageInput) imageInput.value = "";
+            if (imagePreview) imagePreview.style.display = "none";
 
             bootstrap.Modal.getOrCreateInstance(document.getElementById("productModal")).show();
         } catch (err) {
@@ -317,13 +334,12 @@ import { getProductImage } from './assets.js';
             const viewBody = document.getElementById("viewBody");
             viewBody.innerHTML = `
         <div class="ps-view__hero">
-          <div class="ps-view__image" style="text-align: center; margin-bottom: 1rem;">
-            <img src="${getProductImage(p.image_url)}" 
+          <div class="ps-view__image" style="text-align: center; margin-bottom: 1.5rem;">
+            <img src="${getProductImage(p.image)}" 
                  alt="${name}" 
                  onerror="this.src='assets/images/product-placeholder.svg'"
-                 style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover;" />
+                 style="width: 240px; height: 240px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
           </div>
-          <div class="ps-view__icon"><i class="bi ${iconByType(p)}"></i></div>
           <div class="ps-view__name">${name}</div>
           <div class="ps-view__barcode">${p.barcode || "-"}</div>
         </div>
@@ -371,18 +387,48 @@ import { getProductImage } from './assets.js';
             const import_price = parseNumber(document.getElementById("fCost").value);
             const selling_price = parseNumber(document.getElementById("fPrice").value);
             const stock_quantity = parseNumber(document.getElementById("fStock").value);
+            const imageFile = document.getElementById("fImage").files[0];
 
             if (!product_name || !barcode || !category_id || import_price <= 0 || selling_price <= 0) {
                 toast(t("toast.invalid"));
                 return;
             }
 
-            const data = { product_name, barcode, type, category_id, import_price, selling_price, stock_quantity };
+            // Kiểm tra ảnh bắt buộc khi tạo mới
+            if (!id && !imageFile) {
+                toast("Ảnh sản phẩm là bắt buộc");
+                return;
+            }
 
-            if (id) {
-                await API.products.update(id, data);
+            // Sử dụng FormData nếu có file upload
+            if (imageFile || id) {
+                const formData = new FormData();
+                formData.append('product_name', product_name);
+                formData.append('barcode', barcode);
+                formData.append('type', type);
+                formData.append('category_id', category_id);
+                formData.append('import_price', import_price);
+                formData.append('selling_price', selling_price);
+                formData.append('stock_quantity', stock_quantity);
+                
+                // Thêm ảnh nếu có
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+
+                if (id) {
+                    await API.products.update(id, formData);
+                } else {
+                    await API.products.create(formData);
+                }
             } else {
-                await API.products.create(data);
+                // Fallback cho trường hợp không có file (không nên xảy ra)
+                const data = { product_name, barcode, type, category_id, import_price, selling_price, stock_quantity };
+                if (id) {
+                    await API.products.update(id, data);
+                } else {
+                    await API.products.create(data);
+                }
             }
 
             render();
@@ -390,7 +436,7 @@ import { getProductImage } from './assets.js';
             bootstrap.Modal.getInstance(document.getElementById("productModal"))?.hide();
         } catch (err) {
             console.error('Save error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"));
         }
     }
 
@@ -436,11 +482,14 @@ import { getProductImage } from './assets.js';
 
     async function loadCategories() {
         try {
-            const data = await API.categories.getAll();
+            const response = await API.categories.getAll();
+            // API trả về { items: [...], pagination: {...} }
+            const data = response.items || response || [];
+            
             const fCat = document.getElementById("fCategory");
             if (!fCat) return;
             fCat.innerHTML = `<option value="" disabled selected>Chọn danh mục</option>` +
-                data.map(c => `<option value="${c.id}">${c.category_name}</option>`).join("");
+                data.map(c => `<option value="${c.id}">${c.name || c.category_name}</option>`).join("");
         } catch(err) {
             console.error('Load categories error', err);
         }
@@ -459,6 +508,25 @@ import { getProductImage } from './assets.js';
         document.getElementById("btnAdd")?.addEventListener("click", openAdd);
         document.getElementById("btnSave")?.addEventListener("click", save);
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
+        
+        // Image preview
+        document.getElementById("fImage")?.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            const preview = document.getElementById("imagePreview");
+            const previewImg = document.getElementById("previewImg");
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = "none";
+            }
+        });
+        
         render();
     }
 

@@ -311,7 +311,8 @@ import { getCategoryIcon } from './assets.js';
                 return;
             }
 
-            const data = { name, description, icon };
+            // Backend expects 'category_name' not 'name'
+            const data = { category_name: name, description, icon };
 
             if (id) {
                 await API.categories.update(id, data);

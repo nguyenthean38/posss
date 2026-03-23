@@ -23,6 +23,7 @@ class Customer {
                        c.full_name AS name,
                        c.phone_number AS phone,
                        c.address,
+                       c.avatar,
                        COUNT(o.id) AS total_orders,
                        COALESCE(SUM(o.total_amount), 0) AS total_revenue
                 FROM " . $this->table_name . " c
@@ -56,15 +57,25 @@ class Customer {
         ];
     }
 
-    public function update($id, $fullName, $phoneNumber, $address) {
-        $sql = "UPDATE " . $this->table_name . "
-                SET full_name = :full_name, phone_number = :phone, address = :address
-                WHERE id = :id";
+    public function update($id, $fullName, $phoneNumber, $address, $avatar = null) {
+        $fields = ['full_name = :full_name', 'phone_number = :phone', 'address = :address'];
+        $params = [':full_name' => $fullName, ':phone' => $phoneNumber, ':address' => $address, ':id' => $id];
+
+        // Chỉ update avatar nếu có giá trị mới
+        if ($avatar !== null) {
+            $fields[] = 'avatar = :avatar';
+            $params[':avatar'] = $avatar;
+        }
+
+        $sql = "UPDATE " . $this->table_name . " SET " . implode(', ', $fields) . " WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':full_name', $fullName);
-        $stmt->bindParam(':phone', $phoneNumber);
-        $stmt->bindParam(':address', $address);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        foreach ($params as $key => $value) {
+            if ($key === ':id') {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $value);
+            }
+        }
         return $stmt->execute();
     }
 
@@ -77,7 +88,7 @@ class Customer {
 
     // Tìm khách hàng theo số điện thoại (UC-20)
     public function findByPhone($phoneNumber) {
-        $sql = "SELECT id, full_name AS name, phone_number AS phone, address
+        $sql = "SELECT id, full_name AS name, phone_number AS phone, address, avatar
                 FROM " . $this->table_name . "
                 WHERE phone_number = :phone
                 LIMIT 1";
@@ -104,13 +115,19 @@ class Customer {
     }
 
     // Tạo khách hàng mới (UC-21)
-    public function create($fullName, $phoneNumber, $address = null) {
-        $sql = "INSERT INTO " . $this->table_name . " (full_name, phone_number, address)
-                VALUES (:full_name, :phone, :address)";
+    public function create($fullName, $phoneNumber, $address = null, $avatar = null) {
+        // Nếu không có avatar, dùng ảnh mặc định
+        if ($avatar === null) {
+            $avatar = 'uploads/customers/default-customer.png';
+        }
+
+        $sql = "INSERT INTO " . $this->table_name . " (full_name, phone_number, address, avatar)
+                VALUES (:full_name, :phone, :address, :avatar)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':full_name', $fullName);
         $stmt->bindParam(':phone', $phoneNumber);
         $stmt->bindParam(':address', $address);
+        $stmt->bindParam(':avatar', $avatar);
 
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
@@ -123,6 +140,7 @@ class Customer {
                        c.full_name AS name,
                        c.phone_number AS phone,
                        c.address,
+                       c.avatar,
                        COUNT(o.id) AS total_orders,
                        COALESCE(SUM(o.total_amount), 0) AS total_revenue
                 FROM " . $this->table_name . " c
@@ -192,11 +210,12 @@ class Customer {
 
     public function getPurchaseHistory($customerId, $page = 1, $limit = 20) {
         $offset = ($page - 1) * $limit;
-        $sql = "SELECT id as order_id, created_at as date, total_amount as total, 
-                       (SELECT SUM(quantity) FROM order_details WHERE order_id = orders.id) as total_quantity
-                FROM orders
-                WHERE customer_id = :cid
-                ORDER BY created_at DESC
+        // UC-23: Lịch sử mua hàng - Frontend expects 'id', 'created_at', 'total', 'item_count'
+        $sql = "SELECT o.id, o.created_at, o.total_amount as total, 
+                       COALESCE((SELECT SUM(quantity) FROM order_details WHERE order_id = o.id), 0) as item_count
+                FROM orders o
+                WHERE o.customer_id = :cid
+                ORDER BY o.created_at DESC
                 LIMIT :limit OFFSET :offset";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':cid', $customerId, PDO::PARAM_INT);
@@ -211,15 +230,7 @@ class Customer {
         $countStmt->execute();
         $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        return [
-            'items' => $items,
-            'pagination' => [
-                'page' => (int)$page,
-                'limit' => (int)$limit,
-                'total' => $total,
-                'total_pages' => (int)ceil($total / $limit)
-            ]
-        ];
+        return $items; // Frontend expects array directly, not wrapped in pagination
     }
 
     public function getOrderDetail($orderId) {

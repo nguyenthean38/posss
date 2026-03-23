@@ -33,8 +33,9 @@ class PosController {
         if (session_status() === PHP_SESSION_NONE) session_start();
         if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
 
-        $barcode = isset($data['Barcode']) ? trim($data['Barcode']) : '';
-        $qty = isset($data['Quantity']) ? max(1, (int)$data['Quantity']) : 1;
+        // Chuẩn hóa: chấp nhận cả PascalCase và snake_case để tương thích frontend
+        $barcode = isset($data['barcode']) ? trim($data['barcode']) : (isset($data['Barcode']) ? trim($data['Barcode']) : '');
+        $qty = isset($data['quantity']) ? max(1, (int)$data['quantity']) : (isset($data['Quantity']) ? max(1, (int)$data['Quantity']) : 1);
 
         if ($barcode === '') Response::json(["message" => "Vui lòng nhập mã vạch"], 400);
 
@@ -71,8 +72,9 @@ class PosController {
         if (session_status() === PHP_SESSION_NONE) session_start();
         if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
 
-        $productId = isset($data['ProductId']) ? (int)$data['ProductId'] : 0;
-        $qty = isset($data['NewQuantity']) ? max(1, (int)$data['NewQuantity']) : 1;
+        // Chuẩn hóa: chấp nhận cả PascalCase và snake_case để tương thích frontend
+        $productId = isset($data['product_id']) ? (int)$data['product_id'] : (isset($data['ProductId']) ? (int)$data['ProductId'] : 0);
+        $qty = isset($data['new_quantity']) ? max(1, (int)$data['new_quantity']) : (isset($data['NewQuantity']) ? max(1, (int)$data['NewQuantity']) : 1);
 
         if (isset($_SESSION['cart'][$productId])) {
             $_SESSION['cart'][$productId]['quantity'] = $qty;
@@ -103,10 +105,11 @@ class PosController {
     public function calculateChange($data) {
         AuthMiddleware::checkAuth();
         if (session_status() === PHP_SESSION_NONE) session_start();
-        $customerPay = isset($data['CustomerPay']) ? (float)$data['CustomerPay'] : 0;
+        // Chuẩn hóa: chấp nhận cả PascalCase và snake_case
+        $customerPay = isset($data['customer_pay']) ? (float)$data['customer_pay'] : (isset($data['CustomerPay']) ? (float)$data['CustomerPay'] : 0);
         $total = $this->getCartTotal();
         $change = max(0, $customerPay - $total);
-        Response::json(['ChangeAmount' => $change]);
+        Response::json(['change_amount' => $change, 'ChangeAmount' => $change]); // Trả về cả 2 format
     }
 
     public function checkout($data) {
@@ -114,10 +117,11 @@ class PosController {
         if (session_status() === PHP_SESSION_NONE) session_start();
         if (empty($_SESSION['cart'])) Response::json(["message" => "Giỏ hàng rỗng"], 400);
 
-        $phone = isset($data['Phone']) ? trim($data['Phone']) : '';
-        $fullName = isset($data['FullName']) ? trim($data['FullName']) : '';
-        $address = isset($data['Address']) ? trim($data['Address']) : '';
-        $customerPay = isset($data['CustomerPay']) ? (float)$data['CustomerPay'] : 0;
+        // Chuẩn hóa: chấp nhận cả PascalCase và snake_case
+        $phone = isset($data['phone']) ? trim($data['phone']) : (isset($data['Phone']) ? trim($data['Phone']) : '');
+        $fullName = isset($data['full_name']) ? trim($data['full_name']) : (isset($data['FullName']) ? trim($data['FullName']) : '');
+        $address = isset($data['address']) ? trim($data['address']) : (isset($data['Address']) ? trim($data['Address']) : '');
+        $customerPay = isset($data['customer_pay']) ? (float)$data['customer_pay'] : (isset($data['CustomerPay']) ? (float)$data['CustomerPay'] : 0);
 
         $totalAmount = $this->getCartTotal();
         if ($customerPay < $totalAmount) Response::json(["message" => "Số tiền khách đưa không đủ"], 400);
@@ -170,8 +174,10 @@ class PosController {
             $_SESSION['cart'] = [];
 
             Response::json([
-                'OrderId' => $orderId,
-                'PdfUrl' => '/api/pos/invoice/' . $orderId
+                'order_id' => $orderId,
+                'OrderId' => $orderId, // Tương thích ngược
+                'pdf_url' => '/api/pos/invoice/' . $orderId,
+                'PdfUrl' => '/api/pos/invoice/' . $orderId // Tương thích ngược
             ]);
 
         } catch (Exception $e) {

@@ -14,8 +14,9 @@ class CustomerController {
     public function store($data) {
         AuthMiddleware::checkAuth();
 
-        $fullName = isset($data['full_name']) ? trim($data['full_name']) : (isset($data['name']) ? trim($data['name']) : '');
-        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : (isset($data['phone']) ? trim($data['phone']) : '');
+        // Chuẩn hóa: chỉ chấp nhận snake_case (theo database schema)
+        $fullName = isset($data['full_name']) ? trim($data['full_name']) : '';
+        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : '';
         $address = isset($data['address']) ? trim($data['address']) : null;
 
         if ($fullName === '' || $phone === '') {
@@ -27,7 +28,17 @@ class CustomerController {
             Response::json(["message" => "Số điện thoại đã tồn tại trong hệ thống"], 400);
         }
 
-        $newId = $this->customerModel->create($fullName, $phone, $address);
+        // Upload avatar (TÙY CHỌN - nếu không có sẽ dùng ảnh mặc định)
+        $avatarPath = null;
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $avatarPath = FileUpload::uploadImage($_FILES['avatar'], 'customers', 'customer_');
+            } catch (Exception $e) {
+                Response::json(["message" => $e->getMessage()], 400);
+            }
+        }
+
+        $newId = $this->customerModel->create($fullName, $phone, $address, $avatarPath);
         if ($newId) {
             $customer = $this->customerModel->findById($newId);
             $this->logModel->createLog(
@@ -61,8 +72,15 @@ class CustomerController {
     public function update($id, $data) {
         AuthMiddleware::checkAuth();
         $id = (int)$id;
-        $fullName = isset($data['full_name']) ? trim($data['full_name']) : (isset($data['name']) ? trim($data['name']) : '');
-        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : (isset($data['phone']) ? trim($data['phone']) : '');
+        
+        $customer = $this->customerModel->findById($id);
+        if (!$customer) {
+            Response::json(["message" => "Khách hàng không tồn tại"], 404);
+        }
+
+        // Chuẩn hóa: chỉ chấp nhận snake_case (theo database schema)
+        $fullName = isset($data['full_name']) ? trim($data['full_name']) : '';
+        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : '';
         $address = isset($data['address']) ? trim($data['address']) : null;
 
         if ($fullName === '' || $phone === '') {
@@ -73,7 +91,21 @@ class CustomerController {
             Response::json(["message" => "Số điện thoại đã tồn tại"], 400);
         }
 
-        if ($this->customerModel->update($id, $fullName, $phone, $address)) {
+        // Upload avatar mới nếu có (TÙY CHỌN)
+        $avatarPath = null;
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $avatarPath = FileUpload::uploadImage($_FILES['avatar'], 'customers', 'customer_');
+                // Xóa avatar cũ nếu upload thành công và không phải ảnh mặc định
+                if ($avatarPath && !empty($customer['avatar']) && $customer['avatar'] !== 'uploads/customers/default-customer.png') {
+                    FileUpload::deleteFile($customer['avatar']);
+                }
+            } catch (Exception $e) {
+                Response::json(["message" => $e->getMessage()], 400);
+            }
+        }
+
+        if ($this->customerModel->update($id, $fullName, $phone, $address, $avatarPath)) {
             $this->logModel->createLog($_SESSION['user_id'], 'update_customer', 'Cập nhật khách hàng ID=' . $id);
             Response::json(["message" => "Cập nhật thành công"]);
         }

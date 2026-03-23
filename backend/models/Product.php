@@ -26,7 +26,7 @@ class Product {
         }
 
         $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode,
-                       p.import_price, p.selling_price, p.stock_quantity, p.created_at
+                       p.image, p.import_price, p.selling_price, p.stock_quantity, p.created_at
                 FROM " . $this->table_name . " p
                 LEFT JOIN categories c ON p.category_id = c.id
                 $where
@@ -63,7 +63,7 @@ class Product {
 
     public function findById($id) {
         $sql = "SELECT p.id, p.category_id, c.category_name, p.product_name, p.barcode,
-                       p.import_price, p.selling_price, p.stock_quantity, p.created_at
+                       p.image, p.import_price, p.selling_price, p.stock_quantity, p.created_at
                 FROM " . $this->table_name . " p
                 LEFT JOIN categories c ON p.category_id = c.id
                 WHERE p.id = :id LIMIT 1";
@@ -88,14 +88,15 @@ class Product {
         return $stmt->rowCount() > 0;
     }
 
-    public function create($categoryId, $name, $barcode, $importPrice, $sellingPrice, $stockQuantity) {
+    public function create($categoryId, $name, $barcode, $image, $importPrice, $sellingPrice, $stockQuantity) {
         $sql = "INSERT INTO " . $this->table_name . "
-                (category_id, product_name, barcode, import_price, selling_price, stock_quantity)
-                VALUES (:category_id, :product_name, :barcode, :import_price, :selling_price, :stock_quantity)";
+                (category_id, product_name, barcode, image, import_price, selling_price, stock_quantity)
+                VALUES (:category_id, :product_name, :barcode, :image, :import_price, :selling_price, :stock_quantity)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':category_id', $categoryId, PDO::PARAM_INT);
         $stmt->bindParam(':product_name', $name);
         $stmt->bindParam(':barcode', $barcode);
+        $stmt->bindParam(':image', $image);
         $stmt->bindParam(':import_price', $importPrice);
         $stmt->bindParam(':selling_price', $sellingPrice);
         $stmt->bindParam(':stock_quantity', $stockQuantity, PDO::PARAM_INT);
@@ -106,23 +107,40 @@ class Product {
         return false;
     }
 
-    public function update($id, $categoryId, $name, $barcode, $importPrice, $sellingPrice, $stockQuantity) {
-        $sql = "UPDATE " . $this->table_name . "
-                SET category_id = :category_id,
-                    product_name = :product_name,
-                    barcode = :barcode,
-                    import_price = :import_price,
-                    selling_price = :selling_price,
-                    stock_quantity = :stock_quantity
-                WHERE id = :id";
+    public function update($id, $categoryId, $name, $barcode, $image, $importPrice, $sellingPrice, $stockQuantity) {
+        $fields = [
+            'category_id = :category_id',
+            'product_name = :product_name',
+            'barcode = :barcode',
+            'import_price = :import_price',
+            'selling_price = :selling_price',
+            'stock_quantity = :stock_quantity'
+        ];
+        $params = [
+            ':category_id' => $categoryId,
+            ':product_name' => $name,
+            ':barcode' => $barcode,
+            ':import_price' => $importPrice,
+            ':selling_price' => $sellingPrice,
+            ':stock_quantity' => $stockQuantity,
+            ':id' => $id
+        ];
+
+        // Chỉ update image nếu có giá trị mới
+        if ($image !== null) {
+            $fields[] = 'image = :image';
+            $params[':image'] = $image;
+        }
+
+        $sql = "UPDATE " . $this->table_name . " SET " . implode(', ', $fields) . " WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':category_id', $categoryId, PDO::PARAM_INT);
-        $stmt->bindParam(':product_name', $name);
-        $stmt->bindParam(':barcode', $barcode);
-        $stmt->bindParam(':import_price', $importPrice);
-        $stmt->bindParam(':selling_price', $sellingPrice);
-        $stmt->bindParam(':stock_quantity', $stockQuantity, PDO::PARAM_INT);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        foreach ($params as $key => $value) {
+            if ($key === ':id' || $key === ':category_id' || $key === ':stock_quantity') {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $value);
+            }
+        }
         return $stmt->execute();
     }
 

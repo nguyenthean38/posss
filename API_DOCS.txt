@@ -1,0 +1,1503 @@
+===========================================
+  API DOCUMENTATION - POS SYSTEM
+  Hệ thống Quản lý Bán lẻ
+===========================================
+
+BASE URL: http://localhost:8080/backend/index.php
+
+===========================================
+1. AUTHENTICATION APIs
+===========================================
+
+1.1. Đăng nhập thường (UC-05)
+------------------------------
+POST /api/auth/login
+
+Request Body:
+{
+  "username": "admin",        // Phần trước @ của email
+  "password": "password123"
+}
+
+Response Success (200):
+{
+  "message": "Đăng nhập thành công!",
+  "user": {
+    "id": 1,
+    "full_name": "Nguyễn Văn A",
+    "role": "admin",           // "admin" hoặc "staff"
+    "is_first_login": false
+  }
+}
+
+Response Error (401):
+{
+  "message": "Tài khoản 'admin' không tồn tại!"
+}
+// hoặc
+{
+  "message": "Sai mật khẩu!"
+}
+
+Response Error (403):
+{
+  "message": "Tài khoản của bạn đã bị khóa!"
+}
+// hoặc
+{
+  "message": "Vui lòng đăng nhập bằng link trong email!"
+}
+
+
+1.2. Xác thực token (UC-37)
+----------------------------
+POST /api/auth/verify-token
+
+Request Body:
+{
+  "email": "staff@example.com",
+  "token": "abc123def456"
+}
+
+Response Success (200):
+{
+  "message": "Token hợp lệ",
+  "IsValid": true
+}
+
+Response Error (400):
+{
+  "message": "Token hết hạn hoặc không hợp lệ!",
+  "IsValid": false
+}
+
+1.3. Đăng nhập lần đầu (UC-03)
+-------------------------------
+POST /api/auth/first-login
+
+Request Body:
+{
+  "email": "staff@example.com",
+  "password": "52300003",      // Mật khẩu tạm thời
+  "token": "abc123def456"
+}
+
+Response Success (200):
+{
+  "message": "Xác nhận thành công. Vui lòng đổi mật khẩu!",
+  "require_password_change": true
+}
+
+Response Error (400):
+{
+  "message": "Link kích hoạt đã hết hạn hoặc đã được dùng rồi..."
+}
+
+Response Error (401):
+{
+  "message": "Sai mật khẩu tạm thời!"
+}
+
+
+1.4. Đổi mật khẩu lần đầu (UC-04)
+----------------------------------
+PUT /api/auth/init-password
+
+Headers:
+  Cookie: PHPSESSID=xxx (session cookie)
+
+Request Body:
+{
+  "new_password": "newpass123",
+  "confirm_password": "newpass123"
+}
+
+Response Success (200):
+{
+  "message": "Thay đổi mật khẩu thành công! Bạn đã có thể tiếp tục sử dụng hệ thống."
+}
+
+Response Error (400):
+{
+  "message": "Mật khẩu phải từ 6 ký tự!"
+}
+// hoặc
+{
+  "message": "Xác nhận mật khẩu không khớp!"
+}
+
+1.5. Đổi mật khẩu (UC-14)
+--------------------------
+PUT /api/auth/change-password
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Request Body:
+{
+  "current_password": "oldpass123",
+  "new_password": "newpass456",
+  "confirm_password": "newpass456"
+}
+
+Response Success (200):
+{
+  "message": "Đổi mật khẩu thành công"
+}
+
+Response Error (401):
+{
+  "message": "Mật khẩu hiện tại không đúng"
+}
+
+Response Error (400):
+{
+  "message": "Mật khẩu mới phải từ 6 ký tự trở lên"
+}
+
+
+1.6. Đăng xuất (UC-06)
+-----------------------
+POST /api/auth/logout
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "message": "Đã đăng xuất thành công!"
+}
+
+1.7. Xem thông tin cá nhân (UC-12)
+-----------------------------------
+GET /api/auth/me
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "profile": {
+    "id": 1,
+    "full_name": "Nguyễn Văn A",
+    "email": "admin@example.com",
+    "role": "admin",
+    "status": "active",
+    "avatar": "uploads/avatars/user_1_123456.jpg",
+    "phone": "0123456789",
+    "address": "Hà Nội",
+    "created_at": "2024-01-01 10:00:00"
+  }
+}
+
+1.8. Cập nhật hồ sơ (UC-13) - Multipart Form Data
+--------------------------------------------------
+POST /api/auth/profile
+
+Headers:
+  Cookie: PHPSESSID=xxx
+  Content-Type: multipart/form-data
+
+Request Body (Form Data):
+  full_name: "Nguyễn Văn B"
+  avatar: [File] (JPG/PNG, max 2MB)
+
+Response Success (200):
+{
+  "message": "Cập nhật hồ sơ thành công",
+  "profile": {
+    "id": 1,
+    "full_name": "Nguyễn Văn B",
+    "avatar": "uploads/avatars/user_1_789012.jpg",
+    ...
+  }
+}
+
+
+===========================================
+2. STAFF MANAGEMENT APIs (Admin Only)
+===========================================
+
+2.1. Tạo nhân viên mới (UC-01)
+-------------------------------
+POST /api/staff
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Request Body:
+{
+  "full_name": "Trần Thị B",
+  "email": "staff@example.com"
+}
+
+Response Success (200):
+{
+  "message": "Tạo thành công, đã gửi kích hoạt link 1 phút tới hộp thư!"
+}
+
+Response Error (400):
+{
+  "message": "Email đã được sử dụng ở tài khoản khác!"
+}
+
+2.2. Xem danh sách nhân viên (UC-08)
+-------------------------------------
+GET /api/staff?page=1&limit=20&email=&status=
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Query Parameters:
+  - page: số trang (default: 1)
+  - limit: số bản ghi/trang (default: 20)
+  - email: tìm kiếm theo email (optional)
+  - status: lọc theo trạng thái "active"/"locked" (optional)
+
+Response Success (200):
+{
+  "items": [
+    {
+      "id": 2,
+      "full_name": "Trần Thị B",
+      "email": "staff@example.com",
+      "role": "staff",
+      "status": "active",
+      "is_first_login": true
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 5,
+    "total_pages": 1
+  }
+}
+
+
+2.3. Xem chi tiết nhân viên (UC-09)
+------------------------------------
+GET /api/staff/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "staff": {
+    "id": 2,
+    "full_name": "Trần Thị B",
+    "email": "staff@example.com",
+    "role": "staff",
+    "status": "active",
+    "is_first_login": false,
+    "avatar": null,
+    "created_at": "2024-01-15 14:30:00"
+  },
+  "logs": [
+    {
+      "id": 123,
+      "action": "login",
+      "details": "Đăng nhập thành công",
+      "created_at": "2024-01-20 09:00:00"
+    }
+  ]
+}
+
+2.4. Khóa tài khoản nhân viên (UC-10)
+--------------------------------------
+PATCH /api/staff/{id}/lock
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "message": "Khóa tài khoản thành công"
+}
+
+2.5. Mở khóa tài khoản nhân viên (UC-10)
+-----------------------------------------
+PATCH /api/staff/{id}/unlock
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "message": "Mở khóa tài khoản thành công"
+}
+
+
+2.6. Gửi lại email kích hoạt (UC-11)
+-------------------------------------
+POST /api/staff/{id}/resend
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "message": "Gửi lại link kích hoạt thành công!"
+}
+
+2.7. Xóa nhân viên
+------------------
+DELETE /api/staff/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "message": "Đã xóa tài khoản nhân viên"
+}
+
+Response Error (400):
+{
+  "message": "Không thể xóa nhân viên đã có đơn hàng (5 đơn). Hãy khóa tài khoản thay thế."
+}
+
+2.8. Xem thống kê bán hàng của nhân viên
+-----------------------------------------
+GET /api/staff/{id}/sales
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "staff_id": 2,
+  "total_orders": 45,
+  "total_revenue": 125000000,
+  "recent_orders": [
+    {
+      "OrderId": 123,
+      "Date": "2024-01-20 14:30",
+      "CustomerName": "Nguyễn Văn C",
+      "TotalAmount": 2500000
+    }
+  ]
+}
+
+
+===========================================
+3. CATEGORY APIs (Admin Only)
+===========================================
+
+3.1. Lấy danh sách danh mục (UC-15)
+------------------------------------
+GET /api/categories?page=1&limit=20&q=
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Query Parameters:
+  - page: số trang (default: 1)
+  - limit: số bản ghi/trang (default: 20)
+  - q: tìm kiếm theo tên (optional)
+
+Response Success (200):
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "Điện thoại",
+      "description": "Điện thoại di động",
+      "icon": "phone",
+      "created_at": "2024-01-01 10:00:00",
+      "created_by_name": "Admin",
+      "product_count": 25
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 6,
+    "total_pages": 1
+  }
+}
+
+3.2. Xem chi tiết danh mục
+---------------------------
+GET /api/categories/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "category": {
+    "id": 1,
+    "name": "Điện thoại",
+    "description": "Điện thoại di động",
+    "icon": "phone",
+    "created_at": "2024-01-01 10:00:00",
+    "created_by_name": "Admin",
+    "product_count": 25
+  }
+}
+
+
+3.3. Tạo danh mục mới (UC-15)
+------------------------------
+POST /api/categories
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Request Body:
+{
+  "category_name": "Tai nghe",
+  "description": "Tai nghe không dây",
+  "icon": "earbuds"
+}
+
+Response Success (201):
+{
+  "message": "Tạo danh mục thành công",
+  "category": {
+    "id": 7,
+    "name": "Tai nghe",
+    "description": "Tai nghe không dây",
+    "icon": "earbuds",
+    "created_at": "2024-01-20 15:00:00",
+    "created_by_name": "Admin",
+    "product_count": 0
+  }
+}
+
+Response Error (400):
+{
+  "message": "Tên danh mục đã tồn tại"
+}
+
+3.4. Cập nhật danh mục (UC-15)
+-------------------------------
+PUT /api/categories/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Request Body:
+{
+  "category_name": "Tai nghe Bluetooth",
+  "description": "Tai nghe không dây Bluetooth",
+  "icon": "earbuds"
+}
+
+Response Success (200):
+{
+  "message": "Cập nhật danh mục thành công",
+  "category": {
+    "id": 7,
+    "name": "Tai nghe Bluetooth",
+    ...
+  }
+}
+
+
+3.5. Xóa danh mục (UC-15)
+--------------------------
+DELETE /api/categories/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "message": "Xóa danh mục thành công"
+}
+
+Response Error (400):
+{
+  "message": "Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này"
+}
+
+3.6. Tìm kiếm danh mục
+-----------------------
+POST /api/categories/search
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Request Body:
+{
+  "page": 1,
+  "pageSize": 20,
+  "keyword": "điện"
+}
+
+Response Success (200):
+{
+  "items": [...],
+  "pagination": {...}
+}
+
+===========================================
+4. PRODUCT APIs
+===========================================
+
+4.1. Lấy danh sách sản phẩm (UC-19)
+------------------------------------
+GET /api/products?page=1&limit=20&q=&category_id=
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Query Parameters:
+  - page: số trang (default: 1)
+  - limit: số bản ghi/trang (default: 20)
+  - q: tìm kiếm theo tên hoặc barcode (optional)
+  - category_id: lọc theo danh mục (optional)
+
+
+Response Success (200) - Admin:
+{
+  "items": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "category_name": "Điện thoại",
+      "product_name": "iPhone 15 Pro",
+      "barcode": "IP15PRO001",
+      "image": "uploads/products/product_1234567890_abc123.jpg",
+      "import_price": 25000000,    // Chỉ admin mới thấy
+      "selling_price": 30000000,
+      "stock_quantity": 10,
+      "created_at": "2024-01-01 10:00:00"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 50,
+    "total_pages": 3
+  }
+}
+
+Response Success (200) - Staff (không có import_price):
+{
+  "items": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "category_name": "Điện thoại",
+      "product_name": "iPhone 15 Pro",
+      "barcode": "IP15PRO001",
+      "image": "uploads/products/product_1234567890_abc123.jpg",
+      "selling_price": 30000000,
+      "stock_quantity": 10,
+      "created_at": "2024-01-01 10:00:00"
+    }
+  ],
+  "pagination": {...}
+}
+
+4.2. Xem chi tiết sản phẩm
+---------------------------
+GET /api/products/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "id": 1,
+  "category_id": 1,
+  "category_name": "Điện thoại",
+  "product_name": "iPhone 15 Pro",
+  "barcode": "IP15PRO001",
+  "image": "uploads/products/product_1234567890_abc123.jpg",
+  "import_price": 25000000,    // Chỉ admin mới thấy
+  "selling_price": 30000000,
+  "stock_quantity": 10,
+  "created_at": "2024-01-01 10:00:00"
+}
+
+
+4.3. Tạo sản phẩm mới (UC-16) - Admin Only - MULTIPART FORM DATA
+------------------------------------------------------------------
+POST /api/products
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+  Content-Type: multipart/form-data
+
+Request Body (Form Data):
+  category_id: 1
+  product_name: "Samsung Galaxy S24"
+  barcode: "SGS24001"
+  image: [File] (JPG/PNG/GIF/WEBP, max 2MB) **BẮT BUỘC**
+  import_price: 18000000
+  selling_price: 22000000
+  stock_quantity: 15
+
+**LƯU Ý QUAN TRỌNG:**
+- Ảnh sản phẩm là **BẮT BUỘC** khi tạo sản phẩm mới
+- Định dạng cho phép: JPG, PNG, GIF, WEBP
+- Kích thước tối đa: 2MB
+- File sẽ được lưu tại: uploads/products/product_{timestamp}_{random}.{ext}
+
+Response Success (201):
+{
+  "message": "Tạo sản phẩm thành công",
+  "product": {
+    "id": 51,
+    "category_id": 1,
+    "category_name": "Điện thoại",
+    "product_name": "Samsung Galaxy S24",
+    "barcode": "SGS24001",
+    "image": "uploads/products/product_1234567890_abc123.jpg",
+    "import_price": 18000000,
+    "selling_price": 22000000,
+    "stock_quantity": 15,
+    "created_at": "2024-01-20 16:00:00"
+  }
+}
+
+Response Error (400):
+{
+  "message": "Ảnh sản phẩm là bắt buộc"
+}
+// hoặc
+{
+  "message": "Mã vạch đã tồn tại trong hệ thống"
+}
+// hoặc
+{
+  "message": "Chỉ hỗ trợ ảnh JPG, PNG, GIF, WEBP"
+}
+// hoặc
+{
+  "message": "File vượt quá 2MB"
+}
+
+4.4. Cập nhật sản phẩm (UC-17) - Admin Only - MULTIPART FORM DATA
+------------------------------------------------------------------
+PUT /api/products/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+  Content-Type: multipart/form-data
+
+Request Body (Form Data):
+  category_id: 1
+  product_name: "Samsung Galaxy S24 Ultra"
+  barcode: "SGS24U001"
+  image: [File] (JPG/PNG/GIF/WEBP, max 2MB) **TÙY CHỌN**
+  import_price: 28000000
+  selling_price: 33000000
+  stock_quantity: 8
+
+**LƯU Ý:**
+- Ảnh sản phẩm là **TÙY CHỌN** khi cập nhật
+- Nếu không gửi ảnh mới, ảnh cũ sẽ được giữ nguyên
+- Nếu gửi ảnh mới, ảnh cũ sẽ bị xóa và thay thế
+- Định dạng cho phép: JPG, PNG, GIF, WEBP
+- Kích thước tối đa: 2MB
+
+Response Success (200):
+{
+  "message": "Cập nhật sản phẩm thành công",
+  "product": {
+    "id": 51,
+    "image": "uploads/products/product_1234567891_def456.jpg",
+    ...
+  }
+}
+
+
+4.5. Xóa sản phẩm (UC-18) - Admin Only
+---------------------------------------
+DELETE /api/products/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Response Success (200):
+{
+  "message": "Xóa sản phẩm thành công"
+}
+
+Response Error (400):
+{
+  "message": "Không thể xóa sản phẩm vì đã tồn tại trong đơn hàng. Vui lòng ngừng kinh doanh hoặc ẩn sản phẩm."
+}
+
+===========================================
+5. CUSTOMER APIs
+===========================================
+
+5.1. Lấy danh sách khách hàng
+------------------------------
+GET /api/customers?page=1&limit=20&keyword=
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Query Parameters:
+  - page: số trang (default: 1)
+  - limit: số bản ghi/trang (default: 20)
+  - keyword: tìm kiếm theo tên hoặc SĐT (optional)
+
+Response Success (200):
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "Nguyễn Văn C",
+      "phone": "0987654321",
+      "address": "Hà Nội",
+      "total_orders": 12,
+      "total_revenue": 45000000
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "total_pages": 8
+  }
+}
+
+
+5.2. Tra cứu khách hàng theo SĐT (UC-20)
+-----------------------------------------
+GET /api/customers/search-by-phone?phone=0987654321
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "customer": {
+    "id": 1,
+    "name": "Nguyễn Văn C",
+    "phone": "0987654321",
+    "address": "Hà Nội"
+  }
+}
+
+Response Error (404):
+{
+  "message": "Khách hàng không tồn tại"
+}
+
+5.3. Xem chi tiết khách hàng (UC-22)
+-------------------------------------
+GET /api/customers/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "customer": {
+    "id": 1,
+    "name": "Nguyễn Văn C",
+    "phone": "0987654321",
+    "address": "Hà Nội",
+    "total_orders": 12,
+    "total_revenue": 45000000
+  },
+  "purchase_overview": {
+    "order_count": 12,
+    "total_amount": 45000000,
+    "total_product_quantity": 35,
+    "first_purchase_at": "2023-06-15 10:30:00",
+    "last_purchase_at": "2024-01-18 14:20:00",
+    "recent_orders": [
+      {
+        "id": 234,
+        "total_amount": 3500000,
+        "customer_pay": 4000000,
+        "change_amount": 500000,
+        "created_at": "2024-01-18 14:20:00"
+      }
+    ]
+  }
+}
+
+
+5.4. Tạo khách hàng mới (UC-21) - MULTIPART FORM DATA
+-----------------------------------------------------
+POST /api/customers
+
+Headers:
+  Cookie: PHPSESSID=xxx
+  Content-Type: multipart/form-data
+
+Request Body (Form Data):
+  full_name: "Trần Thị D"
+  phone_number: "0912345678"
+  address: "Hồ Chí Minh"
+  avatar: [File] (JPG/PNG/GIF/WEBP, max 2MB) **TÙY CHỌN**
+
+**LƯU Ý:**
+- Avatar là **TÙY CHỌN**
+- Nếu không upload avatar, hệ thống sẽ dùng ảnh mặc định: uploads/customers/default-customer.png
+- Định dạng cho phép: JPG, PNG, GIF, WEBP
+- Kích thước tối đa: 2MB
+
+Response Success (201):
+{
+  "message": "Tạo khách hàng thành công",
+  "customer": {
+    "id": 151,
+    "name": "Trần Thị D",
+    "phone": "0912345678",
+    "address": "Hồ Chí Minh",
+    "avatar": "uploads/customers/customer_1234567890_abc123.jpg",
+    "total_orders": 0,
+    "total_revenue": 0
+  }
+}
+
+Response Error (400):
+{
+  "message": "Số điện thoại đã tồn tại trong hệ thống"
+}
+// hoặc
+{
+  "message": "Chỉ hỗ trợ ảnh JPG, PNG, GIF, WEBP"
+}
+// hoặc
+{
+  "message": "File vượt quá 2MB"
+}
+
+5.5. Cập nhật khách hàng - MULTIPART FORM DATA
+-----------------------------------------------
+PUT /api/customers/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+  Content-Type: multipart/form-data
+
+Request Body (Form Data):
+  full_name: "Trần Thị D (Updated)"
+  phone_number: "0912345678"
+  address: "TP. Hồ Chí Minh"
+  avatar: [File] (JPG/PNG/GIF/WEBP, max 2MB) **TÙY CHỌN**
+
+**LƯU Ý:**
+- Avatar là **TÙY CHỌN** khi cập nhật
+- Nếu không gửi avatar mới, avatar cũ sẽ được giữ nguyên
+- Nếu gửi avatar mới, avatar cũ sẽ bị xóa và thay thế (trừ ảnh mặc định)
+- Định dạng cho phép: JPG, PNG, GIF, WEBP
+- Kích thước tối đa: 2MB
+
+Response Success (200):
+{
+  "message": "Cập nhật thành công"
+}
+
+Response Error (400):
+{
+  "message": "Số điện thoại đã tồn tại"
+}
+
+
+5.6. Xóa khách hàng
+-------------------
+DELETE /api/customers/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "message": "Xóa thành công"
+}
+
+Response Error (400):
+{
+  "message": "Không thể xóa khách hàng đã có lịch sử đổi trả/mua hàng"
+}
+
+5.7. Xem lịch sử mua hàng (UC-23)
+----------------------------------
+GET /api/customers/{id}/history?page=1&pageSize=20
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+[
+  {
+    "id": 234,
+    "created_at": "2024-01-18 14:20:00",
+    "total": 3500000,
+    "item_count": 3
+  },
+  {
+    "id": 233,
+    "created_at": "2024-01-15 10:15:00",
+    "total": 2800000,
+    "item_count": 2
+  }
+]
+
+5.8. Xem chi tiết đơn hàng (UC-24)
+-----------------------------------
+GET /api/customers/orders/{orderId}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "products": [
+    {
+      "product_id": 1,
+      "product_name": "iPhone 15 Pro",
+      "quantity": 1,
+      "unit_price": 30000000,
+      "total_price": 30000000
+    }
+  ],
+  "customer_pay": 30000000,
+  "change": 0,
+  "total_amount": 30000000
+}
+
+
+===========================================
+6. POS APIs (Point of Sale)
+===========================================
+
+6.1. Khởi tạo phiên bán hàng (UC-25)
+-------------------------------------
+POST /api/pos/session
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "Items": [],
+  "TotalAmount": 0
+}
+
+6.2. Thêm sản phẩm vào giỏ (UC-26, UC-27)
+------------------------------------------
+POST /api/pos/cart/add
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Request Body (Chấp nhận cả 2 format):
+{
+  "barcode": "IP15PRO001",    // hoặc "Barcode"
+  "quantity": 1               // hoặc "Quantity"
+}
+
+Response Success (200):
+{
+  "Items": [
+    {
+      "id": 1,
+      "product_name": "iPhone 15 Pro",
+      "barcode": "IP15PRO001",
+      "selling_price": 30000000,
+      "import_price": 25000000,
+      "quantity": 1
+    }
+  ],
+  "TotalAmount": 30000000
+}
+
+Response Error (404):
+{
+  "message": "Sản phẩm không tồn tại"
+}
+
+
+6.3. Cập nhật số lượng sản phẩm (UC-38)
+----------------------------------------
+PUT /api/pos/cart/item
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Request Body (Chấp nhận cả 2 format):
+{
+  "product_id": 1,           // hoặc "ProductId"
+  "new_quantity": 2          // hoặc "NewQuantity"
+}
+
+Response Success (200):
+{
+  "Items": [
+    {
+      "id": 1,
+      "product_name": "iPhone 15 Pro",
+      "barcode": "IP15PRO001",
+      "selling_price": 30000000,
+      "import_price": 25000000,
+      "quantity": 2
+    }
+  ],
+  "TotalAmount": 60000000
+}
+
+6.4. Xóa sản phẩm khỏi giỏ (UC-39)
+-----------------------------------
+DELETE /api/pos/cart/item/{productId}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "Items": [],
+  "TotalAmount": 0
+}
+
+6.5. Tính tiền thối (UC-29)
+----------------------------
+POST /api/pos/calculate
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Request Body (Chấp nhận cả 2 format):
+{
+  "customer_pay": 100000000   // hoặc "CustomerPay"
+}
+
+Response Success (200):
+{
+  "change_amount": 40000000,
+  "ChangeAmount": 40000000     // Trả về cả 2 format
+}
+
+
+6.6. Thanh toán (UC-30)
+-----------------------
+POST /api/pos/checkout
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Request Body (Chấp nhận cả 2 format):
+{
+  "phone": "0987654321",              // hoặc "Phone"
+  "full_name": "Nguyễn Văn C",        // hoặc "FullName"
+  "address": "Hà Nội",                // hoặc "Address"
+  "customer_pay": 100000000           // hoặc "CustomerPay"
+}
+
+Note: 
+- Nếu phone rỗng -> Khách lẻ (không lưu thông tin)
+- Nếu phone có và tồn tại -> Gắn vào khách hàng cũ
+- Nếu phone có nhưng chưa tồn tại + có full_name -> Tạo khách hàng mới (UC-21)
+
+Response Success (200):
+{
+  "order_id": 235,
+  "OrderId": 235,                     // Tương thích ngược
+  "pdf_url": "/api/pos/invoice/235",
+  "PdfUrl": "/api/pos/invoice/235"    // Tương thích ngược
+}
+
+Response Error (400):
+{
+  "message": "Giỏ hàng rỗng"
+}
+// hoặc
+{
+  "message": "Số tiền khách đưa không đủ"
+}
+
+6.7. Xuất hóa đơn PDF (UC-31)
+------------------------------
+GET /api/pos/invoice/{orderId}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response: HTML page (auto print)
+
+
+===========================================
+7. PROFILE APIs
+===========================================
+
+7.1. Xem hồ sơ cá nhân (UC-12)
+-------------------------------
+GET /api/profile
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Response Success (200):
+{
+  "profile": {
+    "id": 1,
+    "full_name": "Nguyễn Văn A",
+    "email": "admin@example.com",
+    "role": "admin",
+    "status": "active",
+    "avatar": "uploads/avatars/user_1_123456.jpg",
+    "phone": "0123456789",
+    "address": "Hà Nội",
+    "created_at": "2024-01-01 10:00:00"
+  }
+}
+
+7.2. Cập nhật hồ sơ (UC-13)
+----------------------------
+PUT /api/profile
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Request Body:
+{
+  "full_name": "Nguyễn Văn A (Updated)",
+  "phone": "0123456789",
+  "address": "Hà Nội, Việt Nam"
+}
+
+Response Success (200):
+{
+  "message": "Cập nhật hồ sơ thành công",
+  "profile": {
+    "id": 1,
+    "full_name": "Nguyễn Văn A (Updated)",
+    ...
+  }
+}
+
+
+7.3. Upload ảnh đại diện (UC-13)
+---------------------------------
+POST /api/profile/avatar
+
+Headers:
+  Cookie: PHPSESSID=xxx
+  Content-Type: multipart/form-data
+
+Request Body (Form Data):
+  avatar: [File] (JPG/PNG, max 2MB)
+  // hoặc
+  Image: [File] (tương thích ngược)
+
+Response Success (200):
+{
+  "message": "Cập nhật ảnh đại diện thành công",
+  "avatar_url": "uploads/avatars/user_1_789012.jpg"
+}
+
+Response Error (400):
+{
+  "message": "Ảnh đại diện vượt quá 2MB"
+}
+// hoặc
+{
+  "message": "Chỉ hỗ trợ ảnh JPG hoặc PNG"
+}
+
+===========================================
+8. REPORT APIs
+===========================================
+
+8.1. Báo cáo tổng quan (UC-32, UC-33)
+--------------------------------------
+GET /api/reports/summary?timeline=today
+GET /api/reports/summary?fromDate=2024-01-01&toDate=2024-01-31
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Query Parameters (chọn 1 trong 2):
+  Option 1 - Timeline:
+    - timeline: "today" | "yesterday" | "7days" | "month"
+  
+  Option 2 - Date Range:
+    - fromDate: "YYYY-MM-DD"
+    - toDate: "YYYY-MM-DD"
+
+
+Response Success (200):
+{
+  "TotalRevenue": 125000000,
+  "OrderCount": 45,
+  "TotalProductsSold": 120,
+  "CustomerCount": 150,
+  "RecentOrders": [
+    {
+      "OrderId": 235,
+      "Date": "2024-01-20 14:30",
+      "CustomerName": "Nguyễn Văn C",
+      "TotalAmount": 3500000
+    }
+  ],
+  "TopProducts": [
+    {
+      "ProductName": "iPhone 15 Pro",
+      "TotalSold": 25,
+      "TotalRevenue": 750000000
+    }
+  ]
+}
+
+8.2. Danh sách đơn hàng theo thời gian (UC-35)
+-----------------------------------------------
+GET /api/reports/orders?fromDate=2024-01-01&toDate=2024-01-31&page=1&pageSize=20
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Query Parameters:
+  - fromDate: "YYYY-MM-DD" (default: "2000-01-01")
+  - toDate: "YYYY-MM-DD" (default: today)
+  - page: số trang (default: 1)
+  - pageSize: số bản ghi/trang (default: 20)
+
+Response Success (200):
+{
+  "items": [
+    {
+      "OrderId": 235,
+      "Date": "2024-01-20 14:30:00",
+      "CustomerName": "Nguyễn Văn C",
+      "TotalAmount": 3500000
+    }
+  ],
+  "pagination": {
+    "totalItems": 45,
+    "totalPages": 3
+  }
+}
+
+
+8.3. Báo cáo lợi nhuận (UC-34) - Admin Only
+--------------------------------------------
+GET /api/reports/profit?fromDate=2024-01-01&toDate=2024-01-31
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+
+Query Parameters:
+  - fromDate: "YYYY-MM-DD" (default: "2000-01-01")
+  - toDate: "YYYY-MM-DD" (default: today)
+
+Response Success (200):
+{
+  "TotalRevenue": 125000000,
+  "TotalCost": 95000000,
+  "NetProfit": 30000000
+}
+
+8.4. Dữ liệu biểu đồ bán hàng
+------------------------------
+GET /api/reports/chart?type=revenue&period=day&fromDate=2024-01-14&toDate=2024-01-20
+
+Headers:
+  Cookie: PHPSESSID=xxx
+
+Query Parameters:
+  - type: "revenue" | "orders" (default: "revenue")
+  - period: "day" | "week" (default: "day")
+  - fromDate: "YYYY-MM-DD" (default: 6 days ago)
+  - toDate: "YYYY-MM-DD" (default: today)
+
+Response Success (200):
+[
+  {
+    "label": "2024-01-14",
+    "value": 5000000
+  },
+  {
+    "label": "2024-01-15",
+    "value": 7500000
+  },
+  {
+    "label": "2024-01-16",
+    "value": 3200000
+  }
+]
+
+
+===========================================
+9. ERROR RESPONSES (Common)
+===========================================
+
+9.1. Unauthorized (401)
+-----------------------
+{
+  "message": "Vui lòng đăng nhập!"
+}
+
+9.2. Forbidden (403)
+--------------------
+{
+  "message": "Bạn không có quyền thực hiện chức năng này!"
+}
+// hoặc (UC-07)
+{
+  "message": "Tài khoản cần đổi mật khẩu lần đầu. Vui lòng đổi mật khẩu!"
+}
+
+9.3. Not Found (404)
+--------------------
+{
+  "message": "Routing không tồn tại hoặc sai HTTP method!"
+}
+
+9.4. Bad Request (400)
+----------------------
+{
+  "message": "Dữ liệu không hợp lệ"
+}
+
+9.5. Server Error (500)
+-----------------------
+{
+  "message": "Server error: ...",
+  "file": "filename.php",
+  "line": 123
+}
+
+===========================================
+10. NOTES
+===========================================
+
+10.1. Session Management
+------------------------
+- Tất cả API (trừ login, verify-token, first-login) yêu cầu session cookie
+- Session cookie name: PHPSESSID
+- Session timeout: theo cấu hình PHP (thường 24 phút)
+
+10.2. API Naming Convention
+----------------------------
+- Categories: Chỉ chấp nhận snake_case (category_name, description, icon)
+- Customers: Chỉ chấp nhận snake_case (full_name, phone_number, address)
+- Profile: Chỉ chấp nhận snake_case (full_name, phone, address)
+- POS: Chấp nhận CẢ PascalCase VÀ snake_case để tương thích
+
+
+10.3. Token Expiration (UC-36)
+-------------------------------
+- Token email kích hoạt hết hạn sau: 60 giây (1 phút)
+- Token được hash bằng SHA256 trước khi lưu database
+- Mỗi user chỉ có 1 token hợp lệ tại một thời điểm
+
+10.4. Password Security
+-----------------------
+- Mật khẩu được hash bằng bcrypt (PASSWORD_DEFAULT)
+- Mật khẩu tối thiểu: 6 ký tự
+- Mật khẩu tạm thời mặc định: "52300003"
+
+10.5. Authorization Levels
+---------------------------
+- Admin: Toàn quyền (tất cả APIs)
+- Staff: 
+  * Không thấy import_price trong products
+  * Không thấy profit report
+  * Không quản lý staff
+  * Có thể: POS, xem products, customers, reports (không có profit)
+
+10.6. File Upload
+-----------------
+- Avatar: JPG/PNG, max 2MB
+- Upload path: backend/uploads/avatars/
+- File naming: user_{id}_{timestamp}_{random}.{ext}
+
+10.7. Pagination
+----------------
+- Default page: 1
+- Default limit: 20
+- Response format:
+  {
+    "items": [...],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 150,
+      "total_pages": 8
+    }
+  }
+
+10.8. Date Format
+-----------------
+- Input: "YYYY-MM-DD" (e.g., "2024-01-20")
+- Output: "YYYY-MM-DD HH:mm:ss" (e.g., "2024-01-20 14:30:00")
+
+
+10.9. CORS Configuration
+------------------------
+Allowed Origins:
+- http://127.0.0.1:8080 (Docker)
+- http://localhost:8080 (Docker)
+- http://127.0.0.1:5500 (VS Code Live Server)
+- http://localhost:5500 (VS Code Live Server)
+- http://127.0.0.1:3000 (Dev server)
+- http://localhost:3000 (Dev server)
+
+Allowed Methods: POST, GET, PUT, PATCH, DELETE, OPTIONS
+Credentials: true (cookies allowed)
+
+10.10. Business Rules
+---------------------
+- Không thể xóa category nếu còn products
+- Không thể xóa product nếu đã có trong orders
+- Không thể xóa staff nếu đã có orders
+- Không thể xóa customer nếu đã có purchase history
+- VIP customer: total_revenue >= 50,000,000 VND
+- Khách lẻ: Không nhập phone khi checkout
+- Auto create customer: Nhập phone mới + full_name khi checkout
+
+===========================================
+11. USE CASE MAPPING
+===========================================
+
+UC-01: POST /api/staff (Tạo nhân viên)
+UC-02: Email được gửi tự động sau UC-01
+UC-03: POST /api/auth/first-login (Đăng nhập lần đầu)
+UC-04: PUT /api/auth/init-password (Đổi mật khẩu bắt buộc)
+UC-05: POST /api/auth/login (Đăng nhập thường)
+UC-06: POST /api/auth/logout (Đăng xuất)
+UC-07: Middleware tự động check (Chặn khi chưa đổi mật khẩu)
+UC-08: GET /api/staff (Xem danh sách nhân viên)
+UC-09: GET /api/staff/{id} (Xem chi tiết nhân viên)
+UC-10: PATCH /api/staff/{id}/lock, /unlock (Khóa/Mở khóa)
+UC-11: POST /api/staff/{id}/resend (Gửi lại email)
+UC-12: GET /api/auth/me (Xem thông tin cá nhân)
+UC-13: POST /api/auth/profile, POST /api/profile/avatar (Cập nhật hồ sơ)
+UC-14: PUT /api/auth/change-password (Đổi mật khẩu)
+UC-15: CRUD /api/categories (Quản lý danh mục)
+UC-16: POST /api/products (Thêm sản phẩm)
+UC-17: PUT /api/products/{id} (Sửa sản phẩm)
+UC-18: DELETE /api/products/{id} (Xóa sản phẩm)
+UC-19: GET /api/products (Xem danh sách sản phẩm)
+UC-20: GET /api/customers/search-by-phone (Tra cứu SĐT)
+UC-21: POST /api/customers (Tạo khách hàng)
+UC-22: GET /api/customers/{id} (Xem thông tin khách hàng)
+UC-23: GET /api/customers/{id}/history (Lịch sử mua hàng)
+UC-24: GET /api/customers/orders/{orderId} (Chi tiết đơn hàng)
+UC-25: POST /api/pos/session (Mở POS)
+UC-26: POST /api/pos/cart/add (Thêm sản phẩm theo tên)
+UC-27: POST /api/pos/cart/add (Thêm sản phẩm theo barcode)
+UC-28: Tự động cập nhật giỏ hàng (AJAX)
+UC-29: POST /api/pos/calculate (Tính tiền thối)
+UC-30: POST /api/pos/checkout (Thanh toán)
+UC-31: GET /api/pos/invoice/{orderId} (Xuất hóa đơn)
+UC-32: GET /api/reports/summary?timeline=... (Báo cáo theo mốc)
+UC-33: GET /api/reports/summary?fromDate=...&toDate=... (Báo cáo theo khoảng)
+UC-34: GET /api/reports/profit (Xem lợi nhuận - Admin)
+UC-35: GET /api/reports/orders (Danh sách đơn hàng)
+UC-36: Token 60 giây (tự động trong UC-01, UC-11)
+UC-37: POST /api/auth/verify-token (Xác thực token)
+UC-38: PUT /api/pos/cart/item (Sửa số lượng)
+UC-39: DELETE /api/pos/cart/item/{id} (Xóa sản phẩm khỏi giỏ)
+
+===========================================
+END OF DOCUMENTATION
+===========================================
+Generated: 2024-01-20
+Version: 1.0
+Status: Complete - All 39 Use Cases Implemented

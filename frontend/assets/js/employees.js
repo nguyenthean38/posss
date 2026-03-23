@@ -355,15 +355,16 @@ import { requireAuth, isAdmin } from './auth.js';
                 salesSection.style.opacity = "1";
                 salesSection.innerHTML = `
                     <div class="ps-view__card">
-                        <div style="font-weight:600;margin-bottom:8px"><i class="bi bi-bar-chart-line" style="margin-right:6px"></i>${t("view.salesTitle")}</div>
-                        <div class="ps-view__grid" style="margin-bottom:10px">
+                        <div style="font-weight:600;margin-bottom:12px;padding:0 16px"><i class="bi bi-bar-chart-line" style="margin-right:6px"></i>${t("view.salesTitle")}</div>
+                        <div class="ps-view__grid">
                             <div class="ps-view__label">${t("view.totalOrders")}</div>
                             <div class="ps-view__value">${sales.total_orders || 0}</div>
                             <div class="ps-view__label">${t("view.totalRevenue")}</div>
                             <div class="ps-view__value">${fmtVND(sales.total_revenue)}</div>
                         </div>
-                        <div style="font-size:.82rem;font-weight:600;margin-bottom:6px;opacity:.7">${t("view.recentOrders")}</div>
-                        ${ordersHtml}
+                        <div class="ps-view__divider"></div>
+                        <div style="font-size:.88rem;font-weight:600;margin-bottom:8px;opacity:.8;padding:0 16px">${t("view.recentOrders")}</div>
+                        <div style="padding:0 16px">${ordersHtml}</div>
                     </div>`;
             }
         } catch (_) {
