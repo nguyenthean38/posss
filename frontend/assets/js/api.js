@@ -62,7 +62,7 @@ class ApiClient {
     }
 
     /**
-     * Upload file (FormData)
+     * Upload file (FormData) — POST multipart; xử lý 401 giống request()
      */
     async upload(endpoint, formData) {
         const url = `${this.baseUrl}${endpoint}`;
@@ -73,7 +73,28 @@ class ApiClient {
                 body: formData // Không set Content-Type, browser tự set
             });
 
-            const data = await response.json();
+            let data;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { message: text || 'Upload failed' };
+                }
+            }
+
+            if (response.status === 401) {
+                sessionStorage.removeItem('ps_user');
+                if (!window.location.pathname.includes('login.html') &&
+                    !window.location.pathname.includes('first-login.html')) {
+                    window.location.replace('login.html');
+                }
+                throw new Error(data.message || 'Phiên đăng nhập đã hết hạn');
+            }
+
             if (!response.ok) {
                 throw new Error(data.message || 'Upload failed');
             }
@@ -202,25 +223,9 @@ class ApiClient {
     }
 
     async updateProduct(id, data) {
-        // Check if data contains File (image upload)
+        // Multipart: POST /update (PHP không parse $_POST/$_FILES cho PUT multipart)
         if (data instanceof FormData) {
-            const url = `${this.baseUrl}/api/products/${id}`;
-            try {
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    credentials: 'include',
-                    body: data // Không set Content-Type, browser tự set
-                });
-
-                const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.message || 'Update failed');
-                }
-                return result;
-            } catch (error) {
-                console.error('Update failed:', error);
-                throw error;
-            }
+            return this.upload(`/api/products/${id}/update`, data);
         }
         return this.request(`/api/products/${id}`, {
             method: 'PUT',
@@ -294,25 +299,9 @@ class ApiClient {
     }
 
     async updateCustomer(id, data) {
-        // Check if data contains File (avatar upload)
+        // Multipart: POST /update (PHP không parse $_POST/$_FILES cho PUT multipart)
         if (data instanceof FormData) {
-            const url = `${this.baseUrl}/api/customers/${id}`;
-            try {
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    credentials: 'include',
-                    body: data // Không set Content-Type, browser tự set
-                });
-
-                const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.message || 'Update failed');
-                }
-                return result;
-            } catch (error) {
-                console.error('Update failed:', error);
-                throw error;
-            }
+            return this.upload(`/api/customers/${id}/update`, data);
         }
         return this.request(`/api/customers/${id}`, {
             method: 'PUT',
@@ -408,6 +397,13 @@ class ApiClient {
 
     async uploadAvatar(formData) {
         return this.upload('/api/profile/avatar', formData);
+    }
+
+    // ==================== ADMIN ====================
+
+    async getActivityLogs(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        return this.request(`/api/admin/activity-logs${query ? '?' + query : ''}`);
     }
 }
 

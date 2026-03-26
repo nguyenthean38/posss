@@ -80,7 +80,7 @@ export async function requireAuth(redirectTo = "login.html") {
   // Instant RBAC UI application
   document.body.setAttribute('data-role', user.role);
   if (user.role !== 'admin') {
-      document.querySelectorAll('a[href="categories.html"], a[href="employees.html"]').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('a[href="categories.html"], a[href="employees.html"], a[href="activity.html"]').forEach(el => el.style.display = 'none');
       // Ẩn tất cả elements có class admin-only
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   } else {
@@ -129,7 +129,7 @@ export async function requireAuth(redirectTo = "login.html") {
       });
       document.body.setAttribute('data-role', response.profile.role);
       if (response.profile.role !== 'admin') {
-          document.querySelectorAll('a[href="categories.html"], a[href="employees.html"]').forEach(el => el.style.display = 'none');
+          document.querySelectorAll('a[href="categories.html"], a[href="employees.html"], a[href="activity.html"]').forEach(el => el.style.display = 'none');
           // Ẩn tất cả elements có class admin-only
           document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
       } else {

@@ -673,9 +673,27 @@ Response Error (400):
   "message": "File vượt quá 2MB"
 }
 
-4.4. Cập nhật sản phẩm (UC-17) - Admin Only - MULTIPART FORM DATA
-------------------------------------------------------------------
+4.4. Cập nhật sản phẩm (UC-17) - Admin Only
+------------------------------------------
+**A) Cập nhật không đổi ảnh (JSON) — dùng PUT**
+
 PUT /api/products/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx (Admin session)
+  Content-Type: application/json
+
+Request Body (JSON):
+  category_id: 1
+  product_name: "Samsung Galaxy S24 Ultra"
+  barcode: "SGS24U001"
+  import_price: 28000000
+  selling_price: 33000000
+  stock_quantity: 8
+
+**B) Cập nhật có multipart (FormData — có ảnh mới hoặc client gửi FormData không đổi ảnh) — dùng POST**
+
+POST /api/products/{id}/update
 
 Headers:
   Cookie: PHPSESSID=xxx (Admin session)
@@ -690,8 +708,13 @@ Request Body (Form Data):
   selling_price: 33000000
   stock_quantity: 8
 
-**LƯU Ý:**
-- Ảnh sản phẩm là **TÙY CHỌN** khi cập nhật
+**LƯU Ý PHP / HTTP:**
+- PHP chỉ tự điền `$_POST` và `$_FILES` cho request **multipart** khi method là **POST**. Với **PUT** + multipart, dữ liệu form và file thường **không được parse** → không dùng PUT multipart.
+- Cập nhật **JSON-only** (không file): `PUT /api/products/{id}`.
+- Cập nhật **có multipart**: `POST /api/products/{id}/update` (cùng logic xử lý với PUT JSON).
+
+**LƯU Ý ẢNH:**
+- Ảnh sản phẩm là **TÙY CHỌN** khi cập nhật qua multipart
 - Nếu không gửi ảnh mới, ảnh cũ sẽ được giữ nguyên
 - Nếu gửi ảnh mới, ảnh cũ sẽ bị xóa và thay thế
 - Định dạng cho phép: JPG, PNG, GIF, WEBP
@@ -707,6 +730,19 @@ Response Success (200):
   }
 }
 
+Response Error (400) — cập nhật sản phẩm (PUT JSON hoặc POST multipart /update):
+Body JSON: { "message": "<thông điệp từ server>" }
+
+Bảng ánh xạ message (400) — hỗ trợ / QA:
+  - "Dữ liệu sản phẩm không hợp lệ" — Thiếu hoặc sai trường bắt buộc (tên, barcode, giá, danh mục…).
+  - "Giá bán phải lớn hơn hoặc bằng giá nhập" — Điều chỉnh giá bán / giá nhập.
+  - "Danh mục không tồn tại" — category_id không hợp lệ.
+  - "Mã vạch đã tồn tại trong hệ thống" — Trùng barcode với sản phẩm khác.
+  - "File vượt quá 2MB" / "Chỉ hỗ trợ ảnh JPG, PNG, GIF, WEBP" / "Lỗi upload file" — Ảnh không đạt quy tắc upload.
+  - "Ảnh sản phẩm là bắt buộc" — Chủ yếu khi tạo mới (POST) không gửi ảnh.
+
+QA — Xác minh Network (multipart có ảnh / FormData):
+  - Request phải là **POST** `.../api/products/{id}/update`, không dùng **PUT** với multipart (PHP không parse đúng).
 
 4.5. Xóa sản phẩm (UC-18) - Admin Only
 ---------------------------------------
@@ -867,9 +903,24 @@ Response Error (400):
   "message": "File vượt quá 2MB"
 }
 
-5.5. Cập nhật khách hàng - MULTIPART FORM DATA
------------------------------------------------
+5.5. Cập nhật khách hàng
+------------------------
+**A) Cập nhật chỉ thông tin (JSON, không đổi avatar) — dùng PUT**
+
 PUT /api/customers/{id}
+
+Headers:
+  Cookie: PHPSESSID=xxx
+  Content-Type: application/json
+
+Request Body (JSON):
+  full_name: "Trần Thị D (Updated)"
+  phone_number: "0912345678"
+  address: "TP. Hồ Chí Minh"
+
+**B) Cập nhật có multipart (đổi avatar) — dùng POST**
+
+POST /api/customers/{id}/update
 
 Headers:
   Cookie: PHPSESSID=xxx
@@ -881,8 +932,13 @@ Request Body (Form Data):
   address: "TP. Hồ Chí Minh"
   avatar: [File] (JPG/PNG/GIF/WEBP, max 2MB) **TÙY CHỌN**
 
-**LƯU Ý:**
-- Avatar là **TÙY CHỌN** khi cập nhật
+**LƯU Ý PHP / HTTP:**
+- PHP chỉ parse `$_POST` / `$_FILES` cho multipart khi method là **POST**. Không dùng **PUT** + multipart.
+- Cập nhật không file: `PUT /api/customers/{id}`.
+- Cập nhật có avatar (FormData): `POST /api/customers/{id}/update`.
+
+**LƯU Ý AVATAR:**
+- Avatar là **TÙY CHỌN** khi cập nhật qua multipart
 - Nếu không gửi avatar mới, avatar cũ sẽ được giữ nguyên
 - Nếu gửi avatar mới, avatar cũ sẽ bị xóa và thay thế (trừ ảnh mặc định)
 - Định dạng cho phép: JPG, PNG, GIF, WEBP
@@ -894,9 +950,16 @@ Response Success (200):
 }
 
 Response Error (400):
-{
-  "message": "Số điện thoại đã tồn tại"
-}
+Body JSON: { "message": "<thông điệp từ server>" }
+
+Bảng ánh xạ message (400) — cập nhật khách (PUT JSON hoặc POST multipart /update):
+  - "Họ tên và SĐT không được để trống" — Thiếu full_name hoặc phone_number; với multipart, nếu vẫn thấy khi form đã điền: kiểm tra client có gửi **POST** `/api/customers/{id}/update` (không dùng PUT + FormData).
+  - "Số điện thoại đã tồn tại" — SĐT trùng khách khác; không phải lỗi file.
+  - "File vượt quá 2MB" / "Chỉ hỗ trợ ảnh JPG, PNG, GIF, WEBP" / "Lỗi upload file" / "Không thể lưu file trên server" — Ảnh avatar không đạt quy tắc hoặc lỗi ghi file.
+
+QA — Xác minh Network (chọn ảnh + Lưu):
+  - Request phải là **POST** `.../api/customers/{id}/update` (multipart).
+  - Khi status **400**: mở tab **Response**, đọc `message` và đối chiếu bảng trên.
 
 
 5.6. Xóa khách hàng
@@ -1201,6 +1264,53 @@ Response Error (400):
 }
 
 ===========================================
+7.4. Nhật ký ra vào (Admin — nhân viên)
+----------------------------------------------
+GET /api/admin/activity-logs?page=1&limit=50&q=
+
+Chỉ role admin. Session cookie bắt buộc.
+
+Dữ liệu trả về chỉ gồm các bản ghi:
+  - user có role = staff (không gồm admin)
+  - action IN ('login', 'logout', 'first_login') — ra/vào hệ thống và xác thực lần đầu qua email
+
+Query:
+  - page: số trang (mặc định 1)
+  - limit: số dòng mỗi trang (mặc định 50, tối đa 200)
+  - q: từ khóa lọc theo details, tên hoặc email nhân viên (không lọc theo action)
+
+Múi giờ: server PHP/MySQL dùng +07:00 (Asia/Ho_Chi_Minh). created_at trả về dạng ISO 8601 có offset.
+
+Vận hành — nếu thời gian sai năng lịch (ví dụ năm không khớp thực tế):
+  - Giá trị logs.created_at lấy từ đồng hồ MySQL (CURRENT_TIMESTAMP). Múi giờ +7 không sửa được năm/tháng nếu đồng hồ máy chủ sai.
+  - Kiểm tra trên host/container chạy MySQL: lệnh date (Linux) hoặc đồng hồ hệ thống (Windows).
+  - Trong MySQL: SELECT NOW(), @@global.time_zone, @@session.time_zone; — so sánh NOW() với giờ Việt Nam thực tế.
+  - Sửa đồng hồ OS (NTP, đồng bộ thời gian), khởi động lại container db nếu cần. Docker Compose mount docker/mysql/conf.d/timezone.cnf (default-time-zone +07:00).
+  - Bản ghi log cũ ghi khi đồng hồ sai vẫn giữ timestamp cũ; chỉ log mới sau khi sửa hạ tầng là đúng.
+
+Response Success (200):
+{
+  "items": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "details": "Đăng nhập thành công",
+      "created_at": "2025-03-26T10:00:00+07:00",
+      "user_name": "Nguyễn Văn A",
+      "user_email": "staff@example.com"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "total": 120,
+    "total_pages": 3
+  }
+}
+
+Response Error (403): không phải admin.
+
+===========================================
 8. REPORT APIs
 ===========================================
 
@@ -1264,7 +1374,9 @@ Response Success (200):
       "OrderId": 235,
       "Date": "2024-01-20 14:30:00",
       "CustomerName": "Nguyễn Văn C",
-      "TotalAmount": 3500000
+      "StaffName": "NV A",
+      "TotalAmount": 3500000,
+      "ItemsSummary": "iPhone 15 × 1 · Ốp lưng × 2"
     }
   ],
   "pagination": {
@@ -1471,7 +1583,7 @@ UC-13: POST /api/auth/profile, POST /api/profile/avatar (Cập nhật hồ sơ)
 UC-14: PUT /api/auth/change-password (Đổi mật khẩu)
 UC-15: CRUD /api/categories (Quản lý danh mục)
 UC-16: POST /api/products (Thêm sản phẩm)
-UC-17: PUT /api/products/{id} (Sửa sản phẩm)
+UC-17: PUT /api/products/{id} (Sửa sản phẩm JSON) hoặc POST /api/products/{id}/update (multipart có ảnh)
 UC-18: DELETE /api/products/{id} (Xóa sản phẩm)
 UC-19: GET /api/products (Xem danh sách sản phẩm)
 UC-20: GET /api/customers/search-by-phone (Tra cứu SĐT)

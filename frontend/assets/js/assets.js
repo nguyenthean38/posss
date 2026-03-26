@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Assets Helper Module
  * Centralized asset paths and utilities
  */
@@ -37,21 +37,27 @@ export const ASSETS = {
 };
 
 /**
+ * Relative path to backend uploads (no hardcoded host/port)
+ */
+function resolveBackendUploadUrl(path) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const p = String(path).replace(/^\/+/, '');
+    try {
+        return new URL('../backend/' + p, window.location.href).href;
+    } catch (e) {
+        return '../backend/' + p;
+    }
+}
+
+/**
  * Get product image with fallback
  */
 export function getProductImage(imageUrl) {
     if (!imageUrl) {
         return ASSETS.placeholder.product;
     }
-    
-    // Nếu đã là URL đầy đủ (http/https), trả về luôn
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        return imageUrl;
-    }
-    
-    // Nếu là relative path, thêm backend URL
-    // Backend uploads folder: /backend/uploads/...
-    return `http://localhost:8080/backend/${imageUrl}`;
+    return resolveBackendUploadUrl(imageUrl);
 }
 
 /**
@@ -61,14 +67,7 @@ export function getAvatarImage(avatarUrl) {
     if (!avatarUrl) {
         return ASSETS.placeholder.avatar;
     }
-    
-    // Nếu đã là URL đầy đủ (http/https), trả về luôn
-    if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
-        return avatarUrl;
-    }
-    
-    // Nếu là relative path, thêm backend URL
-    return `http://localhost:8080/backend/${avatarUrl}`;
+    return resolveBackendUploadUrl(avatarUrl);
 }
 
 /**

@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 // Start session FIRST - before any output or headers
 session_start();
 
@@ -30,13 +32,13 @@ set_exception_handler(function($exception) {
     exit;
 });
 
-// CORS Headers cho phép Frontend (HTML/JS) gọi API
+// CORS Headers cho phÃ©p Frontend (HTML/JS) gá»i API
 $allowedOrigins = [
-    'http://127.0.0.1:8080',   // Docker (truy cập trực tiếp)
+    'http://127.0.0.1:8080',   // Docker (truy cáº­p trá»±c tiáº¿p)
     'http://localhost:8080',    // Docker (localhost)
     'http://127.0.0.1:5500',   // VS Code Live Server
     'http://localhost:5500',    // VS Code Live Server
-    'http://127.0.0.1:3000',   // Dev server khác
+    'http://127.0.0.1:3000',   // Dev server khÃ¡c
     'http://localhost:3000',
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -44,26 +46,26 @@ if (in_array($origin, $allowedOrigins, true)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 } else {
-    // Fallback cho Postman / không có Origin
+    // Fallback cho Postman / khÃ´ng cÃ³ Origin
     header("Access-Control-Allow-Origin: http://127.0.0.1:8080");
 }
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Xử lý preflight request của CORS
+// Xá»­ lÃ½ preflight request cá»§a CORS
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Gọi các file Config & Core
+// Gá»i cÃ¡c file Config & Core
 require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/core/Response.php';
 require_once __DIR__ . '/core/Mailer.php';
 require_once __DIR__ . '/core/FileUpload.php';
 
-// Session đã được start ở đầu file
+// Session Ä‘Ã£ Ä‘Æ°á»£c start á»Ÿ Ä‘áº§u file
 require_once __DIR__ . '/middlewares/AuthMiddleware.php';
 
 // Require Models
@@ -83,26 +85,27 @@ require_once __DIR__ . '/controllers/CustomerController.php';
 require_once __DIR__ . '/controllers/PosController.php';
 require_once __DIR__ . '/controllers/ReportController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
+require_once __DIR__ . '/controllers/LogController.php';
 
-// Khởi tạo DB connection
-// Khởi tạo DB connection
+// Khá»Ÿi táº¡o DB connection
+// Khá»Ÿi táº¡o DB connection
 $db = Database::getConnection();
 
-// Lấy Body Payload
-// Nếu là multipart/form-data (có file upload) → dùng $_POST
-// Nếu là application/json → parse JSON từ php://input
+// Láº¥y Body Payload
+// Náº¿u lÃ  multipart/form-data (cÃ³ file upload) â†’ dÃ¹ng $_POST
+// Náº¿u lÃ  application/json â†’ parse JSON tá»« php://input
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 if (strpos($contentType, 'multipart/form-data') !== false) {
-    // FormData: Lấy từ $_POST
+    // FormData: Láº¥y tá»« $_POST
     $data = $_POST;
 } else {
-    // JSON: Parse từ php://input
+    // JSON: Parse tá»« php://input
     $data = json_decode(file_get_contents("php://input"), true);
 }
-// Parse đường dẫn Path parameters /api/staff/{id}/resend
+// Parse Ä‘Æ°á»ng dáº«n Path parameters /api/staff/{id}/resend
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Loại bỏ các tiền tố thư mục khỏi URI để match đúng với các routes (vd: /api/auth/login)
+// Loáº¡i bá» cÃ¡c tiá»n tá»‘ thÆ° má»¥c khá»i URI Ä‘á»ƒ match Ä‘Ãºng vá»›i cÃ¡c routes (vd: /api/auth/login)
 $uri = str_replace('/backend/index.php', '', $uri);
 $uri = preg_replace('/^\/backend/', '', $uri);
 
@@ -117,10 +120,11 @@ $customerCtrl = new CustomerController($db);
 $posCtrl = new PosController($db);
 $reportCtrl = new ReportController($db);
 $profileCtrl = new ProfileController($db);
+$logCtrl = new LogController($db);
 
-// ================ ĐIỀU HƯỚNG ROUTES ================
+// ================ ÄIá»€U HÆ¯á»šNG ROUTES ================
 
-// [1] Route Đăng nhập thường & đăng nhập lần đầu
+// [1] Route ÄÄƒng nháº­p thÆ°á»ng & Ä‘Äƒng nháº­p láº§n Ä‘áº§u
 if ($uri === '/api/auth/login' && $method === 'POST') {
     $authCtrl->login($data);
 }
@@ -131,7 +135,7 @@ elseif ($uri === '/api/auth/verify-token' && $method === 'POST') {
     $authCtrl->verifyToken($data);
 }
 
-// [2] Route Bảo vệ: Đổi mật khẩu bắt buộc & Thoát
+// [2] Route Báº£o vá»‡: Äá»•i máº­t kháº©u báº¯t buá»™c & ThoÃ¡t
 elseif ($uri === '/api/auth/init-password' && $method === 'PUT') {
     $authCtrl->initPassword($data);
 }
@@ -145,11 +149,11 @@ elseif ($uri === '/api/auth/change-password' && $method === 'PUT') {
     $authCtrl->changePassword($data);
 }
 elseif ($uri === '/api/auth/profile' && $method === 'POST') {
-    // Cập nhật hồ sơ & ảnh đại diện (multipart/form-data)
+    // Cáº­p nháº­t há»“ sÆ¡ & áº£nh Ä‘áº¡i diá»‡n (multipart/form-data)
     $authCtrl->updateProfile();
 }
 
-// [3] Admin / Staff Roles & Danh mục
+// [3] Admin / Staff Roles & Danh má»¥c
 elseif ($uri === '/api/staff' && $method === 'POST') {
     $staffCtrl->createStaff($data);
 }
@@ -180,7 +184,7 @@ elseif (preg_match('/^\/api\/staff\/(\d+)$/', $uri, $matches) && $method === 'DE
     $staffId = (int)$matches[1];
     $staffCtrl->deleteStaff($staffId);
 }
-// Danh mục sản phẩm
+// Danh má»¥c sáº£n pháº©m
 elseif ($uri === '/api/categories/search' && $method === 'POST') {
     $categoryCtrl->searchCategories($data);
 }
@@ -202,7 +206,7 @@ elseif (preg_match('/^\/api\/categories\/(\d+)$/', $uri, $matches) && $method ==
     $categoryId = (int)$matches[1];
     $categoryCtrl->destroy($categoryId);
 }
-// Sản phẩm (admin)
+// Sáº£n pháº©m (admin)
 elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 'GET') {
     $productCtrl->show((int)$matches[1]);
 }
@@ -211,6 +215,10 @@ elseif ($uri === '/api/products' && $method === 'GET') {
 }
 elseif ($uri === '/api/products' && $method === 'POST') {
     $productCtrl->store($data);
+}
+// Cáº­p nháº­t cÃ³ multipart (PHP chá»‰ parse $_POST/$_FILES cho POST, khÃ´ng cho PUT)
+elseif (preg_match('/^\/api\/products\/(\d+)\/update$/', $uri, $matches) && $method === 'POST') {
+    $productCtrl->update((int)$matches[1], $data);
 }
 elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 'PUT') {
     $productId = (int)$matches[1];
@@ -221,34 +229,38 @@ elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 
     $productCtrl->destroy($productId);
 }
 
-// Khách hàng — route cụ thể trước GET /aphp -S localhost:8000pi/customers/{id}
+// KhÃ¡ch hÃ ng â€” route cá»¥ thá»ƒ trÆ°á»›c GET /aphp -S localhost:8000pi/customers/{id}
 elseif (preg_match('/^\/api\/customers\/(\d+)\/history$/', $uri, $matches) && $method === 'GET') {
     $customerCtrl->history((int)$matches[1]);
 }
 elseif (preg_match('/^\/api\/customers\/orders\/(\d+)$/', $uri, $matches) && $method === 'GET') {
     $customerCtrl->orderDetail((int)$matches[1]);
 }
-// UC-20 - Tra cứu khách hàng theo SĐT
+// UC-20 - Tra cá»©u khÃ¡ch hÃ ng theo SÄT
 elseif ($uri === '/api/customers/search-by-phone' && $method === 'GET') {
     $customerCtrl->searchByPhone();
 }
-// UC-22 - Xem chi tiết khách hàng + tổng quan mua hàng
+// Cáº­p nháº­t khÃ¡ch cÃ³ multipart (PHP chá»‰ parse $_POST/$_FILES cho POST, khÃ´ng cho PUT)
+elseif (preg_match('/^\/api\/customers\/(\d+)\/update$/', $uri, $matches) && $method === 'POST') {
+    $customerCtrl->update((int)$matches[1], $data);
+}
+// UC-22 - Xem chi tiáº¿t khÃ¡ch hÃ ng + tá»•ng quan mua hÃ ng
 elseif (preg_match('/^\/api\/customers\/(\d+)$/', $uri, $matches) && $method === 'GET') {
     $customerCtrl->show((int)$matches[1]);
 }
-// Cập nhật khách hàng
+// Cáº­p nháº­t khÃ¡ch hÃ ng
 elseif (preg_match('/^\/api\/customers\/(\d+)$/', $uri, $matches) && $method === 'PUT') {
     $customerCtrl->update((int)$matches[1], $data);
 }
-// Xóa khách hàng
+// XÃ³a khÃ¡ch hÃ ng
 elseif (preg_match('/^\/api\/customers\/(\d+)$/', $uri, $matches) && $method === 'DELETE') {
     $customerCtrl->destroy((int)$matches[1]);
 }
-// UC-21 - Tạo khách hàng mới (khi thanh toán lần đầu)
+// UC-21 - Táº¡o khÃ¡ch hÃ ng má»›i (khi thanh toÃ¡n láº§n Ä‘áº§u)
 elseif ($uri === '/api/customers' && $method === 'POST') {
     $customerCtrl->store($data);
 }
-// Lấy danh sách khách hàng
+// Láº¥y danh sÃ¡ch khÃ¡ch hÃ ng
 elseif ($uri === '/api/customers' && $method === 'GET') {
     $customerCtrl->index();
 }
@@ -257,7 +269,8 @@ elseif ($uri === '/api/customers' && $method === 'GET') {
 elseif ($uri === '/api/profile' && $method === 'GET') { $profileCtrl->getMyProfile(); }
 elseif ($uri === '/api/profile' && $method === 'PUT') { $profileCtrl->updateProfile($data); }
 elseif ($uri === '/api/profile/avatar' && $method === 'POST') { $profileCtrl->uploadAvatar(); }
-
+// Admin: nhat ky hoat dong (doc bang logs)
+elseif ($uri === '/api/admin/activity-logs' && $method === 'GET') { $logCtrl->activityLogs(); }
 // POS
 elseif ($uri === '/api/pos/session' && $method === 'POST') { $posCtrl->initSession(); }
 elseif ($uri === '/api/pos/cart/add' && $method === 'POST') { $posCtrl->addToCart($data); }
@@ -274,7 +287,7 @@ elseif ($uri === '/api/reports/profit' && $method === 'GET') { $reportCtrl->getP
 elseif ($uri === '/api/reports/chart' && $method === 'GET') { $reportCtrl->getSalesChartData(); }
 
 // ====================================================
-// Trường hợp đường dẫn không hợp lệ
+// TrÆ°á»ng há»£p Ä‘Æ°á»ng dáº«n khÃ´ng há»£p lá»‡
 else {
-    Response::json(["message" => "Routing không tồn tại hoặc sai HTTP method!"], 404);
+    Response::json(["message" => "Routing khÃ´ng tá»“n táº¡i hoáº·c sai HTTP method!"], 404);
 }

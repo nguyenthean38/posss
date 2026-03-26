@@ -36,10 +36,12 @@ import { requireAuth } from './auth.js';
             "kpi.items": "SP đã bán",
             "chart.revenue": "Doanh thu",
             "chart.category": "Danh mục",
+            "chart.noData": "Không có dữ liệu",
             "table.orders": "Đơn hàng",
             "table.date": "Ngày đặt",
             "table.customer": "Tên khách hàng",
             "table.employee": "Nhân viên",
+            "table.products": "Sản phẩm",
             "table.total": "Tổng cộng",
             "table.action": "Thao tác",
             "modal.orderDetail": "Chi tiết đơn hàng",
@@ -47,6 +49,7 @@ import { requireAuth } from './auth.js';
             "misc.items": "sản phẩm",
             "misc.other": "Khác",
             "toast.error": "Có lỗi xảy ra",
+            "toast.reportFail": "Không tải được báo cáo. Kiểm tra đăng nhập hoặc thử lại.",
         },
         en: {
             "page.reports": "Reports",
@@ -75,10 +78,12 @@ import { requireAuth } from './auth.js';
             "kpi.items": "Items sold",
             "chart.revenue": "Revenue",
             "chart.category": "Categories",
+            "chart.noData": "No data",
             "table.orders": "Orders",
             "table.date": "Order date",
             "table.customer": "Customer",
             "table.employee": "Employee",
+            "table.products": "Products",
             "table.total": "Total",
             "table.action": "Action",
             "modal.orderDetail": "Order details",
@@ -86,12 +91,66 @@ import { requireAuth } from './auth.js';
             "misc.items": "items",
             "misc.other": "Other",
             "toast.error": "An error occurred",
+            "toast.reportFail": "Could not load reports. Check login or try again.",
         }
     };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
     const fmtVND = (n) => (Number(n || 0)).toLocaleString("vi-VN") + "\u00A0₫";
+
+    function escapeHtml(s) {
+        if (s == null || s === "") return "";
+        return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    /** Chuẩn hóa số tiền từ API (tránh parseFloat("133.321.000") -> 133 làm cột tí hon / không thấy) */
+    function parseMoneyNumber(v) {
+        if (v == null || v === "") return 0;
+        if (typeof v === "number" && Number.isFinite(v)) return v;
+        const s = String(v).trim().replace(/\s/g, "");
+        if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+            return parseFloat(s.replace(/\./g, "")) || 0;
+        }
+        const n = Number(String(s).replace(/,/g, "."));
+        return Number.isFinite(n) ? n : 0;
+    }
+
+    /**
+     * Một ngày (from === to): đảm bảo cột khớp KPI; nếu chart rỗng/sai nhưng KPI > 0 thì dùng KPI.
+     */
+    function normalizeDailyForChart(fromYmd, toYmd, points, kpiRaw) {
+        const kpi = parseMoneyNumber(kpiRaw);
+        const pts = (points || []).map((p) => ({
+            label: p.label,
+            value: parseMoneyNumber(p.value),
+        }));
+        const sum = pts.reduce((s, p) => s + p.value, 0);
+
+        if (fromYmd === toYmd) {
+            if (kpi > 0 && (pts.length === 0 || sum <= 0)) {
+                return [{ label: labelDay(fromYmd), value: kpi }];
+            }
+            if (pts.length === 1) {
+                return [{ ...pts[0], value: Math.max(pts[0].value, kpi) }];
+            }
+        }
+        return pts;
+    }
+
+    function toast(msg) {
+        const el = document.getElementById("toast");
+        const txt = document.getElementById("toastText");
+        if (!el || !txt) return;
+        txt.textContent = msg;
+        el.classList.add("show");
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => el.classList.remove("show"), 3500);
+    }
 
     function applyLang(lang) {
         document.documentElement.lang = lang;
@@ -157,10 +216,49 @@ import { requireAuth } from './auth.js';
     }
 
     function labelDay(d) {
-        const x = new Date(d);
+        if (d == null || d === "") return "-";
+        const s = String(d);
+        // Tranh lech ngay khi parse "YYYY-MM-DD" (UTC midnight co the thanh ngay hom truoc o GMT+7)
+        let x;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+            const [y, m, dd] = s.split("-").map(Number);
+            x = new Date(y, m - 1, dd);
+        } else {
+            x = new Date(d);
+        }
         const dd = String(x.getDate()).padStart(2, "0");
         const mm = String(x.getMonth() + 1).padStart(2, "0");
         return `${dd}/${mm}`;
+    }
+
+    /** Chuẩn hóa label từ API chart (DATE MySQL) thành YYYY-MM-DD */
+    function normalizeChartDateKey(label) {
+        if (label == null || label === "") return "";
+        const s = String(label).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        if (/^\d{4}-\d{2}-\d{2}[\sT]/.test(s)) return s.slice(0, 10);
+        const d = new Date(s);
+        return Number.isNaN(d.getTime()) ? "" : ymd(d);
+    }
+
+    /** Mỗi ngày trong [rangeStart, rangeEnd] có một điểm (0 nếu không có đơn) — tránh biểu đồ tháng chỉ vài mốc */
+    function fillDailySeries(rangeStart, rangeEnd, chartDataRows) {
+        const map = new Map();
+        for (const row of chartDataRows || []) {
+            const key = normalizeChartDateKey(row.label);
+            if (!key) continue;
+            const v = parseMoneyNumber(row.value);
+            map.set(key, (map.get(key) || 0) + v);
+        }
+        const out = [];
+        const cur = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate());
+        const end = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), rangeEnd.getDate());
+        while (cur <= end) {
+            const key = ymd(cur);
+            out.push({ label: labelDay(key), value: map.has(key) ? map.get(key) : 0 });
+            cur.setDate(cur.getDate() + 1);
+        }
+        return out;
     }
 
     let currentRange = "last7";
@@ -170,21 +268,20 @@ import { requireAuth } from './auth.js';
     function computeRange(kind) {
         const now = new Date();
         if (kind === "today") {
-            rangeFrom = new Date(now.setHours(0, 0, 0, 0));
-            rangeTo = new Date(now.setHours(23, 59, 59, 999));
+            rangeFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            rangeTo = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         } else if (kind === "yesterday") {
-            const y = new Date(now);
-            y.setDate(y.getDate() - 1);
-            rangeFrom = new Date(y.setHours(0, 0, 0, 0));
-            rangeTo = new Date(y.setHours(23, 59, 59, 999));
+            const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+            rangeFrom = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 0, 0, 0, 0);
+            rangeTo = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 23, 59, 59, 999);
         } else if (kind === "last7") {
-            const a = new Date(now);
-            a.setDate(a.getDate() - 6);
-            rangeFrom = new Date(a.setHours(0, 0, 0, 0));
-            rangeTo = new Date(now.setHours(23, 59, 59, 999));
+            const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
+            rangeFrom = start;
+            rangeTo = end;
         } else if (kind === "month") {
-            rangeFrom = new Date(now.getFullYear(), now.getMonth(), 1);
-            rangeTo = new Date(now.setHours(23, 59, 59, 999));
+            rangeFrom = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            rangeTo = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         }
     }
 
@@ -194,6 +291,10 @@ import { requireAuth } from './auth.js';
         if (!f || !t_) return;
         rangeFrom = new Date(f);
         rangeTo = new Date(t_);
+        currentRange = "custom";
+        document.querySelectorAll(".ps-rangebtn").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.range === "custom");
+        });
         refreshAll();
     }
 
@@ -215,67 +316,188 @@ import { requireAuth } from './auth.js';
         };
     }
 
-    function destroyCharts() {
+    function destroyRevChart() {
         if (revChart) { revChart.destroy(); revChart = null; }
+    }
+
+    function destroyDonutChart() {
         if (donutChart) { donutChart.destroy(); donutChart = null; }
     }
 
-    function buildCharts(model) {
-        const c = chartColors();
+    function destroyCharts() {
+        destroyRevChart();
+        destroyDonutChart();
+    }
 
-        const ctx1 = document.getElementById("revLine");
-        revChart = new Chart(ctx1, {
-            type: "line",
-            data: {
-                labels: model.daily.map(x => x.label),
-                datasets: [{
-                    data: model.daily.map(x => x.value),
-                    borderColor: c.line,
-                    backgroundColor: c.fill,
-                    fill: true,
-                    tension: 0.35,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    borderWidth: 2,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: "nearest", axis: "x", intersect: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        intersect: false,
-                        backgroundColor: c.tooltipBg,
-                        borderColor: c.tooltipBorder,
-                        borderWidth: 1,
-                        titleColor: c.tooltipText,
-                        bodyColor: c.tooltipText,
-                        displayColors: false,
-                        callbacks: { label: (ctx) => fmtVND(ctx.parsed.y) }
-                    }
+    function setRevenueChartEmpty(show) {
+        const canvas = document.getElementById("revLine");
+        const empty = document.getElementById("revChartEmpty");
+        if (!canvas || !empty) return;
+        if (show) {
+            empty.textContent = t("chart.noData");
+            empty.removeAttribute("hidden");
+            canvas.style.visibility = "hidden";
+        } else {
+            empty.setAttribute("hidden", "");
+            canvas.style.visibility = "visible";
+        }
+    }
+
+    function buildCharts(model, kpiRevenue, rangeKind) {
+        const c = chartColors();
+        const rk = rangeKind || currentRange;
+        const rawDaily = (model.daily || []).map((x) => ({
+            label: x.label,
+            value: parseMoneyNumber(x.value),
+        }));
+        const kpi = parseMoneyNumber(kpiRevenue);
+        const dataMax = rawDaily.reduce((m, x) => Math.max(m, x.value), 0);
+        const sumDaily = rawDaily.reduce((s, x) => s + x.value, 0);
+        const isRevenueEmpty = kpi <= 0 && sumDaily <= 0;
+
+        if (isRevenueEmpty) {
+            destroyRevChart();
+            setRevenueChartEmpty(true);
+        } else {
+            setRevenueChartEmpty(false);
+            const daily = rawDaily;
+            const axisTop = Math.max(dataMax, kpi, 0) * 1.05;
+            const yScaleMax = axisTop > 0 ? Math.ceil(Number(axisTop)) : 1;
+            const yCap = yScaleMax;
+
+            // Hôm nay / Hôm qua / Tháng này: cột; 7 ngày: line; Tùy chọn ≤31 ngày: cột
+            const useBar =
+                rk === "today" ||
+                rk === "yesterday" ||
+                rk === "month" ||
+                (rk === "custom" && daily.length <= 31);
+            const pointRadius = !useBar && daily.length <= 12 ? 4 : !useBar ? 2 : 0;
+            const pointHoverRadius = !useBar ? Math.max(pointRadius, 4) : 4;
+            const denseX = daily.length > 10;
+
+            const ctx1 = document.getElementById("revLine");
+            destroyRevChart();
+            const enforceYPlugin = {
+                id: "enforceRevenueYAxis",
+                afterLayout(chart) {
+                    const yS = chart.scales.y;
+                    if (!yS || !Number.isFinite(yCap) || yCap <= 0) return;
+                    yS.options.min = 0;
+                    yS.options.max = yCap;
                 },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: c.ticks, font: { size: 11 } } },
-                    y: {
-                        grid: { color: c.grid },
-                        ticks: { color: c.ticks, font: { size: 11 }, callback: (v) => (v / 1000000) + "M" }
-                    }
-                }
-            }
-        });
+            };
+            revChart = new Chart(ctx1, {
+                type: useBar ? "bar" : "line",
+                data: {
+                    labels: daily.map((x) => x.label),
+                    datasets: [
+                        useBar
+                            ? {
+                                data: daily.map((x) => x.value),
+                                backgroundColor: "rgba(59, 130, 246, 0.72)",
+                                borderColor: "rgba(37, 99, 235, 0.95)",
+                                borderWidth: 1,
+                                borderRadius: 4,
+                            }
+                            : {
+                                data: daily.map((x) => x.value),
+                                borderColor: c.line,
+                                backgroundColor: c.fill,
+                                fill: true,
+                                tension: 0.35,
+                                pointRadius,
+                                pointHoverRadius,
+                                borderWidth: 2,
+                            },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    ...(useBar
+                        ? {
+                            datasets: {
+                                bar: {
+                                    categoryPercentage: denseX ? 0.9 : 0.75,
+                                    barPercentage: denseX ? 0.75 : 0.85,
+                                    maxBarThickness: denseX ? 28 : 120,
+                                },
+                            },
+                        }
+                        : {}),
+                    interaction: { mode: "nearest", axis: "x", intersect: useBar },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            intersect: false,
+                            backgroundColor: c.tooltipBg,
+                            borderColor: c.tooltipBorder,
+                            borderWidth: 1,
+                            titleColor: c.tooltipText,
+                            bodyColor: c.tooltipText,
+                            displayColors: false,
+                            callbacks: {
+                                label: (ctx) => {
+                                    const y = ctx.parsed && typeof ctx.parsed.y === "number" ? ctx.parsed.y : 0;
+                                    return fmtVND(y);
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: c.ticks,
+                                font: { size: denseX ? 9 : 11 },
+                                maxRotation: denseX ? 45 : 0,
+                                autoSkip: true,
+                                maxTicksLimit: denseX ? 31 : 14,
+                            },
+                            offset: true,
+                        },
+                        y: {
+                            type: "linear",
+                            min: 0,
+                            max: yScaleMax,
+                            grace: 0,
+                            grid: { color: c.grid },
+                            ticks: {
+                                color: c.ticks,
+                                font: { size: 11 },
+                                callback: (raw) => {
+                                    const v = Number(raw);
+                                    if (!Number.isFinite(v)) return "";
+                                    if (Math.abs(v) >= 1_000_000) return (v / 1_000_000).toFixed(0) + "M";
+                                    if (Math.abs(v) >= 1_000) return (v / 1_000).toFixed(0) + "k";
+                                    return String(Math.round(v));
+                                },
+                            },
+                        },
+                    },
+                },
+                plugins: [enforceYPlugin],
+            });
+        }
+
+        const rawL = model.catLabels || [];
+        const rawV = model.catValues || [];
+        const catPairs = rawL
+            .map((name, i) => ({ name, val: parseMoneyNumber(rawV[i]) }))
+            .filter((p) => p.val > 0);
+        const dLabels = catPairs.map((p) => p.name);
+        const dVals = catPairs.map((p) => p.val);
 
         const ctx2 = document.getElementById("catDonut");
         donutChart = new Chart(ctx2, {
             type: "doughnut",
             data: {
-                labels: model.catLabels,
+                labels: dLabels,
                 datasets: [{
-                    data: model.catValues.length ? model.catValues : [1],
-                    backgroundColor: model.catValues.length ? model.catLabels.map((_, i) => c.donut[i % c.donut.length]) : ["rgba(255,255,255,.10)"],
-                    borderWidth: 1
-                }]
+                    data: dVals.length ? dVals : [1],
+                    backgroundColor: dVals.length ? dLabels.map((_, i) => c.donut[i % c.donut.length]) : ["rgba(255,255,255,.10)"],
+                    borderWidth: 1,
+                }],
             },
             options: {
                 responsive: true,
@@ -289,22 +511,27 @@ import { requireAuth } from './auth.js';
                         borderWidth: 1,
                         titleColor: c.tooltipText,
                         bodyColor: c.tooltipText,
-                        callbacks: { label: (ctx) => `${ctx.label}: ${fmtVND(ctx.parsed)}` }
-                    }
-                }
-            }
+                        callbacks: {
+                            label: (ctx) => {
+                                const v = typeof ctx.parsed === "number" ? ctx.parsed : 0;
+                                return `${ctx.label}: ${fmtVND(v)}`;
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         const legend = document.getElementById("catLegend");
-        const total = model.catValues.reduce((s, x) => s + x, 0) || 1;
-        legend.innerHTML = model.catLabels.length
-            ? model.catLabels.slice(0, 5).map((name, i) => {
-                const val = model.catValues[i];
+        const total = dVals.reduce((s, x) => s + x, 0) || 1;
+        legend.innerHTML = dLabels.length
+            ? dLabels.slice(0, 5).map((name, i) => {
+                const val = dVals[i];
                 const pct = Math.round((val / total) * 100);
                 const color = c.donut[i % c.donut.length];
                 return `<div class="it"><span class="dot" style="background:${color}"></span><div class="it-info"><span class="it-name">${name}</span><span class="it-val">${fmtVND(val)} (${pct}%)</span></div></div>`;
             }).join("")
-            : `<div class="it"><span class="dot" style="background:rgba(255,255,255,.2)"></span><span>${t("misc.other")} (0 ₫)</span></div>`;
+            : `<div class="it"><span class="dot" style="background:rgba(255,255,255,.2)"></span><span>${t("chart.noData")}</span></div>`;
     }
 
     function rebuildCharts() {
@@ -323,11 +550,15 @@ import { requireAuth } from './auth.js';
             const from = ymd(rangeFrom);
             const to   = ymd(rangeTo);
 
-            // [1] Summary KPIs - backend: TotalRevenue, OrderCount, TotalProductsSold, CustomerCount
+            // [1] Summary KPIs + CategoryBreakdown (doanh thu theo danh muc cho donut)
             const summary = await API.reports.getSummary(from, to);
             document.getElementById("kpiRevenue").textContent = fmtVND(summary.TotalRevenue);
             document.getElementById("kpiOrders").textContent  = String(summary.OrderCount || 0);
             document.getElementById("kpiItems").textContent   = String(summary.TotalProductsSold || 0);
+
+            const catRows = summary.CategoryBreakdown || [];
+            const catLabels = catRows.map((c) => c.CategoryName || "");
+            const catValues = catRows.map((c) => parseMoneyNumber(c.Revenue));
 
             // [2] Profit - admin only, from /api/reports/profit
             try {
@@ -337,43 +568,59 @@ import { requireAuth } from './auth.js';
                 document.getElementById("kpiProfit").textContent = "—";
             }
 
-            // [3] Orders list - backend: items[{OrderId, Date, CustomerName, TotalAmount}]
+            // [3] Orders list - backend: items[{OrderId, Date, CustomerName, StaffName, TotalAmount, ItemsSummary}]
             const ordersResp = await API.request(`/api/reports/orders?fromDate=${from}&toDate=${to}&page=1&pageSize=20`);
             const orders = ordersResp.items || [];
             const tb = document.getElementById("orderTbody");
             tb.innerHTML = orders.length
-                ? orders.map(o => `
+                ? orders.map((o) => {
+                    const rawItems = (o.ItemsSummary != null ? String(o.ItemsSummary) : (o.itemssummary != null ? String(o.itemssummary) : "")).trim();
+                    const itemsEsc = escapeHtml(rawItems);
+                    const productsCell = rawItems
+                        ? `<td class="ps-orderProducts"><span class="ps-orderProducts__text" title="${itemsEsc}">${itemsEsc}</span></td>`
+                        : `<td class="ps-orderProducts">—</td>`;
+                    return `
                     <tr>
                         <td><a class="ps-link" href="javascript:void(0)">#${o.OrderId}</a></td>
                         <td>${o.Date || "-"}</td>
                         <td>${o.CustomerName || "Khách lẻ"}</td>
-                        <td>-</td>
+                        <td>${o.StaffName || "—"}</td>
+                        ${productsCell}
                         <td class="text-end" style="font-weight:900">${fmtVND(o.TotalAmount)}</td>
                         <td class="text-center">
                             <button class="ps-actBtn" data-id="${o.OrderId}" title="view"><i class="bi bi-eye"></i></button>
                         </td>
-                    </tr>`).join("")
-                : `<tr><td colspan="6" class="text-center" style="opacity:.5">Không có đơn hàng trong khoảng thời gian này</td></tr>`;
+                    </tr>`;
+                }).join("")
+                : `<tr><td colspan="7" class="text-center" style="opacity:.5">Không có đơn hàng trong khoảng thời gian này</td></tr>`;
 
             tb.querySelectorAll(".ps-actBtn").forEach(btn => {
                 btn.addEventListener("click", () => openOrder(btn.dataset.id));
             });
 
-            // [4] Charts - /api/reports/chart?type=revenue&period=day
+            // [4] Charts - duong ngay tu /api/reports/chart; donut danh muc tu CategoryBreakdown o summary
             try {
                 const chartData = await API.request(`/api/reports/chart?type=revenue&period=day&fromDate=${from}&toDate=${to}`);
+                const filled = fillDailySeries(rangeFrom, rangeTo, chartData || []);
+                const dailyNorm = normalizeDailyForChart(from, to, filled, summary.TotalRevenue);
                 const model = {
-                    daily:     (chartData || []).map(d => ({ label: labelDay(d.label), value: parseFloat(d.value) || 0 })),
-                    catLabels: [],
-                    catValues: [],
+                    daily: dailyNorm,
+                    catLabels,
+                    catValues,
                 };
+                const kpiTotal = parseMoneyNumber(summary.TotalRevenue);
                 destroyCharts();
-                buildCharts(model);
-            } catch (_) {
-                buildCharts({ daily: [], catLabels: [], catValues: [] });
+                buildCharts(model, kpiTotal, currentRange);
+            } catch (chartErr) {
+                console.error("Chart error:", chartErr);
+                toast(chartErr.message || t("toast.error"));
+                const kpiTotal = parseMoneyNumber(summary.TotalRevenue);
+                destroyCharts();
+                buildCharts({ daily: [], catLabels, catValues }, kpiTotal, currentRange);
             }
         } catch (err) {
-            console.error('Refresh error:', err);
+            console.error("Refresh error:", err);
+            toast(err.message || t("toast.reportFail"));
         }
     }
 
@@ -450,6 +697,19 @@ import { requireAuth } from './auth.js';
 
         computeRange(currentRange);
         refreshAll();
+
+        let lastReportSurfaceRefresh = 0;
+        function refreshWhenReportSurfaceVisible() {
+            if (document.hidden) return;
+            const now = Date.now();
+            if (now - lastReportSurfaceRefresh < 1500) return;
+            lastReportSurfaceRefresh = now;
+            refreshAll();
+        }
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) refreshWhenReportSurfaceVisible();
+        });
+        window.addEventListener("focus", () => refreshWhenReportSurfaceVisible());
     }
 
     init();

@@ -106,7 +106,7 @@ class CustomerController {
         }
 
         if ($this->customerModel->update($id, $fullName, $phone, $address, $avatarPath)) {
-            $this->logModel->createLog($_SESSION['user_id'], 'update_customer', 'Cập nhật khách hàng ID=' . $id);
+            $this->logModel->createLog($_SESSION['user_id'], 'update_customer', 'Cập nhật khách hàng ID=' . $id . ' | ' . $fullName . ' | SĐT ' . $phone);
             Response::json(["message" => "Cập nhật thành công"]);
         }
         Response::json(["message" => "Lỗi server"], 500);

@@ -58,6 +58,7 @@ CREATE TABLE products (
     category_id INT NOT NULL,
     product_name VARCHAR(255) NOT NULL,
     barcode VARCHAR(255) NOT NULL UNIQUE,
+    image VARCHAR(500) NULL COMMENT 'Duong dan file anh san pham',
     import_price DECIMAL(10, 2) NOT NULL COMMENT 'Giá gốc ẩn với nhân viên',
     selling_price DECIMAL(10, 2) NOT NULL,
     stock_quantity INT NOT NULL DEFAULT 0,
@@ -70,7 +71,11 @@ CREATE TABLE customers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20) NOT NULL UNIQUE,
-    address VARCHAR(255)
+    address VARCHAR(255),
+    avatar VARCHAR(500) NULL COMMENT 'Duong dan anh dai dien KH',
+    updated_at DATETIME NULL,
+    updated_by INT NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE orders (

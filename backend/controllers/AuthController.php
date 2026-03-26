@@ -181,6 +181,11 @@ class AuthController {
             session_start();
         }
 
+        $userId = $_SESSION['user_id'] ?? null;
+        if ($userId) {
+            $this->logModel->createLog((int)$userId, 'logout', 'Đăng xuất');
+        }
+
         // Xóa toàn bộ dữ liệu session hiện tại
         $_SESSION = [];
 

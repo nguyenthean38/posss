@@ -1,5 +1,5 @@
 // Products Module - Real API Integration
-import API from './api.js?v=5';
+import API from './api.js?v=7';
 import { requireAuth } from './auth.js';
 import { getProductImage } from './assets.js';
 
@@ -72,6 +72,8 @@ import { getProductImage } from './assets.js';
             "view.profit": "Lợi nhuận",
             "view.createdAt": "Ngày tạo",
             "toast.error": "Có lỗi xảy ra",
+            "toast.fileTooBig": "Ảnh không được vượt quá 2MB",
+            "toast.fileType": "Chỉ chấp nhận ảnh JPG, PNG, GIF, WEBP",
         },
         en: {
             "prod.modalDelete": "Delete product",
@@ -131,6 +133,8 @@ import { getProductImage } from './assets.js';
             "view.stock": "Stock",
             "view.createdAt": "Created At",
             "toast.error": "An error occurred",
+            "toast.fileTooBig": "Image must be at most 2MB",
+            "toast.fileType": "Only JPG, PNG, GIF, WEBP images are allowed",
         }
     };
 
@@ -138,12 +142,32 @@ import { getProductImage } from './assets.js';
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
     const fmtVND = (n) => (Number(n || 0)).toLocaleString("vi-VN") + "\u00A0₫";
 
-    function toast(msg) {
+    const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+    const ALLOWED_IMAGE_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+    function validateImageFile(file) {
+        if (!file) return null;
+        if (file.size > MAX_IMAGE_BYTES) return t("toast.fileTooBig");
+        if (!ALLOWED_IMAGE_MIME.includes(file.type)) return t("toast.fileType");
+        return null;
+    }
+
+    function toast(msg, variant = "success") {
         if (!toastEl || !toastText) return;
+        const icon = document.getElementById("toastIcon");
         toastText.textContent = msg;
+        const isErr = variant === "error";
+        toastEl.classList.toggle("ps-toast--error", isErr);
+        if (icon) {
+            icon.className = isErr ? "bi bi-exclamation-circle" : "bi bi-check2-circle";
+        }
+        toastEl.setAttribute("role", isErr ? "alert" : "status");
         toastEl.classList.add("show");
         clearTimeout(toast._t);
-        toast._t = setTimeout(() => toastEl.classList.remove("show"), 1500);
+        toast._t = setTimeout(() => {
+            toastEl.classList.remove("show");
+            toastEl.classList.remove("ps-toast--error");
+        }, isErr ? 2200 : 1500);
     }
 
     function applyLang(lang) {
@@ -268,7 +292,7 @@ import { getProductImage } from './assets.js';
             });
         } catch (err) {
             console.error('Render error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -314,7 +338,7 @@ import { getProductImage } from './assets.js';
             bootstrap.Modal.getOrCreateInstance(document.getElementById("productModal")).show();
         } catch (err) {
             console.error('Edit error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -369,7 +393,7 @@ import { getProductImage } from './assets.js';
             bootstrap.Modal.getOrCreateInstance(document.getElementById("viewModal")).show();
         } catch (err) {
             console.error('View error:', err);
-            toast(err.message || t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -390,14 +414,22 @@ import { getProductImage } from './assets.js';
             const imageFile = document.getElementById("fImage").files[0];
 
             if (!product_name || !barcode || !category_id || import_price <= 0 || selling_price <= 0) {
-                toast(t("toast.invalid"));
+                toast(t("toast.invalid"), "error");
                 return;
             }
 
             // Kiểm tra ảnh bắt buộc khi tạo mới
             if (!id && !imageFile) {
-                toast("Ảnh sản phẩm là bắt buộc");
+                toast("Ảnh sản phẩm là bắt buộc", "error");
                 return;
+            }
+
+            if (imageFile) {
+                const imgErr = validateImageFile(imageFile);
+                if (imgErr) {
+                    toast(imgErr, "error");
+                    return;
+                }
             }
 
             // Sử dụng FormData nếu có file upload
@@ -436,7 +468,7 @@ import { getProductImage } from './assets.js';
             bootstrap.Modal.getInstance(document.getElementById("productModal"))?.hide();
         } catch (err) {
             console.error('Save error:', err);
-            toast(err.message || t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -457,7 +489,7 @@ import { getProductImage } from './assets.js';
             bootstrap.Modal.getInstance(document.getElementById("deleteModal"))?.hide();
         } catch (err) {
             console.error('Delete error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 

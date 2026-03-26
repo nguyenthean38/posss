@@ -1,6 +1,7 @@
 // Customers Module - Real API Integration
-import API from './api.js?v=5';
+import API from './api.js?v=8';
 import { requireAuth } from './auth.js';
+import { getAvatarImage } from './assets.js';
 
 (() => {
     requireAuth();
@@ -20,6 +21,7 @@ import { requireAuth } from './auth.js';
             "nav.employees": "Nhân viên",
             "nav.customers": "Khách hàng",
             "nav.reports": "Báo cáo",
+            "nav.activity": "Nhật ký",
             "nav.profile": "Hồ sơ",
             "nav.logout": "Đăng xuất",
             "nav.collapse": "Thu gọn",
@@ -50,6 +52,8 @@ import { requireAuth } from './auth.js';
             "confirm.deleteText": "Bạn có chắc muốn xóa khách hàng này?",
             "rank.vip": "VIP",
             "toast.error": "Có lỗi xảy ra",
+            "toast.fileTooBig": "Ảnh không được vượt quá 2MB",
+            "toast.fileType": "Chỉ chấp nhận ảnh JPG, PNG, GIF, WEBP",
         },
         en: {
             "page.customers": "Customers",
@@ -61,6 +65,7 @@ import { requireAuth } from './auth.js';
             "nav.employees": "Employees",
             "nav.customers": "Customers",
             "nav.reports": "Reports",
+            "nav.activity": "Activity",
             "nav.profile": "Profile",
             "nav.logout": "Logout",
             "nav.collapse": "Collapse",
@@ -91,6 +96,8 @@ import { requireAuth } from './auth.js';
             "confirm.deleteText": "Delete this customer?",
             "rank.vip": "VIP",
             "toast.error": "An error occurred",
+            "toast.fileTooBig": "Image must be at most 2MB",
+            "toast.fileType": "Only JPG, PNG, GIF, WEBP images are allowed",
         }
     };
 
@@ -98,14 +105,35 @@ import { requireAuth } from './auth.js';
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
     const fmtVND = (n) => (Number(n || 0)).toLocaleString("vi-VN") + "\u00A0₫";
 
-    function toast(msg) {
+    const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+    const ALLOWED_IMAGE_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+    function validateImageFile(file) {
+        if (!file) return null;
+        if (file.size > MAX_IMAGE_BYTES) return t("toast.fileTooBig");
+        if (!ALLOWED_IMAGE_MIME.includes(file.type)) return t("toast.fileType");
+        return null;
+    }
+
+    function toast(msg, variant = "success") {
         const el = document.getElementById("toast");
         const txt = document.getElementById("toastText");
+        const icon = document.getElementById("toastIcon");
         if (!el || !txt) return;
         txt.textContent = msg;
+        const isErr = variant === "error";
+        el.classList.toggle("ps-toast--error", isErr);
+        if (icon) {
+            icon.className = isErr ? "bi bi-exclamation-circle" : "bi bi-check2-circle";
+            icon.setAttribute("aria-hidden", "true");
+        }
+        el.setAttribute("role", isErr ? "alert" : "status");
         el.classList.add("show");
         clearTimeout(toast._t);
-        toast._t = setTimeout(() => el.classList.remove("show"), 1500);
+        toast._t = setTimeout(() => {
+            el.classList.remove("show");
+            el.classList.remove("ps-toast--error");
+        }, isErr ? 2200 : 1500);
     }
 
     function applyLang(lang) {
@@ -140,6 +168,21 @@ import { requireAuth } from './auth.js';
         return (parts[0][0] || "A").toUpperCase();
     }
 
+    function escapeAttr(s) {
+        return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    }
+
+    function customerAvatarHtml(c) {
+        const ini = initials(c.name);
+        if (!c.avatar) {
+            return `<div class="ps-cusAvatar"><span class="ps-cusAvatarInitials">${ini}</span></div>`;
+        }
+        const src = escapeAttr(getAvatarImage(c.avatar));
+        return `<div class="ps-cusAvatar">
+                  <img class="ps-cusAvatarImg" src="${src}" alt="" decoding="async" loading="lazy" onerror="this.remove();var s=this.parentElement.querySelector('.ps-cusAvatarInitials');if(s)s.style.display='grid';" />
+                  <span class="ps-cusAvatarInitials" style="display:none">${ini}</span>
+                </div>`;
+    }
     function initLayout() {
         const sidebar = document.getElementById("sidebar");
         const overlay = document.getElementById("overlay");
@@ -209,7 +252,7 @@ import { requireAuth } from './auth.js';
             <div class="ps-card ps-cusCard" data-id="${c.id}">
               <div>
                 <div class="ps-cusTop">
-                  <div class="ps-cusAvatar">${initials(c.name)}</div>
+                  ${customerAvatarHtml(c)}
                   <div class="ps-cusMeta">
                     <div class="d-flex align-items-center">
                       <div class="ps-cusName">${c.name}</div>
@@ -248,7 +291,7 @@ import { requireAuth } from './auth.js';
             });
         } catch (err) {
             console.error('Render error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -271,7 +314,7 @@ import { requireAuth } from './auth.js';
             bootstrap.Modal.getOrCreateInstance(document.getElementById("cusModal")).show();
         } catch (err) {
             console.error('Edit error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -284,18 +327,23 @@ import { requireAuth } from './auth.js';
             const avatarFile = document.getElementById("fAvatar").files[0];
 
             if (!name || !phone) {
-                toast(t("toast.invalid"));
+                toast(t("toast.invalid"), "error");
                 return;
             }
 
             if (!id) {
                 // Khách hàng chỉ được tạo qua POS checkout, không cho tạo thủ công
-                toast(t("toast.error"));
+                toast(t("toast.error"), "error");
                 return;
             }
 
             // Sử dụng FormData nếu có file upload
             if (avatarFile) {
+                const imgErr = validateImageFile(avatarFile);
+                if (imgErr) {
+                    toast(imgErr, "error");
+                    return;
+                }
                 const formData = new FormData();
                 formData.append('full_name', name);
                 formData.append('phone_number', phone);
@@ -314,7 +362,7 @@ import { requireAuth } from './auth.js';
             bootstrap.Modal.getInstance(document.getElementById("cusModal"))?.hide();
         } catch (err) {
             console.error('Save error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -334,7 +382,7 @@ import { requireAuth } from './auth.js';
             bootstrap.Modal.getInstance(document.getElementById("deleteModal"))?.hide();
         } catch (err) {
             console.error('Delete error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 
@@ -389,7 +437,7 @@ import { requireAuth } from './auth.js';
             bootstrap.Modal.getOrCreateInstance(document.getElementById("histModal")).show();
         } catch (err) {
             console.error('History error:', err);
-            toast(t("toast.error"));
+            toast(err.message || t("toast.error"), "error");
         }
     }
 

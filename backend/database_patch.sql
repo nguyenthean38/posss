@@ -26,3 +26,17 @@ ALTER TABLE categories
 -- [4] Them cot created_at vao bang products
 ALTER TABLE products
     ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+-- [5] Them cot image cho san pham (upload anh - Product model / ProductController)
+ALTER TABLE products
+    ADD COLUMN image VARCHAR(500) NULL AFTER barcode;
+
+-- [6] Them cot avatar cho khach hang (Customer::create / CustomerController)
+ALTER TABLE customers
+    ADD COLUMN avatar VARCHAR(500) NULL AFTER address;
+
+-- [7] Audit cap nhat khach: ai sua, luc nao (Cach A)
+ALTER TABLE customers
+    ADD COLUMN updated_at DATETIME NULL AFTER avatar,
+    ADD COLUMN updated_by INT NULL AFTER updated_at,
+    ADD CONSTRAINT fk_customers_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL;

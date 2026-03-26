@@ -16,6 +16,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./backend/database.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
     networks:
       - phonestore_network
     healthcheck:
