@@ -86,6 +86,8 @@ require_once __DIR__ . '/controllers/PosController.php';
 require_once __DIR__ . '/controllers/ReportController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
 require_once __DIR__ . '/controllers/LogController.php';
+require_once __DIR__ . '/models/ShiftAttendance.php';
+require_once __DIR__ . '/controllers/ShiftController.php';
 
 // Khá»Ÿi táº¡o DB connection
 // Khá»Ÿi táº¡o DB connection
@@ -101,6 +103,7 @@ if (strpos($contentType, 'multipart/form-data') !== false) {
 } else {
     // JSON: Parse tá»« php://input
     $data = json_decode(file_get_contents("php://input"), true);
+    if ($data === null) { $data = []; }
 }
 // Parse Ä‘Æ°á»ng dáº«n Path parameters /api/staff/{id}/resend
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -121,6 +124,7 @@ $posCtrl = new PosController($db);
 $reportCtrl = new ReportController($db);
 $profileCtrl = new ProfileController($db);
 $logCtrl = new LogController($db);
+$shiftCtrl = new ShiftController($db);
 
 // ================ ÄIá»€U HÆ¯á»šNG ROUTES ================
 
@@ -269,6 +273,14 @@ elseif ($uri === '/api/customers' && $method === 'GET') {
 elseif ($uri === '/api/profile' && $method === 'GET') { $profileCtrl->getMyProfile(); }
 elseif ($uri === '/api/profile' && $method === 'PUT') { $profileCtrl->updateProfile($data); }
 elseif ($uri === '/api/profile/avatar' && $method === 'POST') { $profileCtrl->uploadAvatar(); }
+// Diem danh ca (staff + admin)
+elseif ($uri === '/api/shifts/status' && $method === 'GET') { $shiftCtrl->status(); }
+elseif ($uri === '/api/shifts/clock-in' && $method === 'POST') { $shiftCtrl->clockIn($data ?? []); }
+elseif ($uri === '/api/shifts/clock-out' && $method === 'POST') { $shiftCtrl->clockOut(); }
+elseif ($uri === '/api/shifts/me' && $method === 'GET') { $shiftCtrl->myList(); }
+elseif ($uri === '/api/admin/shifts/export' && $method === 'GET') { $shiftCtrl->adminExportCsv(); }
+elseif ($uri === '/api/admin/shifts' && $method === 'GET') { $shiftCtrl->adminList(); }
+elseif (preg_match('/^\/api\/admin\/shifts\/(\d+)$/', $uri, $m) && $method === 'PATCH') { $shiftCtrl->adminUpdate((int)$m[1], $data ?? []); }
 // Admin: nhat ky hoat dong (doc bang logs)
 elseif ($uri === '/api/admin/activity-logs' && $method === 'GET') { $logCtrl->activityLogs(); }
 // POS

@@ -243,7 +243,7 @@ import { requireAuth, isAdmin } from './auth.js';
 
         grid.innerHTML = list.map(e => {
             const badgeStatus = e.status === 'locked' ? "lock" : "ok";
-            const badgeWarn = !e.is_first_login ? `<span class="ps-badge warn">${t("emp.needPwd")}</span>` : "";
+            const badgeWarn = e.is_first_login ? `<span class="ps-badge warn">${t("emp.needPwd")}</span>` : "";
             return `
                 <div class="col-12 col-md-6 col-xl-4">
                     <div class="ps-card ps-empCard" data-id="${e.id}">

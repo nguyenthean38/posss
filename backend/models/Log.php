@@ -41,8 +41,12 @@ class Log {
                 AND l.action IN ('login','logout','first_login')";
         $params = [];
         if ($keyword !== '') {
-            $where .= ' AND (l.details LIKE :kw OR u.full_name LIKE :kw OR u.email LIKE :kw)';
-            $params[':kw'] = '%' . $keyword . '%';
+            // Mỗi LIKE cần placeholder tên riêng (PDO MySQL native prepare không gắn :kw lặp lại).
+            $where .= ' AND (l.details LIKE :kw_details OR u.full_name LIKE :kw_name OR u.email LIKE :kw_email)';
+            $like = '%' . $keyword . '%';
+            $params[':kw_details'] = $like;
+            $params[':kw_name'] = $like;
+            $params[':kw_email'] = $like;
         }
 
         $sql = "SELECT l.id, l.user_id, l.details, l.created_at,

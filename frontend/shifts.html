@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PhoneStore POS — Nhật ký ra vào</title>
+    <title>PhoneStore POS — Điểm danh ca</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -49,8 +49,10 @@
                 <a class="ps-nav__item" href="reports.html" data-tooltip="Reports">
                     <i class="bi bi-bar-chart"></i><span data-i18n="nav.reports">Reports</span>
                 </a>
-                <a class="ps-nav__item admin-only" href="shifts.html" data-tooltip="Shifts"><i class="bi bi-clock-history"></i><span data-i18n="nav.shifts">Điểm danh</span></a>
-                <a class="ps-nav__item active admin-only" href="activity.html" data-tooltip="Activity log">
+                <a class="ps-nav__item active admin-only" href="shifts.html" data-tooltip="Shifts">
+                    <i class="bi bi-clock-history"></i><span data-i18n="nav.shifts">Điểm danh</span>
+                </a>
+                <a class="ps-nav__item admin-only" href="activity.html" data-tooltip="Activity log">
                     <i class="bi bi-journal-text"></i><span data-i18n="nav.activity">Nhật ký</span>
                 </a>
             </nav>
@@ -73,8 +75,8 @@
                 <div class="ps-topbar__left">
                     <button class="ps-icon-btn d-lg-none" id="btnMobileMenu" type="button"><i class="bi bi-list"></i></button>
                     <div class="ps-topbar__title">
-                        <i class="bi bi-journal-text me-2" style="color:var(--muted)"></i>
-                        <span data-i18n="page.activity">Nhật ký ra vào</span>
+                        <i class="bi bi-clock-history me-2" style="color:var(--muted)"></i>
+                        <span data-i18n="page.shifts">Điểm danh ca</span>
                     </div>
                 </div>
                 <div class="ps-topbar__right">
@@ -93,33 +95,34 @@
             </header>
 
             <section class="ps-content">
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                    <div class="ps-pos__search ps-card flex-grow-1" style="min-width: 200px;">
-                        <i class="bi bi-search"></i>
-                        <input id="searchInput" type="search" class="ps-pos__searchInput" placeholder="Tìm theo chi tiết, tên hoặc email nhân viên..." data-i18n-ph="act.searchPh" />
+                <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+                    <div>
+                        <label class="form-label small mb-0 opacity-75" for="dateInput" data-i18n="sh.date">Ngày</label>
+                        <input type="date" id="dateInput" class="form-control form-control-sm" style="width:180px" />
                     </div>
-                    <button type="button" class="ps-btn-primary ps-btn-sm" id="btnSearch"><i class="bi bi-search"></i> <span data-i18n="act.search">Tìm</span></button>
+                    <div>
+                        <label class="form-label small mb-0 opacity-75" for="staffFilter" data-i18n="sh.staff">Nhân viên</label>
+                        <select id="staffFilter" class="form-select form-select-sm" style="min-width:220px">
+                            <option value="" data-i18n="sh.allStaff">Tất cả</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnExport"><i class="bi bi-download"></i> <span data-i18n="sh.export">Xuất CSV</span></button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnLoad"><i class="bi bi-arrow-repeat"></i> <span data-i18n="sh.load">Tải</span></button>
                 </div>
-
                 <div class="ps-card p-0 overflow-hidden">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0 align-middle ps-activity-table">
+                        <table class="table table-hover mb-0 align-middle">
                             <thead>
                                 <tr>
-                                    <th data-i18n="act.colTime">Thời gian</th>
-                                    <th data-i18n="act.colUser">Nhân viên</th>
-                                    <th data-i18n="act.colDetails">Chi tiết</th>
+                                    <th data-i18n="sh.colStaff">Nhân viên</th>
+                                    <th data-i18n="sh.colIn">Vào ca</th>
+                                    <th data-i18n="sh.colOut">Ra ca</th>
+                                    <th data-i18n="sh.colStatus">Trạng thái</th>
+                                    <th style="width:90px"></th>
                                 </tr>
                             </thead>
-                            <tbody id="logBody"></tbody>
+                            <tbody id="tbody"></tbody>
                         </table>
-                    </div>
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 p-3 border-top border-secondary border-opacity-25">
-                        <div class="text-muted small" id="pageInfo"></div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPrev" disabled>&laquo;</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnNext" disabled>&raquo;</button>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -128,13 +131,24 @@
         <div class="ps-overlay" id="overlay"></div>
     </div>
 
-    <div class="ps-toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <div class="modal fade" id="editModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content" style="background:var(--panel);color:var(--text)">
+<div class="modal-header border-secondary border-opacity-25"><h5 class="modal-title" data-i18n="sh.editTitle">Sửa giờ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+<div class="modal-body">
+<input type="hidden" id="editId" />
+<input type="datetime-local" id="editIn" class="form-control form-control-sm mb-2" />
+<input type="datetime-local" id="editOut" class="form-control form-control-sm mb-2" />
+<textarea id="editReason" class="form-control form-control-sm" rows="2" placeholder="Lý do"></textarea>
+</div>
+<div class="modal-footer border-secondary border-opacity-25">
+<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+<button type="button" class="btn btn-primary btn-sm" id="btnSaveEdit">Lưu</button>
+</div></div></div></div><div class="ps-toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
         <i class="bi bi-check2-circle" id="toastIcon"></i>
         <div id="toastText">OK</div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="assets/js/activity.js?v=3"></script>
+    <script type="module" src="assets/js/shifts.js?v=2"></script>
 </body>
 
 </html>

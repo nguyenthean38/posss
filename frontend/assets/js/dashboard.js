@@ -1,8 +1,8 @@
-import api from './api.js?v=5';
+import api from './api.js?v=6';
 import { requireAuth, getUser } from './auth.js';
 
-(() => {
-    requireAuth();
+(async () => {
+    await requireAuth();
 
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
@@ -264,6 +264,58 @@ import { requireAuth, getUser } from './auth.js';
         requestAnimationFrame(() => loadDashboard());
     }
 
+    function fmtShift(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        return d.toLocaleString(getLang() === "vi" ? "vi-VN" : "en-GB", { timeZone: "Asia/Ho_Chi_Minh" });
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById("toast");
+        const tx = document.getElementById("toastText");
+        if (tx) tx.textContent = msg;
+        if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2800); }
+    }
+
+    async function refreshShiftPanel() {
+        const u = getUser();
+        const row = document.getElementById("shiftRow");
+        if (!row || !u || u.role !== "staff") return;
+        const txt = document.getElementById("shiftStatusText");
+        const btnIn = document.getElementById("btnShiftIn");
+        const btnOut = document.getElementById("btnShiftOut");
+        if (!txt || !btnIn || !btnOut) return;
+        try {
+            const st = await api.getShiftStatus();
+            const rec = st.record;
+            if (!rec) {
+                txt.textContent = "Chưa chấm vào ca hôm nay (" + (st.work_date || "") + ").";
+                btnIn.disabled = false;
+                btnOut.disabled = true;
+            } else if (rec.status === "open" || !rec.clock_out_at) {
+                txt.textContent = "Đang trong ca — vào lúc " + fmtShift(rec.clock_in_at_iso || rec.clock_in_at);
+                btnIn.disabled = true;
+                btnOut.disabled = false;
+            } else {
+                txt.textContent = "Đã hoàn thành ca — ra lúc " + fmtShift(rec.clock_out_at_iso || rec.clock_out_at);
+                btnIn.disabled = true;
+                btnOut.disabled = true;
+            }
+        } catch (e) { console.warn("shift status", e); txt.textContent = "Không tải được trạng thái ca."; }
+    }
+
+    function wireShiftButtons() {
+        document.getElementById("btnShiftIn")?.addEventListener("click", async () => {
+            try { await api.shiftClockIn({}); showToast("Đã chấm vào ca."); await refreshShiftPanel(); }
+            catch (e) { showToast(e.message || "Lỗi"); }
+        });
+        document.getElementById("btnShiftOut")?.addEventListener("click", async () => {
+            try { await api.shiftClockOut(); showToast("Đã chấm ra ca."); await refreshShiftPanel(); }
+            catch (e) { showToast(e.message || "Lỗi"); }
+        });
+    }
+
     async function loadDashboard() {
         try {
             const data = await api.getReportSummary();
@@ -333,7 +385,7 @@ import { requireAuth, getUser } from './auth.js';
         }
     }
 
-    function init() {
+    async function init() {
         const savedTheme = localStorage.getItem(KEY_THEME) || "dark";
         const savedLang = localStorage.getItem(KEY_LANG) || "vi";
 
@@ -341,8 +393,9 @@ import { requireAuth, getUser } from './auth.js';
         setTheme(savedTheme);
         initLayout();
         loadDashboard();
+        wireShiftButtons();
+        refreshShiftPanel();
     }
 
-    init();
+    await init();
 })();
-

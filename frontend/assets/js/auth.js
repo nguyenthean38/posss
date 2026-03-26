@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Authentication Module - PHP Session Based
  * Backend dùng PHP Session, không dùng JWT
  * Cookie PHPSESSID được browser tự động quản lý
@@ -7,6 +7,12 @@ import { api } from './api.js?v=5';
 import { getAvatarImage } from './assets.js';
 
 const STORAGE_KEY = "ps_user";
+
+function applyStaffOnlyUI(role) {
+  document.querySelectorAll('.staff-only').forEach((el) => {
+    el.style.display = role === 'staff' ? '' : 'none';
+  });
+}
 
 // Lưu user info (CHỈ để hiển thị UI, KHÔNG phải authentication)
 function _saveUser(user) {
@@ -80,13 +86,14 @@ export async function requireAuth(redirectTo = "login.html") {
   // Instant RBAC UI application
   document.body.setAttribute('data-role', user.role);
   if (user.role !== 'admin') {
-      document.querySelectorAll('a[href="categories.html"], a[href="employees.html"], a[href="activity.html"]').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('a[href="categories.html"], a[href="employees.html"], a[href="shifts.html"], a[href="activity.html"]').forEach(el => el.style.display = 'none');
       // Ẩn tất cả elements có class admin-only
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   } else {
       // Hiển thị tất cả elements có class admin-only cho admin
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
   }
+  applyStaffOnlyUI(user.role);
   
   // Update Topbar Profile UI
   function applyUserTopBar(u) {
@@ -129,13 +136,14 @@ export async function requireAuth(redirectTo = "login.html") {
       });
       document.body.setAttribute('data-role', response.profile.role);
       if (response.profile.role !== 'admin') {
-          document.querySelectorAll('a[href="categories.html"], a[href="employees.html"], a[href="activity.html"]').forEach(el => el.style.display = 'none');
+          document.querySelectorAll('a[href="categories.html"], a[href="employees.html"], a[href="shifts.html"], a[href="activity.html"]').forEach(el => el.style.display = 'none');
           // Ẩn tất cả elements có class admin-only
           document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
       } else {
           // Hiển thị tất cả elements có class admin-only cho admin
           document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
       }
+      applyStaffOnlyUI(response.profile.role);
       applyUserTopBar(response.profile);
     }
     return user;

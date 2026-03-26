@@ -1,10 +1,10 @@
 /**
  * POS Module - Real API Integration
  */
-import { api } from './api.js?v=5';
-import { requireAuth, getCurrentUser } from './auth.js';
+import { api } from './api.js?v=6';
+import { requireAuth, getCurrentUser, getUser } from './auth.js';
 
-(() => {
+(async () => {
     // ===== CONSTANTS =====
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
@@ -47,6 +47,14 @@ import { requireAuth, getCurrentUser } from './auth.js';
             "toast.stock": "Không đủ tồn kho",
             "toast.error": "Có lỗi xảy ra",
             "stock": "Tồn kho",
+            "shift.in": "Vào ca",
+            "shift.out": "Ra ca",
+            "shift.none": "Chưa chấm vào ca hôm nay ({date}).",
+            "shift.open": "Đang trong ca — vào lúc {time}",
+            "shift.done": "Đã hoàn thành ca — ra lúc {time}",
+            "shift.loadErr": "Không tải được trạng thái ca.",
+            "shift.toastIn": "Đã chấm vào ca.",
+            "shift.toastOut": "Đã chấm ra ca.",
         },
         en: {
             "page.pos": "Point of Sale",
@@ -80,6 +88,14 @@ import { requireAuth, getCurrentUser } from './auth.js';
             "toast.stock": "Not enough stock",
             "toast.error": "An error occurred",
             "stock": "Stock",
+            "shift.in": "Clock in",
+            "shift.out": "Clock out",
+            "shift.none": "Not clocked in today ({date}).",
+            "shift.open": "On shift — clocked in at {time}",
+            "shift.done": "Shift completed — clocked out at {time}",
+            "shift.loadErr": "Could not load shift status.",
+            "shift.toastIn": "Clocked in.",
+            "shift.toastOut": "Clocked out.",
         }
     };
 
@@ -130,6 +146,64 @@ import { requireAuth, getCurrentUser } from './auth.js';
         localStorage.setItem(KEY_THEME, theme);
         const icon = document.getElementById("btnTheme")?.querySelector("i");
         if (icon) icon.className = theme === "dark" ? "bi bi-moon-stars" : "bi bi-brightness-high";
+    }
+
+    function fmtShift(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        return d.toLocaleString(getLang() === "vi" ? "vi-VN" : "en-GB", { timeZone: "Asia/Ho_Chi_Minh" });
+    }
+
+    async function refreshPosShift() {
+        const u = getUser();
+        const strip = document.getElementById("posShiftStrip");
+        if (!strip || !u || u.role !== "staff") return;
+        const txt = document.getElementById("posShiftText");
+        const btnIn = document.getElementById("posBtnShiftIn");
+        const btnOut = document.getElementById("posBtnShiftOut");
+        if (!txt || !btnIn || !btnOut) return;
+        try {
+            const st = await api.getShiftStatus();
+            const rec = st.record;
+            if (!rec) {
+                txt.textContent = t("shift.none").replace("{date}", st.work_date || "");
+                btnIn.disabled = false;
+                btnOut.disabled = true;
+            } else if (rec.status === "open" || !rec.clock_out_at) {
+                txt.textContent = t("shift.open").replace("{time}", fmtShift(rec.clock_in_at_iso || rec.clock_in_at));
+                btnIn.disabled = true;
+                btnOut.disabled = false;
+            } else {
+                txt.textContent = t("shift.done").replace("{time}", fmtShift(rec.clock_out_at_iso || rec.clock_out_at));
+                btnIn.disabled = true;
+                btnOut.disabled = true;
+            }
+        } catch (e) {
+            console.warn("pos shift status", e);
+            txt.textContent = t("shift.loadErr");
+        }
+    }
+
+    function wirePosShiftButtons() {
+        document.getElementById("posBtnShiftIn")?.addEventListener("click", async () => {
+            try {
+                await api.shiftClockIn({});
+                toast(t("shift.toastIn"));
+                await refreshPosShift();
+            } catch (e) {
+                toast(e.message || t("toast.error"));
+            }
+        });
+        document.getElementById("posBtnShiftOut")?.addEventListener("click", async () => {
+            try {
+                await api.shiftClockOut();
+                toast(t("shift.toastOut"));
+                await refreshPosShift();
+            } catch (e) {
+                toast(e.message || t("toast.error"));
+            }
+        });
     }
 
     function iconByType(p) {
@@ -407,6 +481,7 @@ import { requireAuth, getCurrentUser } from './auth.js';
             applyLang(next);
             renderProducts(document.getElementById("searchInput")?.value || "");
             renderCart();
+            refreshPosShift();
         });
     }
 
@@ -426,6 +501,8 @@ import { requireAuth, getCurrentUser } from './auth.js';
         setTheme(savedTheme);
 
         initLayoutControls();
+        wirePosShiftButtons();
+        await refreshPosShift();
 
         // Search
         const search = document.getElementById("searchInput");

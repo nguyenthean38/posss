@@ -62,6 +62,10 @@
                     <i class="bi bi-bar-chart"></i>
                     <span data-i18n="nav.reports">Reports</span>
                 </a>
+                                <a class="ps-nav__item admin-only" href="shifts.html" data-tooltip="Shifts">
+                    <i class="bi bi-clock-history"></i>
+                    <span data-i18n="nav.shifts">Điểm danh</span>
+                </a>
                 <a class="ps-nav__item admin-only" href="activity.html" data-tooltip="Activity log">
                     <i class="bi bi-journal-text"></i>
                     <span data-i18n="nav.activity">Nhật ký</span>
@@ -100,6 +104,11 @@
                 </div>
 
                 <div class="ps-topbar__right">
+                    <div class="staff-only d-flex align-items-center gap-2 flex-wrap me-1 me-md-2" id="posShiftStrip" style="display:none;">
+                        <span class="small" id="posShiftText" style="max-width:220px;opacity:.88">—</span>
+                        <button type="button" class="btn btn-success btn-sm py-0 px-2" id="posBtnShiftIn" data-i18n="shift.in">Vào ca</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" id="posBtnShiftOut" disabled data-i18n="shift.out">Ra ca</button>
+                    </div>
                     <button class="ps-chip" id="btnLang" type="button" title="Language">
                         <i class="bi bi-globe"></i>
                         <span id="langLabel">VI</span>

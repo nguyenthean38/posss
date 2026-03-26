@@ -401,6 +401,69 @@ class ApiClient {
 
     // ==================== ADMIN ====================
 
+    // ==================== SHIFTS ====================
+
+    async getShiftStatus() {
+        return this.request('/api/shifts/status', { method: 'GET' });
+    }
+
+    async shiftClockIn(data = {}) {
+        return this.request('/api/shifts/clock-in', {
+            method: 'POST',
+            body: JSON.stringify(data || {})
+        });
+    }
+
+    async shiftClockOut() {
+        return this.request('/api/shifts/clock-out', { method: 'POST' });
+    }
+
+    async getMyShifts(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        return this.request(`/api/shifts/me${query ? '?' + query : ''}`);
+    }
+
+    async getAdminShifts(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        return this.request(`/api/admin/shifts${query ? '?' + query : ''}`);
+    }
+
+    async downloadAdminShiftsExport(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        const url = `${this.baseUrl}/api/admin/shifts/export${query ? '?' + query : ''}`;
+        const response = await fetch(url, { credentials: 'include' });
+        if (response.status === 401) {
+            sessionStorage.removeItem('ps_user');
+            if (!window.location.pathname.includes('login.html')) {
+                window.location.replace('login.html');
+            }
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!response.ok) {
+            let msg = 'HTTP ' + response.status;
+            try {
+                const j = await response.json();
+                if (j.message) msg = j.message;
+            } catch (_) {}
+            throw new Error(msg);
+        }
+        const blob = await response.blob();
+        const dispo = response.headers.get('Content-Disposition') || '';
+        let name = 'shift_attendance.csv';
+        const m = dispo.match(/filename="?([^";]+)"?/i);
+        if (m) name = m[1].trim();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    async adminPatchShift(id, body) {
+        return this.request(`/api/admin/shifts/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body || {})
+        });
+    }
     async getActivityLogs(params = {}) {
         const query = new URLSearchParams(params).toString();
         return this.request(`/api/admin/activity-logs${query ? '?' + query : ''}`);
