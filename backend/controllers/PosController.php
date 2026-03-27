@@ -112,6 +112,12 @@ class PosController {
         Response::json(['change_amount' => $change, 'ChangeAmount' => $change]); // Trả về cả 2 format
     }
 
+    public function loyaltySummary($phone) {
+        AuthMiddleware::checkAuth();
+        $summary = VoucherService::getSummaryForPhone($this->db, $phone);
+        Response::json($summary);
+    }
+
     public function checkout($data) {
         AuthMiddleware::checkAuth();
         if (session_status() === PHP_SESSION_NONE) session_start();
@@ -123,35 +129,82 @@ class PosController {
         $address = isset($data['address']) ? trim($data['address']) : (isset($data['Address']) ? trim($data['Address']) : '');
         $customerPay = isset($data['customer_pay']) ? (float)$data['customer_pay'] : (isset($data['CustomerPay']) ? (float)$data['CustomerPay'] : 0);
 
-        $totalAmount = $this->getCartTotal();
-        if ($customerPay < $totalAmount) Response::json(["message" => "Số tiền khách đưa không đủ"], 400);
+        $earnLoyalty = true;
+        if (array_key_exists('earn_loyalty', $data)) {
+            $earnLoyalty = filter_var($data['earn_loyalty'], FILTER_VALIDATE_BOOLEAN);
+        } elseif (array_key_exists('EarnLoyalty', $data)) {
+            $earnLoyalty = filter_var($data['EarnLoyalty'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $customerVoucherId = null;
+        if (isset($data['customer_voucher_id'])) {
+            $customerVoucherId = (int)$data['customer_voucher_id'];
+        } elseif (isset($data['CustomerVoucherId'])) {
+            $customerVoucherId = (int)$data['CustomerVoucherId'];
+        }
+        if ($customerVoucherId <= 0) {
+            $customerVoucherId = null;
+        }
+
+        $subtotalBeforeVoucher = $this->getCartTotal();
+        $voucherDiscount = 0.0;
+        $lockedVoucher = null;
 
         $custId = null;
         if ($phone !== '') {
             $cust = $this->customerModel->findByPhone($phone);
             if ($cust) {
-                $custId = $cust['id'];
-            } else if ($fullName !== '') {
-                $custId = $this->customerModel->create($fullName, $phone, $address);
+                $custId = (int)$cust['id'];
+            } else {
+                $nameToCreate = $fullName !== '' ? $fullName : 'Khách hàng';
+                $newId = $this->customerModel->create($nameToCreate, $phone, $address);
+                if ($newId) {
+                    $custId = (int)$newId;
+                }
             }
+        }
+
+        if ($customerVoucherId !== null && $custId === null) {
+            Response::json(["message" => "Cần số điện thoại khách để dùng phiếu"], 400);
         }
 
         try {
             $this->db->beginTransaction();
 
-            $change = $customerPay - $totalAmount;
+            if ($customerVoucherId !== null && $custId !== null) {
+                $lockedVoucher = VoucherService::lockVoucherForRedeem($this->db, $customerVoucherId, $custId);
+                if (!$lockedVoucher) {
+                    $this->db->rollBack();
+                    Response::json(["message" => "Phiếu không hợp lệ hoặc đã dùng"], 400);
+                }
+                $voucherDiscount = VoucherService::computeDiscount($lockedVoucher, (float)$subtotalBeforeVoucher);
+            }
+
+            $totalAfterVoucher = max(0.0, (float)$subtotalBeforeVoucher - $voucherDiscount);
+            if ($customerPay < $totalAfterVoucher) {
+                $this->db->rollBack();
+                Response::json(["message" => "Số tiền khách đưa không đủ"], 400);
+            }
+
+            $change = $customerPay - $totalAfterVoucher;
             $staffId = $_SESSION['user_id'];
-            
-            $sql = "INSERT INTO orders (customer_id, user_id, total_amount, customer_pay, change_amount, created_at)
-                    VALUES (:cid, :uid, :total, :pay, :change, NOW())";
+
+            $earnBase = LoyaltyVoucherRules::EARN_ON_TOTAL_AFTER_VOUCHER ? $totalAfterVoucher : $subtotalBeforeVoucher;
+
+            $sql = "INSERT INTO orders (customer_id, user_id, total_amount, customer_pay, change_amount, subtotal_before_voucher, voucher_discount, customer_voucher_id, created_at)
+                    VALUES (:cid, :uid, :total, :pay, :change, :subbf, :vdisc, :cvid, NOW())";
             $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(':cid', $custId);
-            $stmt->bindParam(':uid', $staffId);
-            $stmt->bindParam(':total', $totalAmount);
+            $stmt->bindValue(':cid', $custId, $custId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+            $stmt->bindParam(':uid', $staffId, PDO::PARAM_INT);
+            $stmt->bindParam(':total', $totalAfterVoucher);
             $stmt->bindParam(':pay', $customerPay);
             $stmt->bindParam(':change', $change);
+            $stmt->bindParam(':subbf', $subtotalBeforeVoucher);
+            $stmt->bindParam(':vdisc', $voucherDiscount);
+            $cvBind = $customerVoucherId;
+            $stmt->bindValue(':cvid', $cvBind, $cvBind === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
             $stmt->execute();
-            $orderId = $this->db->lastInsertId();
+            $orderId = (int)$this->db->lastInsertId();
 
             $sqlDetail = "INSERT INTO order_details (order_id, product_id, quantity, unit_price, import_price_at_sale)
                           VALUES (:oid, :pid, :qty, :price, :import)";
@@ -168,17 +221,49 @@ class PosController {
                 $this->db->query("UPDATE products SET stock_quantity = stock_quantity - " . (int)$item['quantity'] . " WHERE id = " . (int)$item['id']);
             }
 
+            if ($custId !== null) {
+                VoucherService::incrementLifetimeSpend($this->db, $custId, (float)$subtotalBeforeVoucher);
+            }
+
+            $pointsEarned = 0;
+            $loyaltyBalance = null;
+            if ($earnLoyalty && $custId) {
+                $loyalty = new LoyaltyPoints($this->db);
+                $earn = $loyalty->earnForOrder((int)$custId, $orderId, (float)$earnBase);
+                if ($earn) {
+                    $pointsEarned = $earn['points'];
+                    $loyaltyBalance = $earn['balance_after'];
+                }
+            }
+
+            if ($customerVoucherId !== null) {
+                VoucherService::markVoucherUsed($this->db, $customerVoucherId, $orderId);
+            }
+
+            if ($custId) {
+                VoucherService::issueEligibleVouchers($this->db, $custId);
+            }
+
             $this->db->commit();
             $this->logModel->createLog($_SESSION['user_id'], 'checkout', 'Thanh toán đơn hàng ID=' . $orderId);
-            
+
             $_SESSION['cart'] = [];
 
-            Response::json([
+            $payload = [
                 'order_id' => $orderId,
-                'OrderId' => $orderId, // Tương thích ngược
+                'OrderId' => $orderId,
                 'pdf_url' => '/api/pos/invoice/' . $orderId,
-                'PdfUrl' => '/api/pos/invoice/' . $orderId // Tương thích ngược
-            ]);
+                'PdfUrl' => '/api/pos/invoice/' . $orderId,
+                'points_earned' => $pointsEarned,
+                'PointsEarned' => $pointsEarned,
+                'customer_loyalty_balance' => $loyaltyBalance,
+                'CustomerLoyaltyBalance' => $loyaltyBalance,
+                'subtotal_before_voucher' => (float)$subtotalBeforeVoucher,
+                'voucher_discount' => (float)$voucherDiscount,
+                'total_amount' => (float)$totalAfterVoucher,
+                'TotalAmount' => (float)$totalAfterVoucher,
+            ];
+            Response::json($payload);
 
         } catch (Exception $e) {
             $this->db->rollBack();

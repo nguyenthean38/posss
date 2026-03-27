@@ -40,6 +40,8 @@ $allowedOrigins = [
     'http://localhost:5500',    // VS Code Live Server
     'http://127.0.0.1:3000',   // Dev server khÃ¡c
     'http://localhost:3000',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins, true)) {
@@ -75,6 +77,9 @@ require_once __DIR__ . '/models/Log.php';
 require_once __DIR__ . '/models/Category.php';
 require_once __DIR__ . '/models/Product.php';
 require_once __DIR__ . '/models/Customer.php';
+require_once __DIR__ . '/models/LoyaltyPoints.php';
+require_once __DIR__ . '/config/LoyaltyVoucherRules.php';
+require_once __DIR__ . '/services/VoucherService.php';
 
 // Require Controllers
 require_once __DIR__ . '/controllers/AuthController.php';
@@ -290,6 +295,10 @@ elseif ($uri === '/api/pos/cart/item' && $method === 'PUT') { $posCtrl->updateIt
 elseif (preg_match('/^\/api\/pos\/cart\/item\/(\d+)$/', $uri, $matches) && $method === 'DELETE') { $posCtrl->removeItem((int)$matches[1]); }
 elseif ($uri === '/api/pos/calculate' && $method === 'POST') { $posCtrl->calculateChange($data); }
 elseif ($uri === '/api/pos/checkout' && $method === 'POST') { $posCtrl->checkout($data); }
+elseif ($uri === '/api/pos/loyalty-summary' && $method === 'GET') {
+    $phone = isset($_GET['phone']) ? (string)$_GET['phone'] : '';
+    $posCtrl->loyaltySummary($phone);
+}
 elseif (preg_match('/^\/api\/pos\/invoice\/(\d+)$/', $uri, $matches) && $method === 'GET') { $posCtrl->exportInvoice((int)$matches[1]); }
 
 // Reports

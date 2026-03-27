@@ -15,11 +15,12 @@ class ApiClient {
      */
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
+        const method = (options.method || 'GET').toUpperCase();
         const config = {
             credentials: 'include', // Gửi cookies/session
             ...options,
             headers: {
-                'Content-Type': 'application/json',
+                ...(method !== 'GET' && method !== 'HEAD' ? { 'Content-Type': 'application/json' } : {}),
                 ...options.headers
             }
         };
@@ -358,6 +359,11 @@ class ApiClient {
             method: 'POST',
             body: JSON.stringify(data)
         });
+    }
+
+    async posLoyaltySummary(phone) {
+        const q = encodeURIComponent(phone || '');
+        return this.request(`/api/pos/loyalty-summary?phone=${q}`, { method: 'GET' });
     }
 
     // ==================== REPORTS ====================

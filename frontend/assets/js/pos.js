@@ -1,17 +1,21 @@
 /**
  * POS Module - Real API Integration
  */
-import { api } from './api.js?v=6';
+import { api } from './api.js?v=7';
 import { requireAuth, getCurrentUser, getUser } from './auth.js';
 
 (async () => {
     // ===== CONSTANTS =====
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
+    /** Đồng bộ với LoyaltyPoints::VND_PER_POINT */
+    const VND_PER_POINT = 100000;
 
     // ===== STATE =====
     let products = [];
     let cart = { Items: [], TotalAmount: 0 };
+    /** Danh sách phiếu từ API loyalty-summary (để tính giảm) */
+    let loyaltyVouchersList = [];
 
     // ===== i18n =====
     const i18n = {
@@ -25,6 +29,8 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
             "nav.employees": "Nhân viên",
             "nav.customers": "Khách hàng",
             "nav.reports": "Báo cáo",
+            "nav.shifts": "Điểm danh",
+            "nav.activity": "Nhật ký",
             "nav.profile": "Hồ sơ",
             "nav.logout": "Đăng xuất",
             "nav.collapse": "Thu gọn",
@@ -40,12 +46,25 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
             "pay.cash": "Tiền khách đưa",
             "pay.change": "Tiền thừa",
             "pay.complete": "Hoàn tất thanh toán",
+            "pay.earnLoyalty": "Tích điểm đơn này",
+            "pay.earnYes": "Có",
+            "pay.earnNo": "Không",
+            "pay.voucher": "Phiếu giảm giá",
+            "pay.voucherNone": "— Không dùng phiếu —",
+            "pay.voucherDiscount": "Giảm phiếu",
+            "pay.subtotal": "Tạm tính giỏ",
+            "pay.payable": "Thanh toán",
+            "loyalty.pointsPreview": "Dự kiến +{pts} điểm (theo tổng sau giảm nếu có phiếu).",
+            "loyalty.pointsPreviewNone": "Đơn chưa đủ 1 điểm (100.000 ₫ / điểm).",
             "toast.added": "Đã thêm vào giỏ",
             "toast.paid": "Thanh toán thành công",
             "toast.cleared": "Đã xóa giỏ",
             "toast.removed": "Đã xóa sản phẩm",
             "toast.stock": "Không đủ tồn kho",
             "toast.error": "Có lỗi xảy ra",
+            "toast.paidLoyalty": "Thanh toán thành công. +{pts} điểm — Số dư: {bal}",
+            "loyalty.hintBalance": "Số dư điểm hiện tại: {bal}",
+            "loyalty.hintNew": "Khách mới — nhập tên nếu đủ; có thể chỉ SĐT (sẽ lưu tên mặc định).",
             "stock": "Tồn kho",
             "shift.in": "Vào ca",
             "shift.out": "Ra ca",
@@ -66,6 +85,8 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
             "nav.employees": "Employees",
             "nav.customers": "Customers",
             "nav.reports": "Reports",
+            "nav.shifts": "Shifts",
+            "nav.activity": "Activity",
             "nav.profile": "Profile",
             "nav.logout": "Logout",
             "nav.collapse": "Collapse",
@@ -81,12 +102,25 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
             "pay.cash": "Cash given",
             "pay.change": "Change",
             "pay.complete": "Complete payment",
+            "pay.earnLoyalty": "Earn points this order",
+            "pay.earnYes": "Yes",
+            "pay.earnNo": "No",
+            "pay.voucher": "Voucher",
+            "pay.voucherNone": "— No voucher —",
+            "pay.voucherDiscount": "Voucher discount",
+            "pay.subtotal": "Cart subtotal",
+            "pay.payable": "Payable",
+            "loyalty.pointsPreview": "Estimated +{pts} pts (on total after voucher if any).",
+            "loyalty.pointsPreviewNone": "Below 1 point threshold (100,000 ₫ / point).",
             "toast.added": "Added to cart",
             "toast.paid": "Payment success",
             "toast.cleared": "Cart cleared",
             "toast.removed": "Item removed",
             "toast.stock": "Not enough stock",
             "toast.error": "An error occurred",
+            "toast.paidLoyalty": "Payment successful. +{pts} pts — Balance: {bal}",
+            "loyalty.hintBalance": "Current points balance: {bal}",
+            "loyalty.hintNew": "New customer — add name if needed; phone alone is OK.",
             "stock": "Stock",
             "shift.in": "Clock in",
             "shift.out": "Clock out",
@@ -288,6 +322,109 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
         }
     }
 
+    let loyaltyHintTimer = null;
+
+    function getEarnLoyalty() {
+        const yes = document.getElementById("payEarnYes");
+        return yes?.checked !== false;
+    }
+
+    function getVoucherDiscount(subtotal) {
+        const sel = document.getElementById("payVoucher");
+        if (!sel || !sel.value) return 0;
+        const v = loyaltyVouchersList.find((x) => String(x.id) === sel.value);
+        if (!v) return 0;
+        const s = Math.max(0, Number(subtotal) || 0);
+        const amt = Number(v.discount_amount_vnd || 0);
+        if (amt > 0) return Math.min(amt, s);
+        const pct = Number(v.discount_percent || 0);
+        if (pct > 0) return Math.floor((s * pct) / 100);
+        return 0;
+    }
+
+    function updatePointsPreview() {
+        const el = document.getElementById("payPointsPreview");
+        if (!el) return;
+        const phone = (document.getElementById("payPhone")?.value || "").trim().replace(/\s/g, "");
+        const subtotal = cart.TotalAmount || 0;
+        const vd = getVoucherDiscount(subtotal);
+        const effective = Math.max(0, subtotal - vd);
+        if (!getEarnLoyalty() || phone.length < 9) {
+            el.textContent = "";
+            return;
+        }
+        const pts = Math.floor(effective / VND_PER_POINT);
+        if (pts < 1) {
+            el.textContent = t("loyalty.pointsPreviewNone");
+            return;
+        }
+        el.textContent = t("loyalty.pointsPreview").replace("{pts}", String(pts));
+    }
+
+    async function refreshPayLoyaltyHint() {
+        const el = document.getElementById("payLoyaltyHint");
+        if (!el) return;
+        const phone = (document.getElementById("payPhone")?.value || "").trim().replace(/\s/g, "");
+        if (phone.length < 9) {
+            el.textContent = "";
+            return;
+        }
+        try {
+            const res = await api.searchCustomerByPhone(phone);
+            const c = res.customer || {};
+            const bal = c.loyalty_points ?? 0;
+            el.textContent = t("loyalty.hintBalance").replace("{bal}", String(bal));
+        } catch {
+            el.textContent = t("loyalty.hintNew");
+        }
+    }
+
+    async function refreshLoyaltySummary() {
+        const sel = document.getElementById("payVoucher");
+        if (!sel) return;
+        const phone = (document.getElementById("payPhone")?.value || "").trim().replace(/\s/g, "");
+        sel.innerHTML = "";
+        const opt0 = document.createElement("option");
+        opt0.value = "";
+        opt0.textContent = t("pay.voucherNone");
+        sel.appendChild(opt0);
+        loyaltyVouchersList = [];
+        if (phone.length < 9) {
+            updatePayState();
+            updatePointsPreview();
+            return;
+        }
+        try {
+            const res = await api.posLoyaltySummary(phone);
+            loyaltyVouchersList = res.vouchers || [];
+            for (const v of loyaltyVouchersList) {
+                const o = document.createElement("option");
+                o.value = String(v.id);
+                const disc =
+                    Number(v.discount_amount_vnd || 0) > 0
+                        ? `-${Number(v.discount_amount_vnd).toLocaleString("vi-VN")} ₫`
+                        : v.discount_percent
+                          ? `${v.discount_percent}%`
+                          : "";
+                o.textContent = `${v.code} · ${v.tier_name || ""} (${disc})`;
+                sel.appendChild(o);
+            }
+        } catch (e) {
+            console.warn("loyalty summary", e);
+        }
+        updatePayState();
+        updatePointsPreview();
+    }
+
+    function schedulePayLoyaltyHint() {
+        clearTimeout(loyaltyHintTimer);
+        loyaltyHintTimer = setTimeout(() => {
+            refreshPayLoyaltyHint();
+            refreshLoyaltySummary();
+            updatePointsPreview();
+        }, 400);
+    }
+
     async function checkout(data) {
         try {
             const result = await api.posCheckout(data);
@@ -299,17 +436,37 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
             
             // Reset cart
             await initCart();
-            toast(t("toast.paid"));
-            
+            const pe = result.PointsEarned ?? result.points_earned ?? 0;
+            const bal = result.CustomerLoyaltyBalance ?? result.customer_loyalty_balance;
+            let paidMsg = t("toast.paid");
+            if (pe > 0 && bal != null) {
+                paidMsg = t("toast.paidLoyalty").replace("{pts}", String(pe)).replace("{bal}", String(bal));
+            }
+            toast(paidMsg);
+
             // Close modal
             const modalEl = document.getElementById("payModal");
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal?.hide();
-            
+
             // Reset form
             document.getElementById("payPhone").value = "";
             document.getElementById("payName").value = "";
             document.getElementById("payCash").value = "";
+            const hint = document.getElementById("payLoyaltyHint");
+            if (hint) hint.textContent = "";
+            const pp = document.getElementById("payPointsPreview");
+            if (pp) pp.textContent = "";
+            document.getElementById("payEarnYes").checked = true;
+            loyaltyVouchersList = [];
+            const pv = document.getElementById("payVoucher");
+            if (pv) {
+                pv.innerHTML = "";
+                const o = document.createElement("option");
+                o.value = "";
+                o.textContent = t("pay.voucherNone");
+                pv.appendChild(o);
+            }
             updatePayState();
             
         } catch (error) {
@@ -369,9 +526,9 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
         if (totalEl) totalEl.textContent = fmtVND(total);
         if (btnCheckout) btnCheckout.disabled = items.length === 0;
 
-        // Update modal total
-        const payTotal = document.getElementById("payTotal");
-        if (payTotal) payTotal.textContent = fmtVND(total);
+        const paySub = document.getElementById("paySubtotal");
+        if (paySub) paySub.textContent = fmtVND(total);
+        updatePayState();
 
         if (!body) return;
 
@@ -425,16 +582,39 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
 
     // ===== PAYMENT =====
     function updatePayState() {
-        const total = cart.TotalAmount || 0;
+        const subtotal = cart.TotalAmount || 0;
+        const vd = getVoucherDiscount(subtotal);
+        const effective = Math.max(0, subtotal - vd);
+
+        const paySub = document.getElementById("paySubtotal");
+        if (paySub) paySub.textContent = fmtVND(subtotal);
+
+        const rowDisc = document.getElementById("payVoucherDiscountRow");
+        const discVal = document.getElementById("payVoucherDiscount");
+        if (rowDisc && discVal) {
+            if (vd > 0) {
+                rowDisc.style.display = "flex";
+                discVal.textContent = "-" + fmtVND(vd).replace(/^\s*/, "");
+            } else {
+                rowDisc.style.display = "none";
+                discVal.textContent = fmtVND(0);
+            }
+        }
+
+        const payTotal = document.getElementById("payTotal");
+        if (payTotal) payTotal.textContent = fmtVND(effective);
+
         const cashInput = document.getElementById("payCash");
         const cash = Number((cashInput?.value || "0").replace(/[^\d]/g, "")) || 0;
-        const change = Math.max(0, cash - total);
+        const change = Math.max(0, cash - effective);
 
         const changeEl = document.getElementById("payChange");
         if (changeEl) changeEl.textContent = fmtVND(change);
 
         const btn = document.getElementById("btnCompletePay");
-        if (btn) btn.disabled = (total <= 0) || (cash < total);
+        if (btn) btn.disabled = subtotal <= 0 || cash < effective;
+
+        updatePointsPreview();
     }
 
     function completePay() {
@@ -442,12 +622,19 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
         const name = (document.getElementById("payName")?.value || "").trim();
         const cashInput = document.getElementById("payCash");
         const cash = Number((cashInput?.value || "0").replace(/[^\d]/g, "")) || 0;
-
-        checkout({
+        const earn = getEarnLoyalty();
+        const vid = document.getElementById("payVoucher")?.value;
+        const payload = {
             Phone: phone,
             FullName: name,
-            CustomerPay: cash
-        });
+            CustomerPay: cash,
+            EarnLoyalty: earn,
+        };
+        if (vid) {
+            payload.CustomerVoucherId = parseInt(vid, 10);
+        }
+
+        checkout(payload);
     }
 
     // ===== LAYOUT CONTROLS =====
@@ -482,6 +669,7 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
             renderProducts(document.getElementById("searchInput")?.value || "");
             renderCart();
             refreshPosShift();
+            refreshPayLoyaltyHint();
         });
     }
 
@@ -514,8 +702,21 @@ import { requireAuth, getCurrentUser, getUser } from './auth.js';
         // Payment modal events
         document.getElementById("payCash")?.addEventListener("input", updatePayState);
         document.getElementById("payModal")?.addEventListener("shown.bs.modal", () => {
-            document.getElementById("payTotal").textContent = fmtVND(cart.TotalAmount || 0);
+            document.getElementById("payEarnYes").checked = true;
             updatePayState();
+            const lh = document.getElementById("payLoyaltyHint");
+            if (lh) lh.textContent = "";
+            const pp = document.getElementById("payPointsPreview");
+            if (pp) pp.textContent = "";
+            schedulePayLoyaltyHint();
+        });
+        document.getElementById("payPhone")?.addEventListener("input", schedulePayLoyaltyHint);
+        document.getElementById("payVoucher")?.addEventListener("change", updatePayState);
+        document.getElementById("payEarnYes")?.addEventListener("change", () => {
+            updatePointsPreview();
+        });
+        document.getElementById("payEarnNo")?.addEventListener("change", () => {
+            updatePointsPreview();
         });
         document.getElementById("btnCompletePay")?.addEventListener("click", completePay);
 

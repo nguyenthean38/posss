@@ -24,12 +24,13 @@ class Customer {
                        c.phone_number AS phone,
                        c.address,
                        c.avatar,
+                       c.loyalty_points,
                        COUNT(o.id) AS total_orders,
                        COALESCE(SUM(o.total_amount), 0) AS total_revenue
                 FROM " . $this->table_name . " c
                 LEFT JOIN orders o ON o.customer_id = c.id
                 $where
-                GROUP BY c.id
+                GROUP BY c.id, c.full_name, c.phone_number, c.address, c.avatar, c.loyalty_points
                 ORDER BY c.id DESC
                 LIMIT :limit OFFSET :offset";
 
@@ -88,7 +89,8 @@ class Customer {
 
     // Tìm khách hàng theo số điện thoại (UC-20)
     public function findByPhone($phoneNumber) {
-        $sql = "SELECT id, full_name AS name, phone_number AS phone, address, avatar
+        $sql = "SELECT id, full_name AS name, phone_number AS phone, address, avatar, loyalty_points,
+                       COALESCE(lifetime_spend_vnd, 0) AS lifetime_spend_vnd
                 FROM " . $this->table_name . "
                 WHERE phone_number = :phone
                 LIMIT 1";
@@ -141,12 +143,13 @@ class Customer {
                        c.phone_number AS phone,
                        c.address,
                        c.avatar,
+                       c.loyalty_points,
                        COUNT(o.id) AS total_orders,
                        COALESCE(SUM(o.total_amount), 0) AS total_revenue
                 FROM " . $this->table_name . " c
                 LEFT JOIN orders o ON o.customer_id = c.id
                 WHERE c.id = :id
-                GROUP BY c.id
+                GROUP BY c.id, c.full_name, c.phone_number, c.address, c.avatar, c.loyalty_points
                 LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
