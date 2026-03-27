@@ -130,6 +130,57 @@
             </section>
         </main>
 
+        <!-- Trợ lý AI — widget compact (shared across pages) -->
+        <div id="aiPanelBackdrop" class="ps-ai-backdrop" hidden></div>
+        <aside id="aiPanel" class="ps-ai-widget" hidden role="dialog" aria-modal="true" aria-labelledby="aiPanelTitle">
+            <header class="ps-ai-widget__header">
+                <button type="button" class="btn-close btn-close-white ps-ai-widget__close" id="aiPanelClose" data-i18n-aria-label="ai.close" aria-label="Đóng"></button>
+                <div class="ps-ai-widget__head-row">
+                    <div class="ps-ai-widget__avatar" aria-hidden="true">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="ps-ai-widget__head-text">
+                        <h2 class="ps-ai-widget__title" id="aiPanelTitle" data-i18n="ai.title">Trợ lý AI</h2>
+                        <p class="ps-ai-widget__subtitle" data-i18n="ai.subtitle">Doanh thu, đơn hàng, báo cáo · 1900 54 54 63</p>
+                    </div>
+                </div>
+                <div class="ps-ai-widget__actions" aria-label="Liên hệ">
+                    <a class="ps-ai-widget__action" href="tel:1900545463" id="aiActionPhone" title="Hotline" aria-label="Gọi hotline">
+                        <i class="bi bi-telephone-fill"></i>
+                    </a>
+                    <a class="ps-ai-widget__action" href="#" id="aiActionFb" rel="noopener noreferrer" title="Messenger" aria-label="Messenger">
+                        <i class="bi bi-messenger"></i>
+                    </a>
+                    <a class="ps-ai-widget__action" href="#" id="aiActionZalo" title="Zalo" aria-label="Zalo">
+                        <span class="ps-ai-widget__zalo">Z</span>
+                    </a>
+                </div>
+            </header>
+            <div class="ps-ai-widget__body">
+                <div id="aiMessages" class="ps-ai-widget__messages">
+                    <div id="aiEmptyState" class="ps-ai-widget__empty">
+                        <p class="ps-ai-widget__empty-lead" data-i18n="ai.emptyLead">Gợi ý câu hỏi:</p>
+                        <ul class="ps-ai-widget__hints">
+                            <li data-i18n="ai.hint1">Doanh thu hôm nay thế nào?</li>
+                            <li data-i18n="ai.hint2">Top sản phẩm bán chạy?</li>
+                            <li data-i18n="ai.hint3">Tổng đơn tuần này?</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <footer class="ps-ai-widget__footer">
+                <label class="visually-hidden" for="aiInput" data-i18n="ai.inputLabel">Nhập câu hỏi</label>
+                <textarea id="aiInput" class="ps-ai-widget__input" rows="2" maxlength="2000" data-i18n-placeholder="ai.placeholder" placeholder="Ví dụ: Doanh thu hôm nay thế nào?"></textarea>
+                <button type="button" class="ps-ai-widget__send" id="aiSend">
+                    <span id="aiSendLabel" data-i18n="ai.send">Gửi</span>
+                    <span id="aiSendSpinner" class="spinner-border spinner-border-sm ms-1 d-none" role="status" aria-hidden="true"></span>
+                </button>
+            </footer>
+        </aside>
+        <button type="button" id="btnAiFab" class="ps-ai-fab" title="Trợ lý AI" aria-label="Mở trợ lý AI" data-i18n-tooltip="ai.fabTitle">
+            <i class="bi bi-chat-heart-fill"></i>
+        </button>
+
         <div class="ps-overlay" id="overlay"></div>
     </div>
 
@@ -227,7 +278,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js?v=639095644633487831"></script>
-    <script type="module" src="assets/js/customers.js?v=8"></script>
+    <script type="module" src="assets/js/customers.js?v=9"></script>
 </body>
 
 </html>

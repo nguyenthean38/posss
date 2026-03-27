@@ -2,6 +2,7 @@
 import API from './api.js?v=8';
 import { requireAuth } from './auth.js';
 import { getAvatarImage } from './assets.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=1';
 
 (() => {
     requireAuth();
@@ -11,183 +12,95 @@ import { getAvatarImage } from './assets.js';
     let pendingDeleteId = null;
 
     const i18n = {
-    vi: {
-        // Navigation
-        "nav.dashboard": "Tổng quan",
-        "nav.pos": "Bán hàng",
-        "nav.products": "Sản phẩm",
-        "nav.categories": "Danh mục",
-        "nav.employees": "Nhân viên",
-        "nav.customers": "Khách hàng",
-        "nav.reports": "Báo cáo",
-        "nav.profile": "Hồ sơ",
-        "nav.logout": "Đăng xuất",
-        "nav.collapse": "Thu gọn",
-
-        // KPI Cards
-        "kpi.revenue": "Tổng doanh thu",
-        "kpi.orders": "Tổng đơn hàng",
-        "kpi.products": "Tổng sản phẩm",
-        "kpi.customers": "Tổng khách hàng",
-
-        // Panels
-        "panel.salesOverview": "Tổng quan doanh số",
-        "panel.orders": "Đơn hàng",
-        "panel.recentOrders": "Đơn hàng gần đây",
-        "panel.topProducts": "Sản phẩm bán chạy",
-
-        // Table Headers
-        "table.customerName": "Tên khách hàng",
-        "table.total": "Tổng tiền",
-        "table.name": "Tên",
-        "table.category": "Danh mục",
-        "table.price": "Giá",
-        "table.stock": "Tồn kho",
-        "table.actions": "Thao tác",
-
-        // Roles
-        "role.admin": "Quản trị viên",
-        "role.manager": "Quản lý",
-        "role.cashier": "Thu ngân",
-
-        // Products
-        "product.sold45": "Đã bán 45 sản phẩm",
-        "product.sold38": "Đã bán 38 sản phẩm",
-        "product.sold67": "Đã bán 67 sản phẩm",
-        "product.sold120": "Đã bán 120 sản phẩm",
-        "product.case": "Ốp lưng iPhone",
-
-        // Buttons
-        "btn.add": "Thêm mới",
-        "btn.edit": "Chỉnh sửa",
-        "btn.delete": "Xóa",
-        "btn.save": "Lưu",
-        "btn.cancel": "Hủy",
-        "btn.search": "Tìm kiếm",
-        "btn.filter": "Lọc",
-        "btn.export": "Xuất",
-
-        // Common
-        "common.loading": "Đang tải...",
-        "common.noData": "Không có dữ liệu",
-        "common.error": "Đã xảy ra lỗi",
-        "common.success": "Thành công",
-
-        // Shifts & Activity
-        "page.shifts": "Điểm danh ca",
-        "nav.shifts": "Điểm danh",
-        "nav.activity": "Nhật ký",
-        "page.activity": "Nhật ký ra vào",
-        "sh.date": "Ngày",
-        "sh.staff": "Nhân viên",
-        "sh.allStaff": "Tất cả",
-        "sh.load": "Tải",
-        "sh.export": "Xuất CSV",
-        "sh.colStaff": "Nhân viên",
-        "sh.colIn": "Vào ca",
-        "sh.colOut": "Ra ca",
-        "sh.colStatus": "Trạng thái",
-        "sh.edit": "Sửa",
-        "sh.editTitle": "Sửa giờ điểm danh",
-        "sh.statusOpen": "Đang mở",
-        "sh.statusClosed": "Đã đóng",
-        "sh.statusAdj": "Đã chỉnh",
-        "act.searchPh": "Tìm theo chi tiết, tên hoặc email nhân viên...",
-        "act.search": "Tìm",
-        "act.colTime": "Thời gian",
-        "act.colUser": "Nhân viên",
-        "act.colDetails": "Chi tiết",
-        "role.staff": "Nhân viên",
-    },
-    en: {
-        // Navigation
-        "nav.dashboard": "Dashboard",
-        "nav.pos": "Point of Sale",
-        "nav.products": "Products",
-        "nav.categories": "Categories",
-        "nav.employees": "Employees",
-        "nav.customers": "Customers",
-        "nav.reports": "Reports",
-        "nav.profile": "Profile",
-        "nav.logout": "Logout",
-        "nav.collapse": "Collapse",
-
-        // KPI Cards
-        "kpi.revenue": "Total Revenue",
-        "kpi.orders": "Total Orders",
-        "kpi.products": "Total Products",
-        "kpi.customers": "Total Customers",
-
-        // Panels
-        "panel.salesOverview": "Sales Overview",
-        "panel.orders": "Orders",
-        "panel.recentOrders": "Recent Orders",
-        "panel.topProducts": "Top Products",
-
-        // Table Headers
-        "table.customerName": "Customer Name",
-        "table.total": "Total",
-        "table.name": "Name",
-        "table.category": "Category",
-        "table.price": "Price",
-        "table.stock": "Stock",
-        "table.actions": "Actions",
-
-        // Roles
-        "role.admin": "Administrator",
-        "role.manager": "Manager",
-        "role.cashier": "Cashier",
-
-        // Products
-        "product.sold45": "45 products sold",
-        "product.sold38": "38 products sold",
-        "product.sold67": "67 products sold",
-        "product.sold120": "120 products sold",
-        "product.case": "iPhone Case",
-
-        // Buttons
-        "btn.add": "Add New",
-        "btn.edit": "Edit",
-        "btn.delete": "Delete",
-        "btn.save": "Save",
-        "btn.cancel": "Cancel",
-        "btn.search": "Search",
-        "btn.filter": "Filter",
-        "btn.export": "Export",
-
-        // Common
-        "common.loading": "Loading...",
-        "common.noData": "No data available",
-        "common.error": "An error occurred",
-        "common.success": "Success",
-
-        // Shifts & Activity
-        "page.shifts": "Shift attendance",
-        "nav.shifts": "Shifts",
-        "nav.activity": "Activity",
-        "page.activity": "Activity Log",
-        "sh.date": "Date",
-        "sh.staff": "Staff",
-        "sh.allStaff": "All",
-        "sh.load": "Load",
-        "sh.export": "Export CSV",
-        "sh.colStaff": "Staff",
-        "sh.colIn": "Clock-in",
-        "sh.colOut": "Clock-out",
-        "sh.colStatus": "Status",
-        "sh.edit": "Edit",
-        "sh.editTitle": "Edit attendance times",
-        "sh.statusOpen": "Open",
-        "sh.statusClosed": "Closed",
-        "sh.statusAdj": "Adjusted",
-        "act.searchPh": "Search by details, name or email...",
-        "act.search": "Search",
-        "act.colTime": "Time",
-        "act.colUser": "User",
-        "act.colDetails": "Details",
-        "role.staff": "Staff",
-    }
-};
+        vi: {
+            "page.customers": "Khách hàng",
+            "role.admin": "Quản trị viên",
+            "nav.dashboard": "Tổng quan",
+            "nav.pos": "Bán hàng",
+            "nav.products": "Sản phẩm",
+            "nav.categories": "Danh mục",
+            "nav.employees": "Nhân viên",
+            "nav.customers": "Khách hàng",
+            "nav.reports": "Báo cáo",
+            "nav.activity": "Nhật ký",
+            "nav.profile": "Hồ sơ",
+            "nav.logout": "Đăng xuất",
+            "nav.collapse": "Thu gọn",
+            "cus.searchPh": "Tìm kiếm...",
+            "cus.add": "Thêm",
+            "cus.modalAdd": "Thêm khách hàng",
+            "cus.modalEdit": "Sửa khách hàng",
+            "cus.modalDelete": "Xóa khách hàng",
+            "cus.fName": "Tên khách hàng",
+            "cus.fPhone": "Số điện thoại",
+            "cus.fAddress": "Địa chỉ",
+            "cus.orders": "Đơn hàng",
+            "cus.revenue": "Tổng doanh thu",
+            "cus.sortRevDesc": "Doanh thu ↓",
+            "cus.sortRevAsc": "Doanh thu ↑",
+            "cus.sortOrdDesc": "Đơn hàng ↓",
+            "cus.sortOrdAsc": "Đơn hàng ↑",
+            "cus.sortNameAsc": "Tên A→Z",
+            "hist.title": "Lịch sử mua hàng",
+            "hist.totalOrders": "Đơn hàng",
+            "hist.totalSum": "Tổng cộng",
+            "common.save": "Lưu",
+            "common.cancel": "Hủy",
+            "common.delete": "Xóa",
+            "toast.saved": "Đã lưu khách hàng",
+            "toast.deleted": "Đã xóa khách hàng",
+            "toast.invalid": "Vui lòng nhập tên + số điện thoại",
+            "confirm.deleteText": "Bạn có chắc muốn xóa khách hàng này?",
+            "rank.vip": "VIP",
+            "toast.error": "Có lỗi xảy ra",
+            "toast.fileTooBig": "Ảnh không được vượt quá 2MB",
+            "toast.fileType": "Chỉ chấp nhận ảnh JPG, PNG, GIF, WEBP",
+        },
+        en: {
+            "page.customers": "Customers",
+            "role.admin": "Administrator",
+            "nav.dashboard": "Dashboard",
+            "nav.pos": "Point of Sale",
+            "nav.products": "Products",
+            "nav.categories": "Categories",
+            "nav.employees": "Employees",
+            "nav.customers": "Customers",
+            "nav.reports": "Reports",
+            "nav.activity": "Activity",
+            "nav.profile": "Profile",
+            "nav.logout": "Logout",
+            "nav.collapse": "Collapse",
+            "cus.searchPh": "Search...",
+            "cus.add": "Add",
+            "cus.modalAdd": "Add customer",
+            "cus.modalEdit": "Edit customer",
+            "cus.modalDelete": "Delete customer",
+            "cus.fName": "Customer name",
+            "cus.fPhone": "Phone",
+            "cus.fAddress": "Address",
+            "cus.orders": "Orders",
+            "cus.revenue": "Revenue",
+            "cus.sortRevDesc": "Revenue ↓",
+            "cus.sortRevAsc": "Revenue ↑",
+            "cus.sortOrdDesc": "Orders ↓",
+            "cus.sortOrdAsc": "Orders ↑",
+            "cus.sortNameAsc": "Name A→Z",
+            "hist.title": "Purchase history",
+            "hist.totalOrders": "Orders",
+            "hist.totalSum": "Total",
+            "common.save": "Save",
+            "common.cancel": "Cancel",
+            "common.delete": "Delete",
+            "toast.saved": "Customer saved",
+            "toast.deleted": "Customer deleted",
+            "toast.invalid": "Please enter name + phone",
+            "confirm.deleteText": "Delete this customer?",
+            "rank.vip": "VIP",
+            "toast.error": "An error occurred",
+            "toast.fileTooBig": "Image must be at most 2MB",
+            "toast.fileType": "Only JPG, PNG, GIF, WEBP images are allowed",
+        }
+    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -561,6 +474,7 @@ import { getAvatarImage } from './assets.js';
         });
 
         render();
+        initAiChatWidget();
     }
 
     init();

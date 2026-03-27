@@ -1,6 +1,7 @@
 // Profile Module - Real API Integration
 import API from './api.js?v=5';
 import { requireAuth, getUser } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=1';
 
 (() => {
     requireAuth();
@@ -9,183 +10,79 @@ import { requireAuth, getUser } from './auth.js';
     const KEY_LANG = "ps_lang";
 
     const i18n = {
-    vi: {
-        // Navigation
-        "nav.dashboard": "Tổng quan",
-        "nav.pos": "Bán hàng",
-        "nav.products": "Sản phẩm",
-        "nav.categories": "Danh mục",
-        "nav.employees": "Nhân viên",
-        "nav.customers": "Khách hàng",
-        "nav.reports": "Báo cáo",
-        "nav.profile": "Hồ sơ",
-        "nav.logout": "Đăng xuất",
-        "nav.collapse": "Thu gọn",
-
-        // KPI Cards
-        "kpi.revenue": "Tổng doanh thu",
-        "kpi.orders": "Tổng đơn hàng",
-        "kpi.products": "Tổng sản phẩm",
-        "kpi.customers": "Tổng khách hàng",
-
-        // Panels
-        "panel.salesOverview": "Tổng quan doanh số",
-        "panel.orders": "Đơn hàng",
-        "panel.recentOrders": "Đơn hàng gần đây",
-        "panel.topProducts": "Sản phẩm bán chạy",
-
-        // Table Headers
-        "table.customerName": "Tên khách hàng",
-        "table.total": "Tổng tiền",
-        "table.name": "Tên",
-        "table.category": "Danh mục",
-        "table.price": "Giá",
-        "table.stock": "Tồn kho",
-        "table.actions": "Thao tác",
-
-        // Roles
-        "role.admin": "Quản trị viên",
-        "role.manager": "Quản lý",
-        "role.cashier": "Thu ngân",
-
-        // Products
-        "product.sold45": "Đã bán 45 sản phẩm",
-        "product.sold38": "Đã bán 38 sản phẩm",
-        "product.sold67": "Đã bán 67 sản phẩm",
-        "product.sold120": "Đã bán 120 sản phẩm",
-        "product.case": "Ốp lưng iPhone",
-
-        // Buttons
-        "btn.add": "Thêm mới",
-        "btn.edit": "Chỉnh sửa",
-        "btn.delete": "Xóa",
-        "btn.save": "Lưu",
-        "btn.cancel": "Hủy",
-        "btn.search": "Tìm kiếm",
-        "btn.filter": "Lọc",
-        "btn.export": "Xuất",
-
-        // Common
-        "common.loading": "Đang tải...",
-        "common.noData": "Không có dữ liệu",
-        "common.error": "Đã xảy ra lỗi",
-        "common.success": "Thành công",
-
-        // Shifts & Activity
-        "page.shifts": "Điểm danh ca",
-        "nav.shifts": "Điểm danh",
-        "nav.activity": "Nhật ký",
-        "page.activity": "Nhật ký ra vào",
-        "sh.date": "Ngày",
-        "sh.staff": "Nhân viên",
-        "sh.allStaff": "Tất cả",
-        "sh.load": "Tải",
-        "sh.export": "Xuất CSV",
-        "sh.colStaff": "Nhân viên",
-        "sh.colIn": "Vào ca",
-        "sh.colOut": "Ra ca",
-        "sh.colStatus": "Trạng thái",
-        "sh.edit": "Sửa",
-        "sh.editTitle": "Sửa giờ điểm danh",
-        "sh.statusOpen": "Đang mở",
-        "sh.statusClosed": "Đã đóng",
-        "sh.statusAdj": "Đã chỉnh",
-        "act.searchPh": "Tìm theo chi tiết, tên hoặc email nhân viên...",
-        "act.search": "Tìm",
-        "act.colTime": "Thời gian",
-        "act.colUser": "Nhân viên",
-        "act.colDetails": "Chi tiết",
-        "role.staff": "Nhân viên",
-    },
-    en: {
-        // Navigation
-        "nav.dashboard": "Dashboard",
-        "nav.pos": "Point of Sale",
-        "nav.products": "Products",
-        "nav.categories": "Categories",
-        "nav.employees": "Employees",
-        "nav.customers": "Customers",
-        "nav.reports": "Reports",
-        "nav.profile": "Profile",
-        "nav.logout": "Logout",
-        "nav.collapse": "Collapse",
-
-        // KPI Cards
-        "kpi.revenue": "Total Revenue",
-        "kpi.orders": "Total Orders",
-        "kpi.products": "Total Products",
-        "kpi.customers": "Total Customers",
-
-        // Panels
-        "panel.salesOverview": "Sales Overview",
-        "panel.orders": "Orders",
-        "panel.recentOrders": "Recent Orders",
-        "panel.topProducts": "Top Products",
-
-        // Table Headers
-        "table.customerName": "Customer Name",
-        "table.total": "Total",
-        "table.name": "Name",
-        "table.category": "Category",
-        "table.price": "Price",
-        "table.stock": "Stock",
-        "table.actions": "Actions",
-
-        // Roles
-        "role.admin": "Administrator",
-        "role.manager": "Manager",
-        "role.cashier": "Cashier",
-
-        // Products
-        "product.sold45": "45 products sold",
-        "product.sold38": "38 products sold",
-        "product.sold67": "67 products sold",
-        "product.sold120": "120 products sold",
-        "product.case": "iPhone Case",
-
-        // Buttons
-        "btn.add": "Add New",
-        "btn.edit": "Edit",
-        "btn.delete": "Delete",
-        "btn.save": "Save",
-        "btn.cancel": "Cancel",
-        "btn.search": "Search",
-        "btn.filter": "Filter",
-        "btn.export": "Export",
-
-        // Common
-        "common.loading": "Loading...",
-        "common.noData": "No data available",
-        "common.error": "An error occurred",
-        "common.success": "Success",
-
-        // Shifts & Activity
-        "page.shifts": "Shift attendance",
-        "nav.shifts": "Shifts",
-        "nav.activity": "Activity",
-        "page.activity": "Activity Log",
-        "sh.date": "Date",
-        "sh.staff": "Staff",
-        "sh.allStaff": "All",
-        "sh.load": "Load",
-        "sh.export": "Export CSV",
-        "sh.colStaff": "Staff",
-        "sh.colIn": "Clock-in",
-        "sh.colOut": "Clock-out",
-        "sh.colStatus": "Status",
-        "sh.edit": "Edit",
-        "sh.editTitle": "Edit attendance times",
-        "sh.statusOpen": "Open",
-        "sh.statusClosed": "Closed",
-        "sh.statusAdj": "Adjusted",
-        "act.searchPh": "Search by details, name or email...",
-        "act.search": "Search",
-        "act.colTime": "Time",
-        "act.colUser": "User",
-        "act.colDetails": "Details",
-        "role.staff": "Staff",
-    }
-};
+        vi: {
+            "page.profile": "Hồ sơ",
+            "role.admin": "Quản trị viên",
+            "role.staff": "Nhân viên",
+            "nav.dashboard": "Tổng quan",
+            "nav.pos": "Bán hàng",
+            "nav.products": "Sản phẩm",
+            "nav.categories": "Danh mục",
+            "nav.employees": "Nhân viên",
+            "nav.customers": "Khách hàng",
+            "nav.reports": "Báo cáo",
+            "nav.profile": "Hồ sơ",
+            "nav.logout": "Đăng xuất",
+            "nav.collapse": "Thu gọn",
+            "tab.info": "Thông tin cá nhân",
+            "tab.pwd": "Đổi mật khẩu",
+            "form.name": "Tên nhân viên",
+            "form.email": "Email",
+            "form.phone": "Số điện thoại",
+            "form.address": "Địa chỉ",
+            "common.save": "Lưu",
+            "pwd.current": "Mật khẩu hiện tại",
+            "pwd.new": "Mật khẩu mới",
+            "pwd.confirm": "Xác nhận mật khẩu",
+            "pwd.btn": "Đổi mật khẩu",
+            "toast.saved": "Đã lưu thông tin",
+            "toast.pwdOk": "Đổi mật khẩu thành công",
+            "toast.pwdWrong": "Mật khẩu hiện tại không đúng",
+            "toast.pwdMismatch": "Mật khẩu xác nhận không khớp",
+            "toast.pwdWeak": "Mật khẩu quá yếu (>= 8 ký tự, có chữ + số)",
+            "pw.weak": "Yếu",
+            "pw.medium": "Trung bình",
+            "pw.strong": "Mạnh",
+            "info.joined": "Tham gia",
+            "toast.error": "Có lỗi xảy ra",
+        },
+        en: {
+            "page.profile": "Profile",
+            "role.admin": "Administrator",
+            "role.staff": "Staff",
+            "nav.dashboard": "Dashboard",
+            "nav.pos": "Point of Sale",
+            "nav.products": "Products",
+            "nav.categories": "Categories",
+            "nav.employees": "Employees",
+            "nav.customers": "Customers",
+            "nav.reports": "Reports",
+            "nav.profile": "Profile",
+            "nav.logout": "Logout",
+            "nav.collapse": "Collapse",
+            "tab.info": "Personal Information",
+            "tab.pwd": "Change Password",
+            "form.name": "Employee Name",
+            "form.email": "Email",
+            "form.phone": "Phone Number",
+            "form.address": "Address",
+            "common.save": "Save",
+            "pwd.current": "Current Password",
+            "pwd.new": "New Password",
+            "pwd.confirm": "Confirm Password",
+            "pwd.btn": "Change Password",
+            "toast.saved": "Profile saved",
+            "toast.pwdOk": "Password changed",
+            "toast.pwdWrong": "Current password is incorrect",
+            "toast.pwdMismatch": "Confirm password mismatch",
+            "toast.pwdWeak": "Weak password (>= 8 chars, letters + numbers)",
+            "pw.weak": "Weak",
+            "pw.medium": "Medium",
+            "pw.strong": "Strong",
+            "info.joined": "Joined",
+            "toast.error": "An error occurred",
+        }
+    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -406,6 +303,7 @@ import { requireAuth, getUser } from './auth.js';
         });
 
         updateStrength();
+        initAiChatWidget();
     }
 
     init();

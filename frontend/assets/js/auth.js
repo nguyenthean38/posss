@@ -62,6 +62,12 @@ export async function logout() {
     console.error('Logout error:', error);
   } finally {
     _clearUser();
+    try {
+      sessionStorage.removeItem("ps_ai_chat_session");
+      sessionStorage.removeItem("ps_ai_panel_open");
+    } catch (_) {
+      /* ignore */
+    }
     location.href = "login.html";
   }
 }

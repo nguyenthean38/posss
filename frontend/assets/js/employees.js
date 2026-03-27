@@ -3,6 +3,7 @@
  */
 import { api } from './api.js?v=5';
 import { requireAuth, isAdmin } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=1';
 
 (() => {
     const KEY_THEME = "ps_theme";
@@ -13,183 +14,117 @@ import { requireAuth, isAdmin } from './auth.js';
     let viewEmployeeId = null;
 
     const i18n = {
-    vi: {
-        // Navigation
-        "nav.dashboard": "Tổng quan",
-        "nav.pos": "Bán hàng",
-        "nav.products": "Sản phẩm",
-        "nav.categories": "Danh mục",
-        "nav.employees": "Nhân viên",
-        "nav.customers": "Khách hàng",
-        "nav.reports": "Báo cáo",
-        "nav.profile": "Hồ sơ",
-        "nav.logout": "Đăng xuất",
-        "nav.collapse": "Thu gọn",
-
-        // KPI Cards
-        "kpi.revenue": "Tổng doanh thu",
-        "kpi.orders": "Tổng đơn hàng",
-        "kpi.products": "Tổng sản phẩm",
-        "kpi.customers": "Tổng khách hàng",
-
-        // Panels
-        "panel.salesOverview": "Tổng quan doanh số",
-        "panel.orders": "Đơn hàng",
-        "panel.recentOrders": "Đơn hàng gần đây",
-        "panel.topProducts": "Sản phẩm bán chạy",
-
-        // Table Headers
-        "table.customerName": "Tên khách hàng",
-        "table.total": "Tổng tiền",
-        "table.name": "Tên",
-        "table.category": "Danh mục",
-        "table.price": "Giá",
-        "table.stock": "Tồn kho",
-        "table.actions": "Thao tác",
-
-        // Roles
-        "role.admin": "Quản trị viên",
-        "role.manager": "Quản lý",
-        "role.cashier": "Thu ngân",
-
-        // Products
-        "product.sold45": "Đã bán 45 sản phẩm",
-        "product.sold38": "Đã bán 38 sản phẩm",
-        "product.sold67": "Đã bán 67 sản phẩm",
-        "product.sold120": "Đã bán 120 sản phẩm",
-        "product.case": "Ốp lưng iPhone",
-
-        // Buttons
-        "btn.add": "Thêm mới",
-        "btn.edit": "Chỉnh sửa",
-        "btn.delete": "Xóa",
-        "btn.save": "Lưu",
-        "btn.cancel": "Hủy",
-        "btn.search": "Tìm kiếm",
-        "btn.filter": "Lọc",
-        "btn.export": "Xuất",
-
-        // Common
-        "common.loading": "Đang tải...",
-        "common.noData": "Không có dữ liệu",
-        "common.error": "Đã xảy ra lỗi",
-        "common.success": "Thành công",
-
-        // Shifts & Activity
-        "page.shifts": "Điểm danh ca",
-        "nav.shifts": "Điểm danh",
-        "nav.activity": "Nhật ký",
-        "page.activity": "Nhật ký ra vào",
-        "sh.date": "Ngày",
-        "sh.staff": "Nhân viên",
-        "sh.allStaff": "Tất cả",
-        "sh.load": "Tải",
-        "sh.export": "Xuất CSV",
-        "sh.colStaff": "Nhân viên",
-        "sh.colIn": "Vào ca",
-        "sh.colOut": "Ra ca",
-        "sh.colStatus": "Trạng thái",
-        "sh.edit": "Sửa",
-        "sh.editTitle": "Sửa giờ điểm danh",
-        "sh.statusOpen": "Đang mở",
-        "sh.statusClosed": "Đã đóng",
-        "sh.statusAdj": "Đã chỉnh",
-        "act.searchPh": "Tìm theo chi tiết, tên hoặc email nhân viên...",
-        "act.search": "Tìm",
-        "act.colTime": "Thời gian",
-        "act.colUser": "Nhân viên",
-        "act.colDetails": "Chi tiết",
-        "role.staff": "Nhân viên",
-    },
-    en: {
-        // Navigation
-        "nav.dashboard": "Dashboard",
-        "nav.pos": "Point of Sale",
-        "nav.products": "Products",
-        "nav.categories": "Categories",
-        "nav.employees": "Employees",
-        "nav.customers": "Customers",
-        "nav.reports": "Reports",
-        "nav.profile": "Profile",
-        "nav.logout": "Logout",
-        "nav.collapse": "Collapse",
-
-        // KPI Cards
-        "kpi.revenue": "Total Revenue",
-        "kpi.orders": "Total Orders",
-        "kpi.products": "Total Products",
-        "kpi.customers": "Total Customers",
-
-        // Panels
-        "panel.salesOverview": "Sales Overview",
-        "panel.orders": "Orders",
-        "panel.recentOrders": "Recent Orders",
-        "panel.topProducts": "Top Products",
-
-        // Table Headers
-        "table.customerName": "Customer Name",
-        "table.total": "Total",
-        "table.name": "Name",
-        "table.category": "Category",
-        "table.price": "Price",
-        "table.stock": "Stock",
-        "table.actions": "Actions",
-
-        // Roles
-        "role.admin": "Administrator",
-        "role.manager": "Manager",
-        "role.cashier": "Cashier",
-
-        // Products
-        "product.sold45": "45 products sold",
-        "product.sold38": "38 products sold",
-        "product.sold67": "67 products sold",
-        "product.sold120": "120 products sold",
-        "product.case": "iPhone Case",
-
-        // Buttons
-        "btn.add": "Add New",
-        "btn.edit": "Edit",
-        "btn.delete": "Delete",
-        "btn.save": "Save",
-        "btn.cancel": "Cancel",
-        "btn.search": "Search",
-        "btn.filter": "Filter",
-        "btn.export": "Export",
-
-        // Common
-        "common.loading": "Loading...",
-        "common.noData": "No data available",
-        "common.error": "An error occurred",
-        "common.success": "Success",
-
-        // Shifts & Activity
-        "page.shifts": "Shift attendance",
-        "nav.shifts": "Shifts",
-        "nav.activity": "Activity",
-        "page.activity": "Activity Log",
-        "sh.date": "Date",
-        "sh.staff": "Staff",
-        "sh.allStaff": "All",
-        "sh.load": "Load",
-        "sh.export": "Export CSV",
-        "sh.colStaff": "Staff",
-        "sh.colIn": "Clock-in",
-        "sh.colOut": "Clock-out",
-        "sh.colStatus": "Status",
-        "sh.edit": "Edit",
-        "sh.editTitle": "Edit attendance times",
-        "sh.statusOpen": "Open",
-        "sh.statusClosed": "Closed",
-        "sh.statusAdj": "Adjusted",
-        "act.searchPh": "Search by details, name or email...",
-        "act.search": "Search",
-        "act.colTime": "Time",
-        "act.colUser": "User",
-        "act.colDetails": "Details",
-        "role.staff": "Staff",
-    }
-};
+        vi: {
+            "page.employees": "Nhân viên",
+            "role.admin": "Quản trị viên",
+            "nav.dashboard": "Tổng quan",
+            "nav.pos": "Bán hàng",
+            "nav.products": "Sản phẩm",
+            "nav.categories": "Danh mục",
+            "nav.employees": "Nhân viên",
+            "nav.customers": "Khách hàng",
+            "nav.reports": "Báo cáo",
+            "nav.profile": "Hồ sơ",
+            "nav.logout": "Đăng xuất",
+            "nav.collapse": "Thu gọn",
+            "emp.searchPh": "Tìm nhân viên theo tên hoặc email...",
+            "emp.add": "Thêm nhân viên",
+            "emp.modalAdd": "Thêm nhân viên",
+            "emp.fName": "Tên nhân viên",
+            "emp.fEmail": "Email",
+            "role.staff": "Nhân viên",
+            "role.admin2": "Admin",
+            "common.save": "Lưu",
+            "common.cancel": "Hủy",
+            "common.delete": "Xóa",
+            "status.active": "Hoạt động",
+            "status.locked": "Đã khóa",
+            "emp.needPwd": "Chưa đổi MK",
+            "emp.view": "Xem chi tiết",
+            "emp.lock": "Khóa TK",
+            "emp.unlock": "Mở khóa",
+            "emp.email": "Gửi lại email",
+            "toast.saved": "Đã lưu nhân viên",
+            "toast.deleted": "Đã xóa nhân viên",
+            "toast.invalid": "Vui lòng nhập tên + email",
+            "toast.locked": "Đã khóa tài khoản",
+            "toast.unlocked": "Đã mở khóa tài khoản",
+            "toast.email": "Đã gửi email",
+            "toast.error": "Có lỗi xảy ra",
+            "view.status": "Trạng thái",
+            "view.role": "Role",
+            "view.phone": "Số điện thoại",
+            "view.address": "Địa chỉ",
+            "view.join": "Ngày tham gia",
+            "view.pwdChanged": "Đổi mật khẩu",
+            "view.yes": "Đã đổi",
+            "view.no": "Chưa đổi",
+            "view.salesTitle": "Thông tin bán hàng",
+            "view.totalOrders": "Tổng đơn hàng",
+            "view.totalRevenue": "Tổng doanh thu",
+            "view.recentOrders": "Đơn hàng gần đây",
+            "view.orderId": "Đơn",
+            "view.customer": "Khách hàng",
+            "view.amount": "Tổng tiền",
+            "view.noOrders": "Chưa có đơn hàng nào",
+            "confirm.deleteText": "Bạn có chắc muốn xóa nhân viên này?"
+        },
+        en: {
+            "page.employees": "Employees",
+            "role.admin": "Administrator",
+            "nav.dashboard": "Dashboard",
+            "nav.pos": "Point of Sale",
+            "nav.products": "Products",
+            "nav.categories": "Categories",
+            "nav.employees": "Employees",
+            "nav.customers": "Customers",
+            "nav.reports": "Reports",
+            "nav.profile": "Profile",
+            "nav.logout": "Logout",
+            "nav.collapse": "Collapse",
+            "emp.searchPh": "Search by name or email...",
+            "emp.add": "Add employee",
+            "emp.modalAdd": "Add employee",
+            "emp.fName": "Employee name",
+            "emp.fEmail": "Email",
+            "role.staff": "Staff",
+            "role.admin2": "Admin",
+            "common.save": "Save",
+            "common.cancel": "Cancel",
+            "common.delete": "Delete",
+            "status.active": "Active",
+            "status.locked": "Locked",
+            "emp.needPwd": "Password not changed",
+            "emp.view": "View details",
+            "emp.lock": "Lock",
+            "emp.unlock": "Unlock",
+            "emp.email": "Resend email",
+            "toast.saved": "Employee saved",
+            "toast.deleted": "Employee deleted",
+            "toast.invalid": "Please enter name + email",
+            "toast.locked": "Account locked",
+            "toast.unlocked": "Account unlocked",
+            "toast.email": "Email sent",
+            "toast.error": "An error occurred",
+            "view.status": "Status",
+            "view.role": "Role",
+            "view.phone": "Phone",
+            "view.address": "Address",
+            "view.join": "Join date",
+            "view.pwdChanged": "Password changed",
+            "view.yes": "Yes",
+            "view.no": "No",
+            "view.salesTitle": "Sales Information",
+            "view.totalOrders": "Total Orders",
+            "view.totalRevenue": "Total Revenue",
+            "view.recentOrders": "Recent Orders",
+            "view.orderId": "Order",
+            "view.customer": "Customer",
+            "view.amount": "Amount",
+            "view.noOrders": "No orders yet",
+            "confirm.deleteText": "Delete this employee?"
+        }
+    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -542,6 +477,7 @@ import { requireAuth, isAdmin } from './auth.js';
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
 
         await loadEmployees();
+        initAiChatWidget();
     }
 
     init();
