@@ -511,7 +511,8 @@ api.products = {
     getById: (id) => api.getProduct(id),
     create: (data) => api.createProduct(data),
     update: (id, data) => api.updateProduct(id, data),
-    delete: (id) => api.deleteProduct(id)
+    delete: (id) => api.deleteProduct(id),
+    restock: (id, quantity) => api.request(`/api/products/${id}/restock`, { method: 'PATCH', body: JSON.stringify({ quantity }) })
 };
 api.profile = {
     get: async () => { const r = await api.getProfile(); return r.profile || r; },

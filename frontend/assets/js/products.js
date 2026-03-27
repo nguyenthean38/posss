@@ -2,6 +2,7 @@
 import API from './api.js?v=7';
 import { requireAuth } from './auth.js';
 import { getProductImage } from './assets.js';
+import { i18n } from './shared.js';
 
 (() => {
     requireAuth();
@@ -13,184 +14,7 @@ import { getProductImage } from './assets.js';
     const toastEl = document.getElementById("toast");
     const toastText = document.getElementById("toastText");
 
-    const i18n = {
-    vi: {
-        // Navigation
-        "nav.dashboard": "Tổng quan",
-        "nav.pos": "Bán hàng",
-        "nav.products": "Sản phẩm",
-        "nav.categories": "Danh mục",
-        "nav.employees": "Nhân viên",
-        "nav.customers": "Khách hàng",
-        "nav.reports": "Báo cáo",
-        "nav.profile": "Hồ sơ",
-        "nav.logout": "Đăng xuất",
-        "nav.collapse": "Thu gọn",
 
-        // KPI Cards
-        "kpi.revenue": "Tổng doanh thu",
-        "kpi.orders": "Tổng đơn hàng",
-        "kpi.products": "Tổng sản phẩm",
-        "kpi.customers": "Tổng khách hàng",
-
-        // Panels
-        "panel.salesOverview": "Tổng quan doanh số",
-        "panel.orders": "Đơn hàng",
-        "panel.recentOrders": "Đơn hàng gần đây",
-        "panel.topProducts": "Sản phẩm bán chạy",
-
-        // Table Headers
-        "table.customerName": "Tên khách hàng",
-        "table.total": "Tổng tiền",
-        "table.name": "Tên",
-        "table.category": "Danh mục",
-        "table.price": "Giá",
-        "table.stock": "Tồn kho",
-        "table.actions": "Thao tác",
-
-        // Roles
-        "role.admin": "Quản trị viên",
-        "role.manager": "Quản lý",
-        "role.cashier": "Thu ngân",
-
-        // Products
-        "product.sold45": "Đã bán 45 sản phẩm",
-        "product.sold38": "Đã bán 38 sản phẩm",
-        "product.sold67": "Đã bán 67 sản phẩm",
-        "product.sold120": "Đã bán 120 sản phẩm",
-        "product.case": "Ốp lưng iPhone",
-
-        // Buttons
-        "btn.add": "Thêm mới",
-        "btn.edit": "Chỉnh sửa",
-        "btn.delete": "Xóa",
-        "btn.save": "Lưu",
-        "btn.cancel": "Hủy",
-        "btn.search": "Tìm kiếm",
-        "btn.filter": "Lọc",
-        "btn.export": "Xuất",
-
-        // Common
-        "common.loading": "Đang tải...",
-        "common.noData": "Không có dữ liệu",
-        "common.error": "Đã xảy ra lỗi",
-        "common.success": "Thành công",
-
-        // Shifts & Activity
-        "page.shifts": "Điểm danh ca",
-        "nav.shifts": "Điểm danh",
-        "nav.activity": "Nhật ký",
-        "page.activity": "Nhật ký ra vào",
-        "sh.date": "Ngày",
-        "sh.staff": "Nhân viên",
-        "sh.allStaff": "Tất cả",
-        "sh.load": "Tải",
-        "sh.export": "Xuất CSV",
-        "sh.colStaff": "Nhân viên",
-        "sh.colIn": "Vào ca",
-        "sh.colOut": "Ra ca",
-        "sh.colStatus": "Trạng thái",
-        "sh.edit": "Sửa",
-        "sh.editTitle": "Sửa giờ điểm danh",
-        "sh.statusOpen": "Đang mở",
-        "sh.statusClosed": "Đã đóng",
-        "sh.statusAdj": "Đã chỉnh",
-        "act.searchPh": "Tìm theo chi tiết, tên hoặc email nhân viên...",
-        "act.search": "Tìm",
-        "act.colTime": "Thời gian",
-        "act.colUser": "Nhân viên",
-        "act.colDetails": "Chi tiết",
-        "role.staff": "Nhân viên",
-    },
-    en: {
-        // Navigation
-        "nav.dashboard": "Dashboard",
-        "nav.pos": "Point of Sale",
-        "nav.products": "Products",
-        "nav.categories": "Categories",
-        "nav.employees": "Employees",
-        "nav.customers": "Customers",
-        "nav.reports": "Reports",
-        "nav.profile": "Profile",
-        "nav.logout": "Logout",
-        "nav.collapse": "Collapse",
-
-        // KPI Cards
-        "kpi.revenue": "Total Revenue",
-        "kpi.orders": "Total Orders",
-        "kpi.products": "Total Products",
-        "kpi.customers": "Total Customers",
-
-        // Panels
-        "panel.salesOverview": "Sales Overview",
-        "panel.orders": "Orders",
-        "panel.recentOrders": "Recent Orders",
-        "panel.topProducts": "Top Products",
-
-        // Table Headers
-        "table.customerName": "Customer Name",
-        "table.total": "Total",
-        "table.name": "Name",
-        "table.category": "Category",
-        "table.price": "Price",
-        "table.stock": "Stock",
-        "table.actions": "Actions",
-
-        // Roles
-        "role.admin": "Administrator",
-        "role.manager": "Manager",
-        "role.cashier": "Cashier",
-
-        // Products
-        "product.sold45": "45 products sold",
-        "product.sold38": "38 products sold",
-        "product.sold67": "67 products sold",
-        "product.sold120": "120 products sold",
-        "product.case": "iPhone Case",
-
-        // Buttons
-        "btn.add": "Add New",
-        "btn.edit": "Edit",
-        "btn.delete": "Delete",
-        "btn.save": "Save",
-        "btn.cancel": "Cancel",
-        "btn.search": "Search",
-        "btn.filter": "Filter",
-        "btn.export": "Export",
-
-        // Common
-        "common.loading": "Loading...",
-        "common.noData": "No data available",
-        "common.error": "An error occurred",
-        "common.success": "Success",
-
-        // Shifts & Activity
-        "page.shifts": "Shift attendance",
-        "nav.shifts": "Shifts",
-        "nav.activity": "Activity",
-        "page.activity": "Activity Log",
-        "sh.date": "Date",
-        "sh.staff": "Staff",
-        "sh.allStaff": "All",
-        "sh.load": "Load",
-        "sh.export": "Export CSV",
-        "sh.colStaff": "Staff",
-        "sh.colIn": "Clock-in",
-        "sh.colOut": "Clock-out",
-        "sh.colStatus": "Status",
-        "sh.edit": "Edit",
-        "sh.editTitle": "Edit attendance times",
-        "sh.statusOpen": "Open",
-        "sh.statusClosed": "Closed",
-        "sh.statusAdj": "Adjusted",
-        "act.searchPh": "Search by details, name or email...",
-        "act.search": "Search",
-        "act.colTime": "Time",
-        "act.colUser": "User",
-        "act.colDetails": "Details",
-        "role.staff": "Staff",
-    }
-};
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -293,6 +117,7 @@ import { getProductImage } from './assets.js';
         return `
       <div class="ps-actions">
         <button class="ps-actBtn" data-act="view" title="View"><i class="bi bi-eye"></i></button>
+        <button class="ps-actBtn" data-act="restock" title="Nhập kho"><i class="bi bi-box-arrow-in-down"></i></button>
         <button class="ps-actBtn admin-only" data-act="edit" title="Edit"><i class="bi bi-pencil-square"></i></button>
         <button class="ps-actBtn danger admin-only" data-act="del" title="Delete"><i class="bi bi-trash3"></i></button>
       </div>
@@ -341,6 +166,7 @@ import { getProductImage } from './assets.js';
             tbody.querySelectorAll("tr").forEach(tr => {
                 const id = tr.dataset.id;
                 tr.querySelector('[data-act="view"]').addEventListener("click", () => openView(id));
+                tr.querySelector('[data-act="restock"]').addEventListener("click", () => openRestock(id));
                 tr.querySelector('[data-act="edit"]').addEventListener("click", () => openEdit(id));
                 tr.querySelector('[data-act="del"]').addEventListener("click", () => openDelete(id));
             });
@@ -526,6 +352,41 @@ import { getProductImage } from './assets.js';
         }
     }
 
+    async function openRestock(id) {
+        try {
+            const p = await API.products.getById(id);
+            if (!p) return;
+            
+            document.getElementById("restockProdId").value = p.id;
+            document.getElementById("restockQty").value = 1;
+            
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("restockModal")).show();
+        } catch (err) {
+            console.error('Restock open error:', err);
+            toast(err.message || t("toast.error"), "error");
+        }
+    }
+
+    async function confirmRestock() {
+        const id = document.getElementById("restockProdId").value;
+        const qty = parseInt(document.getElementById("restockQty").value, 10);
+        
+        if (!id || isNaN(qty) || qty <= 0) {
+            toast(t("toast.invalid") || "Số lượng không hợp lệ", "error");
+            return;
+        }
+
+        try {
+            await API.products.restock(id, qty);
+            toast(t("toast.saved") || "Nhập kho thành công");
+            render();
+            bootstrap.Modal.getInstance(document.getElementById("restockModal"))?.hide();
+        } catch (err) {
+            console.error('Restock save error:', err);
+            toast(err.message || t("toast.error"), "error");
+        }
+    }
+
     function openDelete(id) {
         pendingDeleteId = id;
         const el = document.getElementById("deleteText");
@@ -594,6 +455,7 @@ import { getProductImage } from './assets.js';
         document.getElementById("btnAdd")?.addEventListener("click", openAdd);
         document.getElementById("btnSave")?.addEventListener("click", save);
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
+        document.getElementById("btnConfirmRestock")?.addEventListener("click", confirmRestock);
         
         // Image preview
         document.getElementById("fImage")?.addEventListener("change", (e) => {

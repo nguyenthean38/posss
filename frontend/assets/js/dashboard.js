@@ -1,5 +1,6 @@
 import api from './api.js?v=6';
 import { requireAuth, getUser } from './auth.js';
+import { i18n } from './shared.js';
 
 (async () => {
     await requireAuth();
@@ -7,84 +8,6 @@ import { requireAuth, getUser } from './auth.js';
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
 
-    const i18n = {
-        vi: {
-            "page.dashboard": "Tổng quan",
-            "role.admin": "Quản trị viên",
-            "role.staff": "Nhân viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "kpi.revenue": "Tổng doanh thu",
-            "kpi.orders": "Tổng đơn hàng",
-            "kpi.products": "Tổng sản phẩm",
-            "kpi.customers": "Tổng khách hàng",
-            "panel.salesOverview": "Tổng quan doanh thu",
-            "panel.orders": "Đơn hàng",
-            "panel.recentOrders": "Đơn hàng gần đây",
-            "panel.topProducts": "Sản phẩm bán chạy",
-            "table.customerName": "Tên khách hàng",
-            "table.total": "Tổng tiền",
-            "product.sold": "Đã bán",
-            "product.items": "sản phẩm",
-            "ai.title": "PhoneStore xin chào!",
-            "ai.subtitle": "Doanh thu, đơn hàng, báo cáo · 1900 54 54 63",
-            "ai.emptyLead": "Gợi ý câu hỏi:",
-            "ai.hint1": "Doanh thu hôm nay thế nào?",
-            "ai.hint2": "Top sản phẩm bán chạy?",
-            "ai.hint3": "Tổng đơn tuần này?",
-            "ai.placeholder": "Ví dụ: Doanh thu hôm nay thế nào?",
-            "ai.send": "Gửi",
-            "ai.inputLabel": "Nhập câu hỏi",
-            "ai.fabTitle": "Mở trợ lý AI",
-            "ai.close": "Đóng",
-        },
-        en: {
-            "page.dashboard": "Dashboard",
-            "role.admin": "Administrator",
-            "role.staff": "Staff",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "kpi.revenue": "Total Revenue",
-            "kpi.orders": "Total Orders",
-            "kpi.products": "Total Products",
-            "kpi.customers": "Total Customers",
-            "panel.salesOverview": "Sales Overview",
-            "panel.orders": "Orders",
-            "panel.recentOrders": "Recent Orders",
-            "panel.topProducts": "Top Products",
-            "table.customerName": "Customer Name",
-            "table.total": "Total",
-            "product.sold": "sold",
-            "product.items": "items",
-            "ai.title": "PhoneStore says hi!",
-            "ai.subtitle": "Revenue, orders, reports · 1900 54 54 63",
-            "ai.emptyLead": "Suggested questions:",
-            "ai.hint1": "How is today's revenue?",
-            "ai.hint2": "Top selling products?",
-            "ai.hint3": "Total orders this week?",
-            "ai.placeholder": "e.g. How is today's revenue?",
-            "ai.send": "Send",
-            "ai.inputLabel": "Your question",
-            "ai.fabTitle": "Open AI assistant",
-            "ai.close": "Close",
-        }
-    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
