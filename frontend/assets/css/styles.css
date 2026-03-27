@@ -999,6 +999,10 @@ body[data-theme="dark"] .ps-panel__body {
     background: transparent !important;
 }
 
+.ps-shift-row {
+    margin-bottom: 24px !important;
+}
+
 /* =========================
    CUSTOM SELECT (POPOVER)
 ========================= */
@@ -1011,10 +1015,6 @@ body[data-theme="dark"] .ps-panel__body {
     justify-content: space-between;
     align-items: center;
     text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-right: 16px;
     background: var(--surface);
     color: var(--text);
     border: 1px solid var(--border);
@@ -1024,6 +1024,15 @@ body[data-theme="dark"] .ps-panel__body {
     font-size: 15px;
     font-weight: 500;
     transition: all .2s ease;
+    overflow: hidden; /* Added */
+}
+.ps-custom-select .dropdown-toggle span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 8px;
+    min-width: 0;
 }
 .ps-custom-select .dropdown-toggle:focus {
     outline: none;
@@ -1036,15 +1045,17 @@ body[data-theme="dark"] .ps-panel__body {
 .ps-custom-select .dropdown-menu {
     border-radius: 12px;
     padding: 8px;
-    background: var(--surface);
+    background: var(--bg1) !important; /* Force use theme background */
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow) !important;
     margin-top: 4px !important;
     z-index: 1050;
     max-height: 280px;
     overflow-y: auto;
+    min-width: 100%;
+    max-width: 350px;
 }
 /* Scrollbar for dropdown */
 .ps-custom-select .dropdown-menu::-webkit-scrollbar {
@@ -1059,28 +1070,41 @@ body[data-theme="dark"] .ps-panel__body {
     padding: 10px 14px;
     font-weight: 600;
     font-size: 14.5px;
-    color: var(--text);
+    color: var(--text) !important;
     transition: all 0.2s ease;
     margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .ps-custom-select .dropdown-item:last-child {
     margin-bottom: 0;
 }
 .ps-custom-select .dropdown-item:hover, 
 .ps-custom-select .dropdown-item:focus {
-    background: var(--surface2);
-    color: var(--text);
+    background: var(--surface2) !important;
+    color: var(--text) !important;
 }
 .ps-custom-select .dropdown-item.active, 
 .ps-custom-select .dropdown-item:active {
-    background: rgba(14, 165, 233, 0.15) !important;
-    color: var(--primary) !important;
+    background: var(--primary) !important;
+    color: #fff !important;
 }
 .ps-custom-select .dropdown-item.disabled {
     color: var(--muted);
     pointer-events: none;
     background: transparent;
     font-weight: 500;
+}
+
+.ps-help-text {
+    font-size: 13.5px;
+    color: var(--muted);
+    filter: brightness(1.2); /* Boost visibility slightly in dark mode */
+}
+body[data-theme="light"] .ps-help-text {
+    filter: none;
+    color: var(--muted);
 }
 
 body[data-theme="dark"] .ps-table {
