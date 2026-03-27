@@ -95,23 +95,23 @@
             </header>
 
             <section class="ps-content">
-                <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+                <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
                     <div>
-                        <label class="form-label small mb-0 opacity-75" for="dateInput" data-i18n="sh.date">Ngày</label>
-                        <input type="date" id="dateInput" class="form-control form-control-sm" style="width:180px" />
+                        <label class="ps-label mb-1" for="dateInput" data-i18n="sh.date">Ngày</label>
+                        <input type="date" id="dateInput" class="ps-input" style="width:180px; height: 42px;" />
                     </div>
                     <div>
-                        <label class="form-label small mb-0 opacity-75" for="staffFilter" data-i18n="sh.staff">Nhân viên</label>
-                        <select id="staffFilter" class="form-select form-select-sm" style="min-width:220px">
+                        <label class="ps-label mb-1" for="staffFilter" data-i18n="sh.staff">Nhân viên</label>
+                        <select id="staffFilter" class="ps-input" style="min-width:220px; height: 42px;">
                             <option value="" data-i18n="sh.allStaff">Tất cả</option>
                         </select>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnExport"><i class="bi bi-download"></i> <span data-i18n="sh.export">Xuất CSV</span></button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnLoad"><i class="bi bi-arrow-repeat"></i> <span data-i18n="sh.load">Tải</span></button>
+                    <button type="button" class="ps-btn-secondary" id="btnExport" style="height: 42px; padding: 0 16px;"><i class="bi bi-download"></i> <span data-i18n="sh.export">Xuất CSV</span></button>
+                    <button type="button" class="ps-btn-primary" id="btnLoad" style="height: 42px; padding: 0 16px;"><i class="bi bi-arrow-repeat"></i> <span data-i18n="sh.load">Tải</span></button>
                 </div>
                 <div class="ps-card p-0 overflow-hidden">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0 align-middle">
+                        <table class="table ps-table mb-0 align-middle">
                             <thead>
                                 <tr>
                                     <th data-i18n="sh.colStaff">Nhân viên</th>
@@ -131,18 +131,29 @@
         <div class="ps-overlay" id="overlay"></div>
     </div>
 
-    <div class="modal fade" id="editModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content" style="background:var(--panel);color:var(--text)">
-<div class="modal-header border-secondary border-opacity-25"><h5 class="modal-title" data-i18n="sh.editTitle">Sửa giờ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-<div class="modal-body">
-<input type="hidden" id="editId" />
-<input type="datetime-local" id="editIn" class="form-control form-control-sm mb-2" />
-<input type="datetime-local" id="editOut" class="form-control form-control-sm mb-2" />
-<textarea id="editReason" class="form-control form-control-sm" rows="2" placeholder="Lý do"></textarea>
-</div>
-<div class="modal-footer border-secondary border-opacity-25">
-<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
-<button type="button" class="btn btn-primary btn-sm" id="btnSaveEdit">Lưu</button>
-</div></div></div></div><div class="ps-toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ps-modal">
+                <div class="ps-modal__head">
+                    <div class="ps-modal__title" data-i18n="sh.editTitle">Sửa giờ</div>
+                    <button class="ps-icon-btn" type="button" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="ps-modal__body">
+                    <input type="hidden" id="editId" />
+                    <label class="ps-label">Vào ca</label>
+                    <input type="datetime-local" id="editIn" class="ps-input mb-3" />
+                    <label class="ps-label">Ra ca</label>
+                    <input type="datetime-local" id="editOut" class="ps-input mb-3" />
+                    <label class="ps-label">Lý do điều chỉnh</label>
+                    <textarea id="editReason" class="ps-input" rows="2" placeholder="Lý do"></textarea>
+                </div>
+                <div class="ps-modal__footer d-flex gap-2">
+                    <button type="button" class="ps-btn-secondary w-100" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="ps-btn-primary w-100" id="btnSaveEdit">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div><div class="ps-toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
         <i class="bi bi-check2-circle" id="toastIcon"></i>
         <div id="toastText">OK</div>
     </div>

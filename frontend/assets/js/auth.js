@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Authentication Module - PHP Session Based
  * Backend dùng PHP Session, không dùng JWT
  * Cookie PHPSESSID được browser tự động quản lý
@@ -107,9 +107,13 @@ export async function requireAuth(redirectTo = "login.html") {
           initials = nameStr.substring(0, 2).toUpperCase();
       }
       const roleStr = u.role === 'admin' ? "Administrator" : "Nhân viên";
+      const roleKey = u.role === 'admin' ? "role.admin" : "role.staff";
       
       document.querySelectorAll('.ps-user__name').forEach(el => el.textContent = nameStr);
-      document.querySelectorAll('.ps-user__role').forEach(el => el.textContent = roleStr);
+      document.querySelectorAll('.ps-user__role').forEach(el => {
+          el.setAttribute('data-i18n', roleKey);
+          el.textContent = roleStr;
+      });
       
       // Update avatar - use image if available, otherwise use initials
       document.querySelectorAll('.ps-user__avatar').forEach(el => {
