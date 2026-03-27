@@ -1,0 +1,13 @@
+<?php
+/**
+ * Copy to openrouter.local.php — không commit.
+ * Hoặc dùng biến môi trường OPENROUTER_* trong .env
+ *
+ * Model slug: https://openrouter.ai/models
+ */
+return [
+    'api_key' => 'sk-or-v1-...',
+    'model' => 'google/gemini-2.0-flash-001',
+    'app_url' => 'http://localhost:8080',
+    'app_name' => 'PhoneStore POS',
+];

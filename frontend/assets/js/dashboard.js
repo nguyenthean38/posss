@@ -34,6 +34,17 @@ import { requireAuth, getUser } from './auth.js';
             "table.total": "Tổng tiền",
             "product.sold": "Đã bán",
             "product.items": "sản phẩm",
+            "ai.title": "PhoneStore xin chào!",
+            "ai.subtitle": "Doanh thu, đơn hàng, báo cáo · 1900 54 54 63",
+            "ai.emptyLead": "Gợi ý câu hỏi:",
+            "ai.hint1": "Doanh thu hôm nay thế nào?",
+            "ai.hint2": "Top sản phẩm bán chạy?",
+            "ai.hint3": "Tổng đơn tuần này?",
+            "ai.placeholder": "Ví dụ: Doanh thu hôm nay thế nào?",
+            "ai.send": "Gửi",
+            "ai.inputLabel": "Nhập câu hỏi",
+            "ai.fabTitle": "Mở trợ lý AI",
+            "ai.close": "Đóng",
         },
         en: {
             "page.dashboard": "Dashboard",
@@ -61,6 +72,17 @@ import { requireAuth, getUser } from './auth.js';
             "table.total": "Total",
             "product.sold": "sold",
             "product.items": "items",
+            "ai.title": "PhoneStore says hi!",
+            "ai.subtitle": "Revenue, orders, reports · 1900 54 54 63",
+            "ai.emptyLead": "Suggested questions:",
+            "ai.hint1": "How is today's revenue?",
+            "ai.hint2": "Top selling products?",
+            "ai.hint3": "Total orders this week?",
+            "ai.placeholder": "e.g. How is today's revenue?",
+            "ai.send": "Send",
+            "ai.inputLabel": "Your question",
+            "ai.fabTitle": "Open AI assistant",
+            "ai.close": "Close",
         }
     };
 
@@ -74,6 +96,18 @@ import { requireAuth, getUser } from './auth.js';
         document.querySelectorAll("[data-i18n]").forEach((el) => {
             const key = el.getAttribute("data-i18n");
             if (dict[key]) el.textContent = dict[key];
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+            const key = el.getAttribute("data-i18n-placeholder");
+            if (dict[key]) el.setAttribute("placeholder", dict[key]);
+        });
+        document.querySelectorAll("[data-i18n-tooltip]").forEach((el) => {
+            const key = el.getAttribute("data-i18n-tooltip");
+            if (dict[key]) el.setAttribute("title", dict[key]);
+        });
+        document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
+            const key = el.getAttribute("data-i18n-aria-label");
+            if (dict[key]) el.setAttribute("aria-label", dict[key]);
         });
         document.querySelectorAll(".ps-nav__item[data-tooltip]").forEach((a) => {
             const span = a.querySelector("span[data-i18n]");
@@ -385,6 +419,83 @@ import { requireAuth, getUser } from './auth.js';
         }
     }
 
+    function wireAiChat() {
+        const fab = document.getElementById('btnAiFab');
+        const panel = document.getElementById('aiPanel');
+        const backdrop = document.getElementById('aiPanelBackdrop');
+        const closeBtn = document.getElementById('aiPanelClose');
+        const sendBtn = document.getElementById('aiSend');
+        const input = document.getElementById('aiInput');
+        const messages = document.getElementById('aiMessages');
+        if (!fab || !panel || !messages) return;
+
+        function removeEmptyState() {
+            const empty = document.getElementById('aiEmptyState');
+            if (empty && empty.parentNode) empty.remove();
+        }
+
+        function openPanel() {
+            panel.hidden = false;
+            if (backdrop) backdrop.hidden = false;
+            input?.focus();
+        }
+        function closePanel() {
+            panel.hidden = true;
+            if (backdrop) backdrop.hidden = true;
+        }
+
+        function isPanelOpen() {
+            return panel && !panel.hidden;
+        }
+
+        fab.addEventListener('click', openPanel);
+        closeBtn?.addEventListener('click', closePanel);
+        backdrop?.addEventListener('click', closePanel);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isPanelOpen()) {
+                e.preventDefault();
+                closePanel();
+            }
+        });
+
+        function appendBubble(role, text) {
+            removeEmptyState();
+            const div = document.createElement('div');
+            div.className = role === 'user' ? 'ps-ai-bubble ps-ai-bubble--user' : 'ps-ai-bubble ps-ai-bubble--bot';
+            div.textContent = text;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        async function send() {
+            const text = (input?.value || '').trim();
+            if (!text) return;
+            const spinner = document.getElementById('aiSendSpinner');
+            sendBtn.disabled = true;
+            spinner?.classList.remove('d-none');
+            appendBubble('user', text);
+            input.value = '';
+            try {
+                const res = await api.aiChat(text);
+                appendBubble('bot', res.reply || '(Không có nội dung)');
+            } catch (e) {
+                appendBubble('bot', 'Lỗi: ' + (e.message || 'Không gửi được'));
+            } finally {
+                sendBtn.disabled = false;
+                spinner?.classList.add('d-none');
+            }
+        }
+
+        sendBtn?.addEventListener('click', send);
+        input?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+            }
+        });
+    }
+
     async function init() {
         const savedTheme = localStorage.getItem(KEY_THEME) || "dark";
         const savedLang = localStorage.getItem(KEY_LANG) || "vi";
@@ -395,6 +506,7 @@ import { requireAuth, getUser } from './auth.js';
         loadDashboard();
         wireShiftButtons();
         refreshShiftPanel();
+        wireAiChat();
     }
 
     await init();

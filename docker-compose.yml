@@ -43,6 +43,11 @@ services:
       DB_NAME: phonestore_pos
       DB_USER: phonestore
       DB_PASSWORD: phonestore123
+      # Trợ lý AI (OpenRouter) — https://openrouter.ai/keys
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-google/gemini-2.0-flash-001}
+      OPENROUTER_APP_URL: ${OPENROUTER_APP_URL:-http://localhost:8080}
+      OPENROUTER_APP_NAME: ${OPENROUTER_APP_NAME:-PhoneStore POS}
     networks:
       - phonestore_network
 

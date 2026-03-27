@@ -388,6 +388,15 @@ class ApiClient {
         return this.request(`/api/reports/chart${query ? '?' + query : ''}`);
     }
 
+    // ==================== AI (OpenRouter) ====================
+
+    async aiChat(message) {
+        return this.request('/api/ai/chat', {
+            method: 'POST',
+            body: JSON.stringify({ message })
+        });
+    }
+
     // ==================== PROFILE ====================
 
     async getProfile() {

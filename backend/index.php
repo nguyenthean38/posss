@@ -62,6 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Gá»i cÃ¡c file Config & Core
+require_once __DIR__ . '/config/load_env.php';
+EnvLoader::loadFromProjectRoot();
+
 require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/core/Response.php';
 require_once __DIR__ . '/core/Mailer.php';
@@ -93,6 +96,7 @@ require_once __DIR__ . '/controllers/ProfileController.php';
 require_once __DIR__ . '/controllers/LogController.php';
 require_once __DIR__ . '/models/ShiftAttendance.php';
 require_once __DIR__ . '/controllers/ShiftController.php';
+require_once __DIR__ . '/controllers/AiChatController.php';
 
 // Khá»Ÿi táº¡o DB connection
 // Khá»Ÿi táº¡o DB connection
@@ -130,6 +134,7 @@ $reportCtrl = new ReportController($db);
 $profileCtrl = new ProfileController($db);
 $logCtrl = new LogController($db);
 $shiftCtrl = new ShiftController($db);
+$aiChatCtrl = new AiChatController($db);
 
 // ================ ÄIá»€U HÆ¯á»šNG ROUTES ================
 
@@ -306,6 +311,9 @@ elseif ($uri === '/api/reports/summary' && $method === 'GET') { $reportCtrl->get
 elseif ($uri === '/api/reports/orders' && $method === 'GET') { $reportCtrl->getOrdersByTimeline(); }
 elseif ($uri === '/api/reports/profit' && $method === 'GET') { $reportCtrl->getProfitAnalysis(); }
 elseif ($uri === '/api/reports/chart' && $method === 'GET') { $reportCtrl->getSalesChartData(); }
+
+// Trá»£ lÃ½ AI (OpenRouter) â€” Ä‘Ã£ Ä‘Äƒng nháº­p
+elseif ($uri === '/api/ai/chat' && $method === 'POST') { $aiChatCtrl->chat($data ?? []); }
 
 // ====================================================
 // TrÆ°á»ng há»£p Ä‘Æ°á»ng dáº«n khÃ´ng há»£p lá»‡

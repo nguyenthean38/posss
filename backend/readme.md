@@ -40,5 +40,15 @@ Tôi đã đọc rất kĩ Sơ đồ Cơ sở Dữ Lệu ERD (`erd.png`), nên t
 > Tài khoản: `admin@gmail.com`
 > Mật khẩu đăng nhập: `admin` -> Mã Hash tương ứng đã được đặt đúng trong database mẫu!
 
+### Trợ lý AI (OpenRouter)
+
+Chat trên Dashboard gọi `POST /api/ai/chat`. Cấu hình **không dùng Composer**:
+
+- Biến môi trường: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (slug từ [openrouter.ai/models](https://openrouter.ai/models)), tùy chọn `OPENROUTER_APP_URL`, `OPENROUTER_APP_NAME`.
+- Hoặc `backend/config/openrouter.local.php` (copy từ `openrouter.local.php.example`).
+- File `.env` ở gốc project hoặc `backend/.env` được nạp qua `EnvLoader` trong `index.php`.
+
+Tạo key: [openrouter.ai/keys](https://openrouter.ai/keys).
+
 ### 4. Yêu cầu hỗ trợ thêm CSDL?
 Nếu bạn muốn bổ sung hệ thống POS (Giao dịch), tôi có thể tạo thêm các bảng từ ERD: `categories`, `products`, `customers`, `orders` và `order_details` (Lưu ý: `order_details` có column đính giá vốn lúc bán). Hãy xác nhận để tôi viết SQL tiếp nhé!
