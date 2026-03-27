@@ -252,6 +252,21 @@ export const i18n = {
         "modal.products": "Sản phẩm",
 
         "role.staff": "Nhân viên",
+
+        // AI Chat
+        "product.sold": "Đã bán",
+        "product.items": "sản phẩm",
+        "ai.title": "PhoneStore xin chào!",
+        "ai.subtitle": "Doanh thu, đơn hàng, báo cáo · 1900 54 54 63",
+        "ai.emptyLead": "Gợi ý câu hỏi:",
+        "ai.hint1": "Doanh thu hôm nay thế nào?",
+        "ai.hint2": "Top sản phẩm bán chạy?",
+        "ai.hint3": "Tổng đơn tuần này?",
+        "ai.placeholder": "Ví dụ: Doanh thu hôm nay thế nào?",
+        "ai.send": "Gửi",
+        "ai.inputLabel": "Nhập câu hỏi",
+        "ai.fabTitle": "Mở trợ lý AI",
+        "ai.close": "Đóng",
     },
     en: {
         // Navigation
@@ -499,6 +514,21 @@ export const i18n = {
         "modal.products": "Products",
 
         "role.staff": "Staff",
+
+        // AI Chat
+        "product.sold": "sold",
+        "product.items": "items",
+        "ai.title": "PhoneStore says hi!",
+        "ai.subtitle": "Revenue, orders, reports · 1900 54 54 63",
+        "ai.emptyLead": "Suggested questions:",
+        "ai.hint1": "How is today's revenue?",
+        "ai.hint2": "Top selling products?",
+        "ai.hint3": "Total orders this week?",
+        "ai.placeholder": "e.g. How is today's revenue?",
+        "ai.send": "Send",
+        "ai.inputLabel": "Your question",
+        "ai.fabTitle": "Open AI assistant",
+        "ai.close": "Close",
     }
 };
 
@@ -613,4 +643,143 @@ export function initSidebar() {
             document.querySelector(".ps-app")?.classList.toggle("sidebar-collapsed");
         };
     }
+}
+
+// ===== CUSTOM SELECT POPOVER =====
+export function initCustomSelects() {
+    function enhanceSelect(select) {
+        if (select.dataset.psSelectInit) return;
+        
+        // Hide the original select natively
+        select.style.display = 'none';
+        select.dataset.psSelectInit = "1";
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'dropdown ps-custom-select w-100';
+        
+        const trigger = document.createElement('button');
+        // Copy margins or specific classes if needed, but usually wrapper takes full width
+        trigger.className = 'ps-input dropdown-toggle d-flex justify-content-between align-items-center w-100';
+        trigger.type = 'button';
+        trigger.setAttribute('data-bs-toggle', 'dropdown');
+        trigger.setAttribute('aria-expanded', 'false');
+        
+        // Inherit styles
+        if (select.style.width) wrapper.style.width = select.style.width;
+        if (select.style.minWidth) wrapper.style.minWidth = select.style.minWidth;
+        
+        const textSpan = document.createElement('span');
+        textSpan.className = 'text-truncate';
+        
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-chevron-down ms-2 flex-shrink-0';
+        icon.style.color = 'var(--muted)';
+        if (getTheme() === 'dark') icon.style.opacity = '0.7';
+        
+        trigger.appendChild(textSpan);
+        trigger.appendChild(icon);
+        
+        const menu = document.createElement('ul');
+        menu.className = 'dropdown-menu w-100 shadow-sm border-0';
+        
+        function updateUI() {
+            const opt = select.options[select.selectedIndex];
+            if (opt) {
+                textSpan.textContent = opt.text;
+                if (!opt.value) {
+                    textSpan.style.color = 'var(--muted)';
+                } else {
+                    textSpan.style.color = 'inherit';
+                }
+            } else {
+                textSpan.textContent = "";
+            }
+            
+            menu.innerHTML = '';
+            Array.from(select.options).forEach((o, index) => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.className = 'dropdown-item ps-dropdown-item';
+                a.href = '#';
+                a.textContent = o.text;
+                
+                if (o.disabled) {
+                    a.classList.add('disabled');
+                    if (!o.value) {
+                        a.style.fontWeight = '700';
+                        a.style.fontSize = '12px';
+                        a.style.textTransform = 'uppercase';
+                        a.style.color = 'var(--muted)';
+                        a.style.padding = '4px 14px';
+                        a.style.background = 'transparent';
+                    }
+                } else {
+                    if (select.selectedIndex === index) {
+                        a.classList.add('active');
+                    }
+                    a.onclick = (e) => {
+                        e.preventDefault();
+                        select.selectedIndex = index;
+                        // trigger change
+                        select.dispatchEvent(new Event('change'));
+                        updateUI();
+                    };
+                }
+                
+                li.appendChild(a);
+                menu.appendChild(li);
+            });
+        }
+        
+        // Bind UI update to native change
+        select.addEventListener('change', updateUI);
+        
+        // Watch for dynamically added options (e.g loadCategories)
+        const observer = new MutationObserver(updateUI);
+        observer.observe(select, { childList: true, subtree: true });
+        
+        updateUI();
+        
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(menu);
+        
+        select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+        // Optional value setter interceptor so programatic setting updates UI too
+        try {
+            const originalSetter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set;
+            Object.defineProperty(select, "value", {
+                set: function(val) {
+                    originalSetter.call(this, val);
+                    updateUI(); // auto update
+                },
+                get: function() {
+                    return Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").get.call(this);
+                }
+            });
+        } catch(e) {}
+    }
+
+    document.querySelectorAll('select.ps-input').forEach(enhanceSelect);
+
+    const bodyObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) { // Element Node
+                    if (node.tagName === 'SELECT' && node.classList.contains('ps-input')) {
+                        enhanceSelect(node);
+                    }
+                    node.querySelectorAll?.('select.ps-input').forEach(enhanceSelect);
+                }
+            });
+        });
+    });
+    bodyObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+// Auto Init
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomSelects);
+} else {
+    initCustomSelects();
 }
