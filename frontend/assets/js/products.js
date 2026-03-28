@@ -3,6 +3,7 @@ import API from './api.js?v=7';
 import { requireAuth } from './auth.js';
 import { getProductImage } from './assets.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 (() => {
     requireAuth();
@@ -14,130 +15,6 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     const toastEl = document.getElementById("toast");
     const toastText = document.getElementById("toastText");
 
-    const i18n = {
-        vi: {
-            "page.products": "Sản phẩm",
-            "role.admin": "Quản trị viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "prod.searchPh": "Tìm sản phẩm theo tên hoặc mã vạch...",
-            "prod.add": "Thêm sản phẩm",
-            "prod.colName": "Tên sản phẩm",
-            "prod.colBarcode": "Mã vạch",
-            "prod.colCategory": "Danh mục",
-            "prod.colCost": "Giá nhập",
-            "prod.colPrice": "Giá bán",
-            "prod.colStock": "Tồn kho",
-            "prod.colActions": "Thao tác",
-            "prod.modalAdd": "Thêm sản phẩm",
-            "prod.modalEdit": "Sửa sản phẩm",
-            "prod.modalView": "Chi tiết sản phẩm",
-            "prod.fName": "Tên sản phẩm",
-            "prod.fBarcode": "Mã vạch",
-            "prod.fType": "Loại",
-            "prod.fCost": "Giá nhập",
-            "prod.fPrice": "Giá bán",
-            "prod.fCategory": "Danh mục",
-            "prod.fStock": "Tồn kho",
-            "type.phone": "Điện thoại",
-            "type.earbuds": "Tai nghe",
-            "type.case": "Ốp lưng",
-            "type.charger": "Sạc",
-            "type.cable": "Cáp",
-            "type.accessory": "Phụ kiện",
-            "common.cancel": "Hủy",
-            "common.save": "Lưu",
-            "common.close": "Đóng",
-            "toast.saved": "Đã lưu sản phẩm",
-            "toast.deleted": "Đã xóa sản phẩm",
-            "toast.invalid": "Vui lòng nhập đủ thông tin",
-            "confirm.delete": "Xóa sản phẩm này?",
-            "view.name": "Tên",
-            "view.barcode": "Mã vạch",
-            "view.type": "Loại",
-            "view.category": "Danh mục",
-            "view.cost": "Giá nhập",
-            "view.price": "Giá bán",
-            "view.stock": "Tồn kho",
-            "prod.modalDelete": "Xóa sản phẩm",
-            "common.delete": "Xóa",
-            "confirm.deleteText": "Bạn có chắc muốn xóa sản phẩm này?",
-            "view.profit": "Lợi nhuận",
-            "view.createdAt": "Ngày tạo",
-            "toast.error": "Có lỗi xảy ra",
-            "toast.fileTooBig": "Ảnh không được vượt quá 2MB",
-            "toast.fileType": "Chỉ chấp nhận ảnh JPG, PNG, GIF, WEBP",
-        },
-        en: {
-            "prod.modalDelete": "Delete product",
-            "common.delete": "Delete",
-            "confirm.deleteText": "Are you sure you want to delete this product?",
-            "view.profit": "Profit",
-            "page.products": "Products",
-            "role.admin": "Administrator",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "prod.searchPh": "Search by name or barcode...",
-            "prod.add": "Add product",
-            "prod.colName": "Product name",
-            "prod.colBarcode": "Barcode",
-            "prod.colCategory": "Category",
-            "prod.colCost": "Cost",
-            "prod.colPrice": "Price",
-            "prod.colStock": "Stock",
-            "prod.colActions": "Actions",
-            "prod.modalAdd": "Add product",
-            "prod.modalEdit": "Edit product",
-            "prod.modalView": "Product details",
-            "prod.fName": "Product name",
-            "prod.fBarcode": "Barcode",
-            "prod.fType": "Type",
-            "prod.fCost": "Cost",
-            "prod.fPrice": "Price",
-            "prod.fCategory": "Category",
-            "prod.fStock": "Stock",
-            "type.phone": "Phone",
-            "type.earbuds": "Earbuds",
-            "type.case": "Case",
-            "type.charger": "Charger",
-            "type.cable": "Cable",
-            "type.accessory": "Accessory",
-            "common.cancel": "Cancel",
-            "common.save": "Save",
-            "common.close": "Close",
-            "toast.saved": "Product saved",
-            "toast.deleted": "Product deleted",
-            "toast.invalid": "Please fill required fields",
-            "confirm.delete": "Delete this product?",
-            "view.name": "Name",
-            "view.barcode": "Barcode",
-            "view.type": "Type",
-            "view.category": "Category",
-            "view.cost": "Cost",
-            "view.price": "Price",
-            "view.stock": "Stock",
-            "view.createdAt": "Created At",
-            "toast.error": "An error occurred",
-            "toast.fileTooBig": "Image must be at most 2MB",
-            "toast.fileType": "Only JPG, PNG, GIF, WEBP images are allowed",
-        }
-    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -240,6 +117,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
         return `
       <div class="ps-actions">
         <button class="ps-actBtn" data-act="view" title="View"><i class="bi bi-eye"></i></button>
+        <button class="ps-actBtn" data-act="restock" title="Nhập kho"><i class="bi bi-box-arrow-in-down"></i></button>
         <button class="ps-actBtn admin-only" data-act="edit" title="Edit"><i class="bi bi-pencil-square"></i></button>
         <button class="ps-actBtn danger admin-only" data-act="del" title="Delete"><i class="bi bi-trash3"></i></button>
       </div>
@@ -288,6 +166,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
             tbody.querySelectorAll("tr").forEach(tr => {
                 const id = tr.dataset.id;
                 tr.querySelector('[data-act="view"]').addEventListener("click", () => openView(id));
+                tr.querySelector('[data-act="restock"]').addEventListener("click", () => openRestock(id));
                 tr.querySelector('[data-act="edit"]').addEventListener("click", () => openEdit(id));
                 tr.querySelector('[data-act="del"]').addEventListener("click", () => openDelete(id));
             });
@@ -473,6 +352,41 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
         }
     }
 
+    async function openRestock(id) {
+        try {
+            const p = await API.products.getById(id);
+            if (!p) return;
+            
+            document.getElementById("restockProdId").value = p.id;
+            document.getElementById("restockQty").value = 1;
+            
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("restockModal")).show();
+        } catch (err) {
+            console.error('Restock open error:', err);
+            toast(err.message || t("toast.error"), "error");
+        }
+    }
+
+    async function confirmRestock() {
+        const id = document.getElementById("restockProdId").value;
+        const qty = parseInt(document.getElementById("restockQty").value, 10);
+        
+        if (!id || isNaN(qty) || qty <= 0) {
+            toast(t("toast.invalid") || "Số lượng không hợp lệ", "error");
+            return;
+        }
+
+        try {
+            await API.products.restock(id, qty);
+            toast(t("toast.saved") || "Nhập kho thành công");
+            render();
+            bootstrap.Modal.getInstance(document.getElementById("restockModal"))?.hide();
+        } catch (err) {
+            console.error('Restock save error:', err);
+            toast(err.message || t("toast.error"), "error");
+        }
+    }
+
     function openDelete(id) {
         pendingDeleteId = id;
         const el = document.getElementById("deleteText");
@@ -541,6 +455,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
         document.getElementById("btnAdd")?.addEventListener("click", openAdd);
         document.getElementById("btnSave")?.addEventListener("click", save);
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
+        document.getElementById("btnConfirmRestock")?.addEventListener("click", confirmRestock);
         
         // Image preview
         document.getElementById("fImage")?.addEventListener("change", (e) => {

@@ -67,6 +67,103 @@ export const i18n = {
         "common.noData": "Không có dữ liệu",
         "common.error": "Đã xảy ra lỗi",
         "common.success": "Thành công",
+        "common.cancel": "Hủy",
+        "common.save": "Lưu",
+        "common.delete": "Xóa",
+
+        // Pages
+        "page.products": "Sản phẩm",
+        "page.categories": "Danh mục",
+
+        // Products page
+        "prod.searchPh": "Tìm sản phẩm theo tên hoặc mã vạch...",
+        "prod.add": "Thêm sản phẩm",
+        "prod.modalAdd": "Thêm sản phẩm",
+        "prod.modalEdit": "Sửa sản phẩm",
+        "prod.modalView": "Xem chi tiết",
+        "prod.modalDelete": "Xóa sản phẩm",
+        "prod.colName": "Tên sản phẩm",
+        "prod.colBarcode": "Mã vạch",
+        "prod.colCategory": "Danh mục",
+        "prod.colCost": "Giá nhập",
+        "prod.colPrice": "Giá bán",
+        "prod.colStock": "Tồn kho",
+        "prod.colActions": "Thao tác",
+        "prod.fName": "Tên sản phẩm",
+        "prod.fBarcode": "Mã vạch",
+        "prod.fType": "Loại",
+        "prod.fCost": "Giá nhập",
+        "prod.fPrice": "Giá bán",
+        "prod.fCategory": "Danh mục",
+        "prod.fStock": "Tồn kho",
+
+        // Product types
+        "type.phone": "Điện thoại",
+        "type.earbuds": "Tai nghe",
+        "type.case": "Ốp lưng",
+        "type.charger": "Sạc",
+        "type.cable": "Cáp",
+        "type.accessory": "Phụ kiện",
+
+        // View modal
+        "view.category": "Danh mục",
+        "view.type": "Loại",
+        "view.cost": "Giá nhập",
+        "view.price": "Giá bán",
+        "view.stock": "Tồn kho",
+        "view.createdAt": "Ngày tạo",
+        "view.profit": "Lợi nhuận",
+        "view.name": "Tên",
+        "view.desc": "Mô tả",
+        "view.icon": "Icon",
+        "view.count": "Số sản phẩm",
+        "view.createdBy": "Người tạo",
+
+        // Categories page
+        "cat.searchPh": "Tìm danh mục...",
+        "cat.add": "Thêm",
+        "cat.modalAdd": "Thêm danh mục",
+        "cat.modalEdit": "Sửa danh mục",
+        "cat.modalView": "Xem chi tiết",
+        "cat.modalDelete": "Xóa danh mục",
+        "cat.deleteHint": "Nếu danh mục đang có sản phẩm, hệ thống sẽ chuyển sản phẩm sang 'Khác'.",
+        "cat.fName": "Tên danh mục",
+        "cat.fDesc": "Mô tả",
+        "cat.fIcon": "Loại icon",
+        "cat.items": "sản phẩm",
+        "icon.phone": "Điện thoại",
+        "icon.accessory": "Phụ kiện",
+        "icon.earbuds": "Tai nghe",
+        "icon.charger": "Sạc & Pin",
+        "icon.watch": "Đồng hồ",
+        "icon.other": "Khác",
+
+        // Toast / Confirm
+        "toast.saved": "Đã lưu thành công",
+        "toast.deleted": "Đã xóa thành công",
+        "toast.invalid": "Dữ liệu không hợp lệ",
+        "toast.error": "Có lỗi xảy ra",
+        "toast.err": "Có lỗi xảy ra",
+        "toast.ok": "Thành công",
+        "toast.fileTooBig": "Ảnh quá lớn (tối đa 2MB)",
+        "toast.fileType": "Định dạng ảnh không hợp lệ",
+        "toast.added": "Đã thêm vào giỏ",
+        "toast.empty": "Giỏ hàng trống",
+        "toast.checkout": "Thanh toán thành công",
+        "toast.reportFail": "Lỗi tải báo cáo",
+        "toast.success": "Thành công",
+        "toast.fail": "Sai tên đăng nhập hoặc mật khẩu",
+        "confirm.deleteText": "Bạn có chắc muốn xóa?",
+
+        // Profile
+        "info.joined": "Ngày tham gia",
+        "toast.pwdMismatch": "Mật khẩu xác nhận không khớp",
+        "toast.pwdWeak": "Mật khẩu quá yếu",
+        "toast.pwdOk": "Đổi mật khẩu thành công",
+        "toast.pwdWrong": "Mật khẩu hiện tại không đúng",
+        "pw.weak": "Yếu",
+        "pw.medium": "Trung bình",
+        "pw.strong": "Mạnh",
 
         // Shifts & Activity
         "page.shifts": "Điểm danh ca",
@@ -87,12 +184,89 @@ export const i18n = {
         "sh.statusOpen": "Đang mở",
         "sh.statusClosed": "Đã đóng",
         "sh.statusAdj": "Đã chỉnh",
+        "shift.title": "Điểm danh ca",
+        "shift.none": "Chưa vào ca hôm nay ({date})",
+        "shift.open": "Đã vào ca lúc {time}",
+        "shift.done": "Đã kết thúc ca lúc {time}",
+        "shift.loadErr": "Lỗi tải trạng thái ca",
+        "shift.toastIn": "Vào ca thành công",
+        "shift.toastOut": "Ra ca thành công",
         "act.searchPh": "Tìm theo chi tiết, tên hoặc email nhân viên...",
         "act.search": "Tìm",
         "act.colTime": "Thời gian",
         "act.colUser": "Nhân viên",
         "act.colDetails": "Chi tiết",
+        "act.page": "Trang",
+        "act.empty": "Không có nhật ký",
+
+        // Employees
+        "emp.view": "Xem",
+        "emp.lock": "Khóa",
+        "emp.unlock": "Mở khóa",
+        "emp.needPwd": "Chưa đổi MK",
+        "emp.modalAdd": "Thêm nhân viên",
+        "status.active": "Hoạt động",
+        "status.locked": "Đã khóa",
+        "role.admin2": "Quản trị viên",
+        "view.status": "Trạng thái",
+        "view.role": "Vai trò",
+        "view.pwdChanged": "Đã đổi MK",
+        "view.yes": "Đã đổi",
+        "view.no": "Chưa đổi",
+        "view.salesTitle": "Doanh số bán hàng",
+        "view.totalOrders": "Tổng đơn hàng",
+        "view.totalRevenue": "Tổng doanh thu",
+        "view.recentOrders": "Đơn hàng gần đây",
+        "view.noOrders": "Chưa có đơn hàng",
+        "view.orderId": "Mã đơn",
+        "view.customer": "Khách hàng",
+        "view.amount": "Số tiền",
+        "toast.unlocked": "Đã mở khóa",
+        "toast.locked": "Đã khóa",
+        "toast.email": "Đã gửi email",
+
+        // Customers
+        "cus.orders": "Đơn hàng",
+        "cus.revenue": "Doanh thu",
+        "cus.modalEdit": "Sửa khách hàng",
+        "rank.vip": "VIP",
+        "hist.totalOrders": "Tổng đơn",
+        "hist.totalSum": "Tổng chi",
+
+        // POS
+        "stock": "Tồn kho",
+        "empty.title": "Giỏ hàng trống",
+        "pay.voucherNone": "Không dùng voucher",
+        "loyalty.pointsPreview": "Tích {pts} điểm",
+        "loyalty.pointsPreviewNone": "Không đủ tích điểm",
+        "loyalty.hintBalance": "Số dư: {bal} điểm",
+        "loyalty.hintNew": "Khách hàng mới",
+        "toast.removed": "Đã xóa khỏi giỏ",
+        "toast.cleared": "Đã xóa giỏ hàng",
+        "toast.paid": "Thanh toán thành công",
+        "toast.paidLoyalty": "Thanh toán thành công! +{pts} điểm (Tổng: {bal})",
+
+        // Reports
+        "chart.noData": "Không có dữ liệu",
+        "modal.orderDetail": "Chi tiết đơn hàng",
+        "modal.products": "Sản phẩm",
+
         "role.staff": "Nhân viên",
+
+        // AI Chat
+        "product.sold": "Đã bán",
+        "product.items": "sản phẩm",
+        "ai.title": "PhoneStore xin chào!",
+        "ai.subtitle": "Doanh thu, đơn hàng, báo cáo · 1900 54 54 63",
+        "ai.emptyLead": "Gợi ý câu hỏi:",
+        "ai.hint1": "Doanh thu hôm nay thế nào?",
+        "ai.hint2": "Top sản phẩm bán chạy?",
+        "ai.hint3": "Tổng đơn tuần này?",
+        "ai.placeholder": "Ví dụ: Doanh thu hôm nay thế nào?",
+        "ai.send": "Gửi",
+        "ai.inputLabel": "Nhập câu hỏi",
+        "ai.fabTitle": "Mở trợ lý AI",
+        "ai.close": "Đóng",
     },
     en: {
         // Navigation
@@ -155,6 +329,103 @@ export const i18n = {
         "common.noData": "No data available",
         "common.error": "An error occurred",
         "common.success": "Success",
+        "common.cancel": "Cancel",
+        "common.save": "Save",
+        "common.delete": "Delete",
+
+        // Pages
+        "page.products": "Products",
+        "page.categories": "Categories",
+
+        // Products page
+        "prod.searchPh": "Search products by name or barcode...",
+        "prod.add": "Add product",
+        "prod.modalAdd": "Add product",
+        "prod.modalEdit": "Edit product",
+        "prod.modalView": "Details",
+        "prod.modalDelete": "Delete product",
+        "prod.colName": "Product name",
+        "prod.colBarcode": "Barcode",
+        "prod.colCategory": "Category",
+        "prod.colCost": "Cost",
+        "prod.colPrice": "Price",
+        "prod.colStock": "Stock",
+        "prod.colActions": "Actions",
+        "prod.fName": "Product name",
+        "prod.fBarcode": "Barcode",
+        "prod.fType": "Type",
+        "prod.fCost": "Cost",
+        "prod.fPrice": "Price",
+        "prod.fCategory": "Category",
+        "prod.fStock": "Stock",
+
+        // Product types
+        "type.phone": "Phone",
+        "type.earbuds": "Earbuds",
+        "type.case": "Case",
+        "type.charger": "Charger",
+        "type.cable": "Cable",
+        "type.accessory": "Accessory",
+
+        // View modal
+        "view.category": "Category",
+        "view.type": "Type",
+        "view.cost": "Cost",
+        "view.price": "Price",
+        "view.stock": "Stock",
+        "view.createdAt": "Created At",
+        "view.profit": "Profit",
+        "view.name": "Name",
+        "view.desc": "Description",
+        "view.icon": "Icon",
+        "view.count": "Items",
+        "view.createdBy": "Created By",
+
+        // Categories page
+        "cat.searchPh": "Search categories...",
+        "cat.add": "Add",
+        "cat.modalAdd": "Add category",
+        "cat.modalEdit": "Edit category",
+        "cat.modalView": "Details",
+        "cat.modalDelete": "Delete category",
+        "cat.deleteHint": "If category has products, items will be moved to 'Other'.",
+        "cat.fName": "Category name",
+        "cat.fDesc": "Description",
+        "cat.fIcon": "Icon type",
+        "cat.items": "items",
+        "icon.phone": "Phone",
+        "icon.accessory": "Accessory",
+        "icon.earbuds": "Earbuds",
+        "icon.charger": "Charging",
+        "icon.watch": "Watch",
+        "icon.other": "Other",
+
+        // Toast / Confirm
+        "toast.saved": "Saved successfully",
+        "toast.deleted": "Deleted successfully",
+        "toast.invalid": "Invalid data",
+        "toast.error": "An error occurred",
+        "toast.err": "An error occurred",
+        "toast.ok": "Success",
+        "toast.fileTooBig": "Image too large (max 2MB)",
+        "toast.fileType": "Invalid image format",
+        "toast.added": "Added to cart",
+        "toast.empty": "Cart is empty",
+        "toast.checkout": "Checkout successful",
+        "toast.reportFail": "Failed to load report",
+        "toast.success": "Success",
+        "toast.fail": "Wrong username or password",
+        "confirm.deleteText": "Are you sure you want to delete?",
+
+        // Profile
+        "info.joined": "Joined",
+        "toast.pwdMismatch": "Confirmation password does not match",
+        "toast.pwdWeak": "Password is too weak",
+        "toast.pwdOk": "Password changed successfully",
+        "toast.pwdWrong": "Current password is incorrect",
+        "pw.weak": "Weak",
+        "pw.medium": "Medium",
+        "pw.strong": "Strong",
 
         // Shifts & Activity
         "page.shifts": "Shift attendance",
@@ -175,12 +446,89 @@ export const i18n = {
         "sh.statusOpen": "Open",
         "sh.statusClosed": "Closed",
         "sh.statusAdj": "Adjusted",
+        "shift.title": "Shift Attendance",
+        "shift.none": "Not clocked in today ({date})",
+        "shift.open": "Clocked in at {time}",
+        "shift.done": "Shift ended at {time}",
+        "shift.loadErr": "Error loading shift status",
+        "shift.toastIn": "Clocked in successfully",
+        "shift.toastOut": "Clocked out successfully",
         "act.searchPh": "Search by details, name or email...",
         "act.search": "Search",
         "act.colTime": "Time",
         "act.colUser": "User",
         "act.colDetails": "Details",
+        "act.page": "Page",
+        "act.empty": "No activity logs",
+
+        // Employees
+        "emp.view": "View",
+        "emp.lock": "Lock",
+        "emp.unlock": "Unlock",
+        "emp.needPwd": "Needs password change",
+        "emp.modalAdd": "Add employee",
+        "status.active": "Active",
+        "status.locked": "Locked",
+        "role.admin2": "Administrator",
+        "view.status": "Status",
+        "view.role": "Role",
+        "view.pwdChanged": "Password changed",
+        "view.yes": "Yes",
+        "view.no": "No",
+        "view.salesTitle": "Sales Performance",
+        "view.totalOrders": "Total orders",
+        "view.totalRevenue": "Total revenue",
+        "view.recentOrders": "Recent orders",
+        "view.noOrders": "No orders yet",
+        "view.orderId": "Order ID",
+        "view.customer": "Customer",
+        "view.amount": "Amount",
+        "toast.unlocked": "Unlocked",
+        "toast.locked": "Locked",
+        "toast.email": "Email sent",
+
+        // Customers
+        "cus.orders": "Orders",
+        "cus.revenue": "Revenue",
+        "cus.modalEdit": "Edit customer",
+        "rank.vip": "VIP",
+        "hist.totalOrders": "Total orders",
+        "hist.totalSum": "Total spent",
+
+        // POS
+        "stock": "Stock",
+        "empty.title": "Cart is empty",
+        "pay.voucherNone": "No voucher",
+        "loyalty.pointsPreview": "Earn {pts} points",
+        "loyalty.pointsPreviewNone": "Not enough for points",
+        "loyalty.hintBalance": "Balance: {bal} points",
+        "loyalty.hintNew": "New customer",
+        "toast.removed": "Removed from cart",
+        "toast.cleared": "Cart cleared",
+        "toast.paid": "Payment successful",
+        "toast.paidLoyalty": "Payment successful! +{pts} points (Total: {bal})",
+
+        // Reports
+        "chart.noData": "No data",
+        "modal.orderDetail": "Order details",
+        "modal.products": "Products",
+
         "role.staff": "Staff",
+
+        // AI Chat
+        "product.sold": "sold",
+        "product.items": "items",
+        "ai.title": "PhoneStore says hi!",
+        "ai.subtitle": "Revenue, orders, reports · 1900 54 54 63",
+        "ai.emptyLead": "Suggested questions:",
+        "ai.hint1": "How is today's revenue?",
+        "ai.hint2": "Top selling products?",
+        "ai.hint3": "Total orders this week?",
+        "ai.placeholder": "e.g. How is today's revenue?",
+        "ai.send": "Send",
+        "ai.inputLabel": "Your question",
+        "ai.fabTitle": "Open AI assistant",
+        "ai.close": "Close",
     }
 };
 
@@ -295,4 +643,143 @@ export function initSidebar() {
             document.querySelector(".ps-app")?.classList.toggle("sidebar-collapsed");
         };
     }
+}
+
+// ===== CUSTOM SELECT POPOVER =====
+export function initCustomSelects() {
+    function enhanceSelect(select) {
+        if (select.dataset.psSelectInit) return;
+        
+        // Hide the original select natively
+        select.style.display = 'none';
+        select.dataset.psSelectInit = "1";
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'dropdown ps-custom-select w-100';
+        
+        const trigger = document.createElement('button');
+        // Copy margins or specific classes if needed, but usually wrapper takes full width
+        trigger.className = 'ps-input dropdown-toggle d-flex justify-content-between align-items-center w-100';
+        trigger.type = 'button';
+        trigger.setAttribute('data-bs-toggle', 'dropdown');
+        trigger.setAttribute('aria-expanded', 'false');
+        
+        // Inherit styles
+        if (select.style.width) wrapper.style.width = select.style.width;
+        if (select.style.minWidth) wrapper.style.minWidth = select.style.minWidth;
+        
+        const textSpan = document.createElement('span');
+        textSpan.className = 'text-truncate';
+        
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-chevron-down ms-2 flex-shrink-0';
+        icon.style.color = 'var(--muted)';
+        if (getTheme() === 'dark') icon.style.opacity = '0.7';
+        
+        trigger.appendChild(textSpan);
+        trigger.appendChild(icon);
+        
+        const menu = document.createElement('ul');
+        menu.className = 'dropdown-menu w-100 shadow-sm border-0';
+        
+        function updateUI() {
+            const opt = select.options[select.selectedIndex];
+            if (opt) {
+                textSpan.textContent = opt.text;
+                if (!opt.value) {
+                    textSpan.style.color = 'var(--muted)';
+                } else {
+                    textSpan.style.color = 'inherit';
+                }
+            } else {
+                textSpan.textContent = "";
+            }
+            
+            menu.innerHTML = '';
+            Array.from(select.options).forEach((o, index) => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.className = 'dropdown-item ps-dropdown-item';
+                a.href = '#';
+                a.textContent = o.text;
+                
+                if (o.disabled) {
+                    a.classList.add('disabled');
+                    if (!o.value) {
+                        a.style.fontWeight = '700';
+                        a.style.fontSize = '12px';
+                        a.style.textTransform = 'uppercase';
+                        a.style.color = 'var(--muted)';
+                        a.style.padding = '4px 14px';
+                        a.style.background = 'transparent';
+                    }
+                } else {
+                    if (select.selectedIndex === index) {
+                        a.classList.add('active');
+                    }
+                    a.onclick = (e) => {
+                        e.preventDefault();
+                        select.selectedIndex = index;
+                        // trigger change
+                        select.dispatchEvent(new Event('change'));
+                        updateUI();
+                    };
+                }
+                
+                li.appendChild(a);
+                menu.appendChild(li);
+            });
+        }
+        
+        // Bind UI update to native change
+        select.addEventListener('change', updateUI);
+        
+        // Watch for dynamically added options (e.g loadCategories)
+        const observer = new MutationObserver(updateUI);
+        observer.observe(select, { childList: true, subtree: true });
+        
+        updateUI();
+        
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(menu);
+        
+        select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+        // Optional value setter interceptor so programatic setting updates UI too
+        try {
+            const originalSetter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set;
+            Object.defineProperty(select, "value", {
+                set: function(val) {
+                    originalSetter.call(this, val);
+                    updateUI(); // auto update
+                },
+                get: function() {
+                    return Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").get.call(this);
+                }
+            });
+        } catch(e) {}
+    }
+
+    document.querySelectorAll('select.ps-input').forEach(enhanceSelect);
+
+    const bodyObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) { // Element Node
+                    if (node.tagName === 'SELECT' && node.classList.contains('ps-input')) {
+                        enhanceSelect(node);
+                    }
+                    node.querySelectorAll?.('select.ps-input').forEach(enhanceSelect);
+                }
+            });
+        });
+    });
+    bodyObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+// Auto Init
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomSelects);
+} else {
+    initCustomSelects();
 }

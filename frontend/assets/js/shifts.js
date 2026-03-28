@@ -1,79 +1,13 @@
 import api from './api.js?v=6';
 import { requireAuth, isAdmin } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 const KEY_THEME = 'ps_theme';
 const KEY_LANG = 'ps_lang';
 
-const i18n = {
-    vi: {
-        'page.shifts': 'Điểm danh ca',
-        'nav.dashboard': 'Tổng quan',
-        'nav.pos': 'Bán hàng',
-        'nav.products': 'Sản phẩm',
-        'nav.categories': 'Danh mục',
-        'nav.employees': 'Nhân viên',
-        'nav.customers': 'Khách hàng',
-        'nav.reports': 'Báo cáo',
-        'nav.shifts': 'Điểm danh',
-        'nav.activity': 'Nhật ký',
-        'nav.profile': 'Hồ sơ',
-        'nav.logout': 'Đăng xuất',
-        'nav.collapse': 'Thu gọn',
-        'role.admin': 'Quản trị viên',
-        'sh.date': 'Ngày',
-        'sh.staff': 'Nhân viên',
-        'sh.allStaff': 'Tất cả',
-        'sh.load': 'Tải',
-        'sh.export': 'Xuất CSV',
-        'sh.colStaff': 'Nhân viên',
-        'sh.colIn': 'Vào ca',
-        'sh.colOut': 'Ra ca',
-        'sh.colStatus': 'Trạng thái',
-        'sh.edit': 'Sửa',
-        'sh.editTitle': 'Sửa giờ điểm danh',
-        'sh.statusOpen': 'Đang mở',
-        'sh.statusClosed': 'Đã đóng',
-        'sh.statusAdj': 'Đã chỉnh',
-        'toast.ok': 'Đã lưu',
-        'toast.err': 'Lỗi',
-    },
-    en: {
-        'page.shifts': 'Shift attendance',
-        'nav.dashboard': 'Dashboard',
-        'nav.pos': 'Point of Sale',
-        'nav.products': 'Products',
-        'nav.categories': 'Categories',
-        'nav.employees': 'Employees',
-        'nav.customers': 'Customers',
-        'nav.reports': 'Reports',
-        'nav.shifts': 'Shifts',
-        'nav.activity': 'Activity',
-        'nav.profile': 'Profile',
-        'nav.logout': 'Logout',
-        'nav.collapse': 'Collapse',
-        'role.admin': 'Administrator',
-        'sh.date': 'Date',
-        'sh.staff': 'Staff',
-        'sh.allStaff': 'All',
-        'sh.load': 'Load',
-        'sh.export': 'Export CSV',
-        'sh.colStaff': 'Staff',
-        'sh.colIn': 'Clock-in',
-        'sh.colOut': 'Clock-out',
-        'sh.colStatus': 'Status',
-        'sh.edit': 'Edit',
-        'sh.editTitle': 'Edit attendance times',
-        'sh.statusOpen': 'Open',
-        'sh.statusClosed': 'Closed',
-        'sh.statusAdj': 'Adjusted',
-        'toast.ok': 'Saved',
-        'toast.err': 'Error',
-    },
-};
-
 function getLang() { return localStorage.getItem(KEY_LANG) || 'vi'; }
-function t(k) { return i18n[getLang()]?.[k] || i18n.en[k] || k; }
+const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
 
 function applyLang(lang) {
     document.documentElement.lang = lang;

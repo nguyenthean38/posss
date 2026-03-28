@@ -240,7 +240,7 @@
                     <div class="mt-3">
                         <label class="ps-label">Ảnh sản phẩm <span style="color: var(--danger)">*</span></label>
                         <input class="ps-input" type="file" id="fImage" accept="image/*" />
-                        <small class="text-muted d-block mt-1">JPG, PNG, GIF, WEBP - Tối đa 2MB</small>
+                        <small class="ps-help-text d-block mt-1">JPG, PNG, GIF, WEBP - Tối đa 2MB. Nếu không chọn, sẽ dùng ảnh mặc định.</small>
                         <div id="imagePreview" class="mt-2" style="display: none;">
                             <img id="previewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover;" />
                         </div>
@@ -296,6 +296,31 @@
                     <button class="ps-btn-primary w-100" id="btnSave" type="button">
                         <span data-i18n="common.save">Save</span>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESTOCK MODAL -->
+    <div class="modal fade" id="restockModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content ps-modal">
+                <div class="ps-modal__head">
+                    <div class="ps-modal__title">Nhập kho</div>
+                    <button class="ps-icon-btn" type="button" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="ps-modal__body">
+                    <input type="hidden" id="restockProdId" />
+                    <label class="ps-label mb-2">Số lượng nhập thêm</label>
+                    <input type="number" class="ps-input text-center fs-4" id="restockQty" value="1" min="1" />
+                </div>
+
+                <div class="ps-modal__footer d-flex gap-2">
+                    <button class="ps-btn-secondary w-50" type="button" data-bs-dismiss="modal">Hủy</button>
+                    <button class="ps-btn-primary w-50" id="btnConfirmRestock" type="button">Xác nhận</button>
                 </div>
             </div>
         </div>
@@ -358,3 +383,4 @@
 </body>
 
 </html>
+

@@ -2,6 +2,7 @@
 import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 (() => {
     requireAuth();
@@ -9,92 +10,6 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
 
-    const i18n = {
-        vi: {
-            "page.reports": "Báo cáo",
-            "role.admin": "Quản trị viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "range.today": "Hôm nay",
-            "range.yesterday": "Hôm qua",
-            "range.last7": "7 ngày qua",
-            "range.month": "Tháng này",
-            "range.custom": "Tùy chọn",
-            "range.from": "Từ ngày",
-            "range.to": "Đến ngày",
-            "common.search": "Tìm kiếm",
-            "kpi.revenue": "Doanh thu",
-            "kpi.profit": "Lợi nhuận",
-            "kpi.orders": "Đơn hàng",
-            "kpi.items": "SP đã bán",
-            "chart.revenue": "Doanh thu",
-            "chart.category": "Danh mục",
-            "chart.noData": "Không có dữ liệu",
-            "table.orders": "Đơn hàng",
-            "table.date": "Ngày đặt",
-            "table.customer": "Tên khách hàng",
-            "table.employee": "Nhân viên",
-            "table.products": "Sản phẩm",
-            "table.total": "Tổng cộng",
-            "table.action": "Thao tác",
-            "modal.orderDetail": "Chi tiết đơn hàng",
-            "modal.products": "Sản phẩm:",
-            "misc.items": "sản phẩm",
-            "misc.other": "Khác",
-            "toast.error": "Có lỗi xảy ra",
-            "toast.reportFail": "Không tải được báo cáo. Kiểm tra đăng nhập hoặc thử lại.",
-        },
-        en: {
-            "page.reports": "Reports",
-            "role.admin": "Administrator",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "range.today": "Today",
-            "range.yesterday": "Yesterday",
-            "range.last7": "Last 7 days",
-            "range.month": "This month",
-            "range.custom": "Custom",
-            "range.from": "From",
-            "range.to": "To",
-            "common.search": "Search",
-            "kpi.revenue": "Revenue",
-            "kpi.profit": "Profit",
-            "kpi.orders": "Orders",
-            "kpi.items": "Items sold",
-            "chart.revenue": "Revenue",
-            "chart.category": "Categories",
-            "chart.noData": "No data",
-            "table.orders": "Orders",
-            "table.date": "Order date",
-            "table.customer": "Customer",
-            "table.employee": "Employee",
-            "table.products": "Products",
-            "table.total": "Total",
-            "table.action": "Action",
-            "modal.orderDetail": "Order details",
-            "modal.products": "Products:",
-            "misc.items": "items",
-            "misc.other": "Other",
-            "toast.error": "An error occurred",
-            "toast.reportFail": "Could not load reports. Check login or try again.",
-        }
-    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -549,13 +464,13 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     async function refreshAll() {
         try {
             const from = ymd(rangeFrom);
-            const to   = ymd(rangeTo);
+            const to = ymd(rangeTo);
 
             // [1] Summary KPIs + CategoryBreakdown (doanh thu theo danh muc cho donut)
             const summary = await API.reports.getSummary(from, to);
             document.getElementById("kpiRevenue").textContent = fmtVND(summary.TotalRevenue);
-            document.getElementById("kpiOrders").textContent  = String(summary.OrderCount || 0);
-            document.getElementById("kpiItems").textContent   = String(summary.TotalProductsSold || 0);
+            document.getElementById("kpiOrders").textContent = String(summary.OrderCount || 0);
+            document.getElementById("kpiItems").textContent = String(summary.TotalProductsSold || 0);
 
             const catRows = summary.CategoryBreakdown || [];
             const catLabels = catRows.map((c) => c.CategoryName || "");

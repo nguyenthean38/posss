@@ -3,6 +3,7 @@ import API from './api.js?v=5';
 import { requireAuth } from './auth.js';
 import { getCategoryIcon } from './assets.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 (() => {
     requireAuth();
@@ -11,96 +12,6 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     const KEY_LANG = "ps_lang";
     let pendingDeleteId = null;
 
-    const i18n = {
-        vi: {
-            "page.categories": "Danh mục",
-            "role.admin": "Quản trị viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "cat.searchPh": "Tìm danh mục...",
-            "cat.add": "Thêm",
-            "cat.modalAdd": "Thêm danh mục",
-            "cat.modalEdit": "Sửa danh mục",
-            "cat.modalView": "Xem chi tiết",
-            "cat.modalDelete": "Xóa danh mục",
-            "cat.deleteHint": "Nếu danh mục đang có sản phẩm, hệ thống sẽ chuyển sản phẩm sang \"Khác\".",
-            "cat.fName": "Tên danh mục",
-            "cat.fDesc": "Mô tả",
-            "cat.fIcon": "Loại icon",
-            "icon.phone": "Điện thoại",
-            "icon.accessory": "Phụ kiện",
-            "icon.earbuds": "Tai nghe",
-            "icon.charger": "Sạc & Pin",
-            "icon.watch": "Đồng hồ",
-            "icon.other": "Khác",
-            "common.cancel": "Hủy",
-            "common.save": "Lưu",
-            "common.delete": "Xóa",
-            "toast.saved": "Đã lưu danh mục",
-            "toast.deleted": "Đã xóa danh mục",
-            "toast.invalid": "Vui lòng nhập tên danh mục",
-            "cat.items": "sản phẩm",
-            "view.name": "Tên",
-            "view.desc": "Mô tả",
-            "view.icon": "Icon",
-            "view.count": "Số sản phẩm",
-            "view.createdAt": "Ngày tạo",
-            "view.createdBy": "Người tạo",
-            "toast.error": "Có lỗi xảy ra",
-        },
-        en: {
-            "page.categories": "Categories",
-            "role.admin": "Administrator",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "cat.searchPh": "Search categories...",
-            "cat.add": "Add",
-            "cat.modalAdd": "Add category",
-            "cat.modalEdit": "Edit category",
-            "cat.modalView": "Details",
-            "cat.modalDelete": "Delete category",
-            "cat.deleteHint": "If category has products, items will be moved to \"Other\".",
-            "cat.fName": "Category name",
-            "cat.fDesc": "Description",
-            "cat.fIcon": "Icon type",
-            "icon.phone": "Phone",
-            "icon.accessory": "Accessory",
-            "icon.earbuds": "Earbuds",
-            "icon.charger": "Charging",
-            "icon.watch": "Watch",
-            "icon.other": "Other",
-            "common.cancel": "Cancel",
-            "common.save": "Save",
-            "common.delete": "Delete",
-            "toast.saved": "Category saved",
-            "toast.deleted": "Category deleted",
-            "toast.invalid": "Please enter a name",
-            "cat.items": "items",
-            "view.name": "Name",
-            "view.desc": "Description",
-            "view.icon": "Icon",
-            "view.count": "Items",
-            "view.createdAt": "Created At",
-            "view.createdBy": "Created By",
-            "toast.error": "An error occurred",
-        }
-    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -177,7 +88,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
         const iconConfig = getCategoryIcon(icon || 'other');
         return iconConfig.icon;
     }
-    
+
     function iconColor(icon) {
         const iconConfig = getCategoryIcon(icon || 'other');
         return iconConfig.color;

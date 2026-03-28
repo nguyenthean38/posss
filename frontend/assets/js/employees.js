@@ -4,6 +4,7 @@
 import { api } from './api.js?v=5';
 import { requireAuth, isAdmin } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 (() => {
     const KEY_THEME = "ps_theme";
@@ -13,118 +14,6 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     let pendingDeleteId = null;
     let viewEmployeeId = null;
 
-    const i18n = {
-        vi: {
-            "page.employees": "Nhân viên",
-            "role.admin": "Quản trị viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "emp.searchPh": "Tìm nhân viên theo tên hoặc email...",
-            "emp.add": "Thêm nhân viên",
-            "emp.modalAdd": "Thêm nhân viên",
-            "emp.fName": "Tên nhân viên",
-            "emp.fEmail": "Email",
-            "role.staff": "Nhân viên",
-            "role.admin2": "Admin",
-            "common.save": "Lưu",
-            "common.cancel": "Hủy",
-            "common.delete": "Xóa",
-            "status.active": "Hoạt động",
-            "status.locked": "Đã khóa",
-            "emp.needPwd": "Chưa đổi MK",
-            "emp.view": "Xem chi tiết",
-            "emp.lock": "Khóa TK",
-            "emp.unlock": "Mở khóa",
-            "emp.email": "Gửi lại email",
-            "toast.saved": "Đã lưu nhân viên",
-            "toast.deleted": "Đã xóa nhân viên",
-            "toast.invalid": "Vui lòng nhập tên + email",
-            "toast.locked": "Đã khóa tài khoản",
-            "toast.unlocked": "Đã mở khóa tài khoản",
-            "toast.email": "Đã gửi email",
-            "toast.error": "Có lỗi xảy ra",
-            "view.status": "Trạng thái",
-            "view.role": "Role",
-            "view.phone": "Số điện thoại",
-            "view.address": "Địa chỉ",
-            "view.join": "Ngày tham gia",
-            "view.pwdChanged": "Đổi mật khẩu",
-            "view.yes": "Đã đổi",
-            "view.no": "Chưa đổi",
-            "view.salesTitle": "Thông tin bán hàng",
-            "view.totalOrders": "Tổng đơn hàng",
-            "view.totalRevenue": "Tổng doanh thu",
-            "view.recentOrders": "Đơn hàng gần đây",
-            "view.orderId": "Đơn",
-            "view.customer": "Khách hàng",
-            "view.amount": "Tổng tiền",
-            "view.noOrders": "Chưa có đơn hàng nào",
-            "confirm.deleteText": "Bạn có chắc muốn xóa nhân viên này?"
-        },
-        en: {
-            "page.employees": "Employees",
-            "role.admin": "Administrator",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "emp.searchPh": "Search by name or email...",
-            "emp.add": "Add employee",
-            "emp.modalAdd": "Add employee",
-            "emp.fName": "Employee name",
-            "emp.fEmail": "Email",
-            "role.staff": "Staff",
-            "role.admin2": "Admin",
-            "common.save": "Save",
-            "common.cancel": "Cancel",
-            "common.delete": "Delete",
-            "status.active": "Active",
-            "status.locked": "Locked",
-            "emp.needPwd": "Password not changed",
-            "emp.view": "View details",
-            "emp.lock": "Lock",
-            "emp.unlock": "Unlock",
-            "emp.email": "Resend email",
-            "toast.saved": "Employee saved",
-            "toast.deleted": "Employee deleted",
-            "toast.invalid": "Please enter name + email",
-            "toast.locked": "Account locked",
-            "toast.unlocked": "Account unlocked",
-            "toast.email": "Email sent",
-            "toast.error": "An error occurred",
-            "view.status": "Status",
-            "view.role": "Role",
-            "view.phone": "Phone",
-            "view.address": "Address",
-            "view.join": "Join date",
-            "view.pwdChanged": "Password changed",
-            "view.yes": "Yes",
-            "view.no": "No",
-            "view.salesTitle": "Sales Information",
-            "view.totalOrders": "Total Orders",
-            "view.totalRevenue": "Total Revenue",
-            "view.recentOrders": "Recent Orders",
-            "view.orderId": "Order",
-            "view.customer": "Customer",
-            "view.amount": "Amount",
-            "view.noOrders": "No orders yet",
-            "confirm.deleteText": "Delete this employee?"
-        }
-    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -310,8 +199,8 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
                     <div class="ps-view__label">${t("view.pwdChanged")}</div>
                     <div class="ps-view__value">
                         ${!e.is_first_login
-                            ? `<i class="bi bi-check2-square" style="color:var(--green)"></i> ${t("view.yes")}`
-                            : `<i class="bi bi-x-square" style="color:var(--red)"></i> ${t("view.no")}`}
+                ? `<i class="bi bi-check2-square" style="color:var(--green)"></i> ${t("view.yes")}`
+                : `<i class="bi bi-x-square" style="color:var(--red)"></i> ${t("view.no")}`}
                     </div>
                 </div>
             </div>

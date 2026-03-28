@@ -238,6 +238,10 @@ elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 
     $productId = (int)$matches[1];
     $productCtrl->update($productId, $data);
 }
+elseif (preg_match('/^\/api\/products\/(\d+)\/restock$/', $uri, $matches) && $method === 'PATCH') {
+    $productId = (int)$matches[1];
+    $productCtrl->restock($productId, $data);
+}
 elseif (preg_match('/^\/api\/products\/(\d+)$/', $uri, $matches) && $method === 'DELETE') {
     $productId = (int)$matches[1];
     $productCtrl->destroy($productId);

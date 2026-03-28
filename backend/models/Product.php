@@ -159,5 +159,13 @@ class Product {
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
+
+    public function updateStock($id, $addQuantity) {
+        $sql = "UPDATE " . $this->table_name . " SET stock_quantity = stock_quantity + :qty WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':qty', $addQuantity, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
 

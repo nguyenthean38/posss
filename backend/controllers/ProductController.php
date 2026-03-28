@@ -208,5 +208,30 @@ class ProductController {
 
         Response::json(["message" => "Lỗi server khi xóa sản phẩm"], 500);
     }
+
+    // [PATCH] /api/products/{id}/restock
+    // Dành cho cả Admin lẫn Nhân viên để nhập thêm kho
+    public function restock($id, $data) {
+        AuthMiddleware::checkAuth(); // Nhân viên cũng được thực hiện
+        
+        $id = (int)$id;
+        $addQuantity = isset($data['quantity']) ? (int)$data['quantity'] : 0;
+        
+        if ($addQuantity <= 0) {
+            Response::json(["message" => "Số lượng nhập kho phải lớn hơn 0"], 400);
+        }
+        
+        $product = $this->productModel->findById($id);
+        if (!$product) {
+            Response::json(["message" => "Sản phẩm không tồn tại"], 404);
+        }
+        
+        if ($this->productModel->updateStock($id, $addQuantity)) {
+            $this->logModel->createLog($_SESSION['user_id'], 'restock_product', "Nhập kho sản phẩm ID=$id thêm $addQuantity");
+            Response::json(["message" => "Nhập kho thành công"]);
+        }
+        
+        Response::json(["message" => "Lỗi server khi nhập kho"], 500);
+    }
 }
 

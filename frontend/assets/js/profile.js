@@ -2,6 +2,7 @@
 import API from './api.js?v=5';
 import { requireAuth, getUser } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 (() => {
     requireAuth();
@@ -9,80 +10,6 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
 
-    const i18n = {
-        vi: {
-            "page.profile": "Hồ sơ",
-            "role.admin": "Quản trị viên",
-            "role.staff": "Nhân viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "tab.info": "Thông tin cá nhân",
-            "tab.pwd": "Đổi mật khẩu",
-            "form.name": "Tên nhân viên",
-            "form.email": "Email",
-            "form.phone": "Số điện thoại",
-            "form.address": "Địa chỉ",
-            "common.save": "Lưu",
-            "pwd.current": "Mật khẩu hiện tại",
-            "pwd.new": "Mật khẩu mới",
-            "pwd.confirm": "Xác nhận mật khẩu",
-            "pwd.btn": "Đổi mật khẩu",
-            "toast.saved": "Đã lưu thông tin",
-            "toast.pwdOk": "Đổi mật khẩu thành công",
-            "toast.pwdWrong": "Mật khẩu hiện tại không đúng",
-            "toast.pwdMismatch": "Mật khẩu xác nhận không khớp",
-            "toast.pwdWeak": "Mật khẩu quá yếu (>= 8 ký tự, có chữ + số)",
-            "pw.weak": "Yếu",
-            "pw.medium": "Trung bình",
-            "pw.strong": "Mạnh",
-            "info.joined": "Tham gia",
-            "toast.error": "Có lỗi xảy ra",
-        },
-        en: {
-            "page.profile": "Profile",
-            "role.admin": "Administrator",
-            "role.staff": "Staff",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "tab.info": "Personal Information",
-            "tab.pwd": "Change Password",
-            "form.name": "Employee Name",
-            "form.email": "Email",
-            "form.phone": "Phone Number",
-            "form.address": "Address",
-            "common.save": "Save",
-            "pwd.current": "Current Password",
-            "pwd.new": "New Password",
-            "pwd.confirm": "Confirm Password",
-            "pwd.btn": "Change Password",
-            "toast.saved": "Profile saved",
-            "toast.pwdOk": "Password changed",
-            "toast.pwdWrong": "Current password is incorrect",
-            "toast.pwdMismatch": "Confirm password mismatch",
-            "toast.pwdWeak": "Weak password (>= 8 chars, letters + numbers)",
-            "pw.weak": "Weak",
-            "pw.medium": "Medium",
-            "pw.strong": "Strong",
-            "info.joined": "Joined",
-            "toast.error": "An error occurred",
-        }
-    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -209,8 +136,8 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     async function saveInfo() {
         try {
             const full_name = document.getElementById("fName").value.trim();
-            const phone     = document.getElementById("fPhone").value.trim();
-            const address   = document.getElementById("fAddress").value.trim();
+            const phone = document.getElementById("fPhone").value.trim();
+            const address = document.getElementById("fAddress").value.trim();
 
             await API.profile.update({ full_name, phone, address });
             renderProfile();

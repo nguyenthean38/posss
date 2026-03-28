@@ -1,69 +1,17 @@
 import api from './api.js?v=8';
 import { requireAuth, isAdmin } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 const KEY_THEME = 'ps_theme';
 const KEY_LANG = 'ps_lang';
 const LIMIT = 50;
 
-const i18n = {
-    vi: {
-        'page.activity': 'Nhật ký ra vào',
-        'role.admin': 'Quản trị viên',
-        'nav.dashboard': 'Tổng quan',
-        'nav.pos': 'Bán hàng',
-        'nav.products': 'Sản phẩm',
-        'nav.categories': 'Danh mục',
-        'nav.employees': 'Nhân viên',
-        'nav.customers': 'Khách hàng',
-        'nav.reports': 'Báo cáo',
-        'nav.shifts': 'Điểm danh',
-        'nav.activity': 'Nhật ký',
-        'nav.profile': 'Hồ sơ',
-        'nav.logout': 'Đăng xuất',
-        'nav.collapse': 'Thu gọn',
-        'act.searchPh': 'Tìm theo chi tiết, tên hoặc email nhân viên...',
-        'act.search': 'Tìm',
-        'act.colTime': 'Thời gian',
-        'act.colUser': 'Nhân viên',
-        'act.colDetails': 'Chi tiết',
-        'act.empty': 'Chưa có bản ghi',
-        'act.page': 'Trang',
-        'toast.error': 'Có lỗi xảy ra',
-    },
-    en: {
-        'page.activity': 'Staff sign-in log',
-        'role.admin': 'Administrator',
-        'nav.dashboard': 'Dashboard',
-        'nav.pos': 'Point of Sale',
-        'nav.products': 'Products',
-        'nav.categories': 'Categories',
-        'nav.employees': 'Employees',
-        'nav.customers': 'Customers',
-        'nav.reports': 'Reports',
-        'nav.shifts': 'Shifts',
-        'nav.activity': 'Activity',
-        'nav.profile': 'Profile',
-        'nav.logout': 'Logout',
-        'nav.collapse': 'Collapse',
-        'act.searchPh': 'Search by detail, name or staff email...',
-        'act.search': 'Search',
-        'act.colTime': 'Time',
-        'act.colUser': 'Staff',
-        'act.colDetails': 'Details',
-        'act.empty': 'No records',
-        'act.page': 'Page',
-        'toast.error': 'An error occurred',
-    },
-};
-
 function getLang() {
     return localStorage.getItem(KEY_LANG) || 'vi';
 }
 
-function t(k) {
-    return i18n[getLang()]?.[k] || i18n.en[k] || k;
-}
+const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
 
 function escapeHtml(s) {
     return String(s ?? '')

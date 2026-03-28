@@ -4,6 +4,7 @@
 import { api } from './api.js?v=7';
 import { requireAuth, getCurrentUser, getUser } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 (async () => {
     // ===== CONSTANTS =====
@@ -19,120 +20,6 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     let loyaltyVouchersList = [];
 
     // ===== i18n =====
-    const i18n = {
-        vi: {
-            "page.pos": "Bán hàng",
-            "role.admin": "Quản trị viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.shifts": "Điểm danh",
-            "nav.activity": "Nhật ký",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "cart.title": "Giỏ hàng",
-            "cart.clear": "Xóa giỏ",
-            "cart.total": "Tổng cộng",
-            "cart.checkout": "Thanh toán",
-            "pos.searchPh": "Tìm sản phẩm theo tên hoặc mã vạch...",
-            "empty.title": "Giỏ hàng trống",
-            "pay.title": "Thanh toán",
-            "pay.phone": "Số điện thoại",
-            "pay.name": "Tên khách hàng",
-            "pay.cash": "Tiền khách đưa",
-            "pay.change": "Tiền thừa",
-            "pay.complete": "Hoàn tất thanh toán",
-            "pay.earnLoyalty": "Tích điểm đơn này",
-            "pay.earnYes": "Có",
-            "pay.earnNo": "Không",
-            "pay.voucher": "Phiếu giảm giá",
-            "pay.voucherNone": "— Không dùng phiếu —",
-            "pay.voucherDiscount": "Giảm phiếu",
-            "pay.subtotal": "Tạm tính giỏ",
-            "pay.payable": "Thanh toán",
-            "loyalty.pointsPreview": "Dự kiến +{pts} điểm (theo tổng sau giảm nếu có phiếu).",
-            "loyalty.pointsPreviewNone": "Đơn chưa đủ 1 điểm (100.000 ₫ / điểm).",
-            "toast.added": "Đã thêm vào giỏ",
-            "toast.paid": "Thanh toán thành công",
-            "toast.cleared": "Đã xóa giỏ",
-            "toast.removed": "Đã xóa sản phẩm",
-            "toast.stock": "Không đủ tồn kho",
-            "toast.error": "Có lỗi xảy ra",
-            "toast.paidLoyalty": "Thanh toán thành công. +{pts} điểm — Số dư: {bal}",
-            "loyalty.hintBalance": "Số dư điểm hiện tại: {bal}",
-            "loyalty.hintNew": "Khách mới — nhập tên nếu đủ; có thể chỉ SĐT (sẽ lưu tên mặc định).",
-            "stock": "Tồn kho",
-            "shift.in": "Vào ca",
-            "shift.out": "Ra ca",
-            "shift.none": "Chưa chấm vào ca hôm nay ({date}).",
-            "shift.open": "Đang trong ca — vào lúc {time}",
-            "shift.done": "Đã hoàn thành ca — ra lúc {time}",
-            "shift.loadErr": "Không tải được trạng thái ca.",
-            "shift.toastIn": "Đã chấm vào ca.",
-            "shift.toastOut": "Đã chấm ra ca.",
-        },
-        en: {
-            "page.pos": "Point of Sale",
-            "role.admin": "Administrator",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.shifts": "Shifts",
-            "nav.activity": "Activity",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "cart.title": "Cart",
-            "cart.clear": "Clear",
-            "cart.total": "Total",
-            "cart.checkout": "Checkout",
-            "pos.searchPh": "Search by name or barcode...",
-            "empty.title": "Cart is empty",
-            "pay.title": "Payment",
-            "pay.phone": "Phone number",
-            "pay.name": "Customer name",
-            "pay.cash": "Cash given",
-            "pay.change": "Change",
-            "pay.complete": "Complete payment",
-            "pay.earnLoyalty": "Earn points this order",
-            "pay.earnYes": "Yes",
-            "pay.earnNo": "No",
-            "pay.voucher": "Voucher",
-            "pay.voucherNone": "— No voucher —",
-            "pay.voucherDiscount": "Voucher discount",
-            "pay.subtotal": "Cart subtotal",
-            "pay.payable": "Payable",
-            "loyalty.pointsPreview": "Estimated +{pts} pts (on total after voucher if any).",
-            "loyalty.pointsPreviewNone": "Below 1 point threshold (100,000 ₫ / point).",
-            "toast.added": "Added to cart",
-            "toast.paid": "Payment success",
-            "toast.cleared": "Cart cleared",
-            "toast.removed": "Item removed",
-            "toast.stock": "Not enough stock",
-            "toast.error": "An error occurred",
-            "toast.paidLoyalty": "Payment successful. +{pts} pts — Balance: {bal}",
-            "loyalty.hintBalance": "Current points balance: {bal}",
-            "loyalty.hintNew": "New customer — add name if needed; phone alone is OK.",
-            "stock": "Stock",
-            "shift.in": "Clock in",
-            "shift.out": "Clock out",
-            "shift.none": "Not clocked in today ({date}).",
-            "shift.open": "On shift — clocked in at {time}",
-            "shift.done": "Shift completed — clocked out at {time}",
-            "shift.loadErr": "Could not load shift status.",
-            "shift.toastIn": "Clocked in.",
-            "shift.toastOut": "Clocked out.",
-        }
-    };
 
     // ===== HELPERS =====
     const fmtVND = (n) => {
@@ -141,7 +28,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
-    const t = (key) => (i18n[getLang()]?.[key] || i18n.en[key] || key);
+    const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
 
     function toast(msg) {
         const el = document.getElementById("toast");
@@ -405,8 +292,8 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
                     Number(v.discount_amount_vnd || 0) > 0
                         ? `-${Number(v.discount_amount_vnd).toLocaleString("vi-VN")} ₫`
                         : v.discount_percent
-                          ? `${v.discount_percent}%`
-                          : "";
+                            ? `${v.discount_percent}%`
+                            : "";
                 o.textContent = `${v.code} · ${v.tier_name || ""} (${disc})`;
                 sel.appendChild(o);
             }
@@ -429,12 +316,12 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     async function checkout(data) {
         try {
             const result = await api.posCheckout(data);
-            
+
             // Open invoice in new tab
             if (result.PdfUrl) {
                 window.open(result.PdfUrl, '_blank');
             }
-            
+
             // Reset cart
             await initCart();
             const pe = result.PointsEarned ?? result.points_earned ?? 0;
@@ -469,7 +356,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
                 pv.appendChild(o);
             }
             updatePayState();
-            
+
         } catch (error) {
             console.error('Checkout error:', error);
             toast(error.message || t("toast.error"));

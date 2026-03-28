@@ -3,6 +3,7 @@ import API from './api.js?v=8';
 import { requireAuth } from './auth.js';
 import { getAvatarImage } from './assets.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { i18n } from './shared.js';
 
 (() => {
     requireAuth();
@@ -11,96 +12,6 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
     const KEY_LANG = "ps_lang";
     let pendingDeleteId = null;
 
-    const i18n = {
-        vi: {
-            "page.customers": "Khách hàng",
-            "role.admin": "Quản trị viên",
-            "nav.dashboard": "Tổng quan",
-            "nav.pos": "Bán hàng",
-            "nav.products": "Sản phẩm",
-            "nav.categories": "Danh mục",
-            "nav.employees": "Nhân viên",
-            "nav.customers": "Khách hàng",
-            "nav.reports": "Báo cáo",
-            "nav.activity": "Nhật ký",
-            "nav.profile": "Hồ sơ",
-            "nav.logout": "Đăng xuất",
-            "nav.collapse": "Thu gọn",
-            "cus.searchPh": "Tìm kiếm...",
-            "cus.add": "Thêm",
-            "cus.modalAdd": "Thêm khách hàng",
-            "cus.modalEdit": "Sửa khách hàng",
-            "cus.modalDelete": "Xóa khách hàng",
-            "cus.fName": "Tên khách hàng",
-            "cus.fPhone": "Số điện thoại",
-            "cus.fAddress": "Địa chỉ",
-            "cus.orders": "Đơn hàng",
-            "cus.revenue": "Tổng doanh thu",
-            "cus.sortRevDesc": "Doanh thu ↓",
-            "cus.sortRevAsc": "Doanh thu ↑",
-            "cus.sortOrdDesc": "Đơn hàng ↓",
-            "cus.sortOrdAsc": "Đơn hàng ↑",
-            "cus.sortNameAsc": "Tên A→Z",
-            "hist.title": "Lịch sử mua hàng",
-            "hist.totalOrders": "Đơn hàng",
-            "hist.totalSum": "Tổng cộng",
-            "common.save": "Lưu",
-            "common.cancel": "Hủy",
-            "common.delete": "Xóa",
-            "toast.saved": "Đã lưu khách hàng",
-            "toast.deleted": "Đã xóa khách hàng",
-            "toast.invalid": "Vui lòng nhập tên + số điện thoại",
-            "confirm.deleteText": "Bạn có chắc muốn xóa khách hàng này?",
-            "rank.vip": "VIP",
-            "toast.error": "Có lỗi xảy ra",
-            "toast.fileTooBig": "Ảnh không được vượt quá 2MB",
-            "toast.fileType": "Chỉ chấp nhận ảnh JPG, PNG, GIF, WEBP",
-        },
-        en: {
-            "page.customers": "Customers",
-            "role.admin": "Administrator",
-            "nav.dashboard": "Dashboard",
-            "nav.pos": "Point of Sale",
-            "nav.products": "Products",
-            "nav.categories": "Categories",
-            "nav.employees": "Employees",
-            "nav.customers": "Customers",
-            "nav.reports": "Reports",
-            "nav.activity": "Activity",
-            "nav.profile": "Profile",
-            "nav.logout": "Logout",
-            "nav.collapse": "Collapse",
-            "cus.searchPh": "Search...",
-            "cus.add": "Add",
-            "cus.modalAdd": "Add customer",
-            "cus.modalEdit": "Edit customer",
-            "cus.modalDelete": "Delete customer",
-            "cus.fName": "Customer name",
-            "cus.fPhone": "Phone",
-            "cus.fAddress": "Address",
-            "cus.orders": "Orders",
-            "cus.revenue": "Revenue",
-            "cus.sortRevDesc": "Revenue ↓",
-            "cus.sortRevAsc": "Revenue ↑",
-            "cus.sortOrdDesc": "Orders ↓",
-            "cus.sortOrdAsc": "Orders ↑",
-            "cus.sortNameAsc": "Name A→Z",
-            "hist.title": "Purchase history",
-            "hist.totalOrders": "Orders",
-            "hist.totalSum": "Total",
-            "common.save": "Save",
-            "common.cancel": "Cancel",
-            "common.delete": "Delete",
-            "toast.saved": "Customer saved",
-            "toast.deleted": "Customer deleted",
-            "toast.invalid": "Please enter name + phone",
-            "confirm.deleteText": "Delete this customer?",
-            "rank.vip": "VIP",
-            "toast.error": "An error occurred",
-            "toast.fileTooBig": "Image must be at most 2MB",
-            "toast.fileType": "Only JPG, PNG, GIF, WEBP images are allowed",
-        }
-    };
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -305,13 +216,13 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
             document.getElementById("fName").value = c.name || "";
             document.getElementById("fPhone").value = c.phone || "";
             document.getElementById("fAddress").value = c.address || "";
-            
+
             // Clear avatar input and preview
             const avatarInput = document.getElementById("fAvatar");
             const avatarPreview = document.getElementById("avatarPreview");
             if (avatarInput) avatarInput.value = "";
             if (avatarPreview) avatarPreview.style.display = "none";
-            
+
             bootstrap.Modal.getOrCreateInstance(document.getElementById("cusModal")).show();
         } catch (err) {
             console.error('Edit error:', err);
@@ -350,7 +261,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
                 formData.append('phone_number', phone);
                 formData.append('address', address);
                 formData.append('avatar', avatarFile);
-                
+
                 await API.customers.update(id, formData);
             } else {
                 // Không có avatar mới, chỉ update thông tin
@@ -460,7 +371,7 @@ import { initAiChatWidget } from './ai-chat-widget.js?v=1';
             const file = e.target.files[0];
             const preview = document.getElementById("avatarPreview");
             const previewImg = document.getElementById("previewAvatar");
-            
+
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
