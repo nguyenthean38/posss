@@ -1,7 +1,8 @@
 /**
  * Trợ lý AI — dùng chung mọi trang app; lịch sử trong sessionStorage.
  */
-import api from './api.js?v=7';
+import api from './api.js?v=9';
+import { t } from './shared.js';
 
 const KEY_LANG = 'ps_lang';
 const STORAGE_CHAT = 'ps_ai_chat_session';
@@ -179,9 +180,9 @@ export function initAiChatWidget() {
         input.value = '';
         try {
             const res = await api.aiChat(text);
-            appendBubble('bot', res.reply || '(Không có nội dung)');
+            appendBubble('bot', res.reply || t('ai.emptyReply'));
         } catch (e) {
-            appendBubble('bot', 'Lỗi: ' + (e.message || 'Không gửi được'));
+            appendBubble('bot', `${t('ai.errSend')}: ${e.message || t('ai.errGeneric')}`);
         } finally {
             sendBtn.disabled = false;
             spinner?.classList.add('d-none');

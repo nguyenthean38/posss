@@ -2,6 +2,12 @@
  * API Client Module
  * Quản lý tất cả API calls đến backend PHP
  */
+import { i18n } from './shared.js';
+
+function apiT(k) {
+    const lang = typeof localStorage !== 'undefined' ? localStorage.getItem('ps_lang') || 'vi' : 'vi';
+    return i18n[lang]?.[k] || i18n.en[k] || k;
+}
 
 const API_BASE = '../backend/index.php';
 
@@ -48,7 +54,7 @@ class ApiClient {
                     window.location.replace('login.html');
                 }
 
-                throw new Error(data.message || 'Phiên đăng nhập đã hết hạn');
+                throw new Error(data.message || apiT('auth.sessionExpired'));
             }
 
             if (!response.ok) {
@@ -93,7 +99,7 @@ class ApiClient {
                     !window.location.pathname.includes('first-login.html')) {
                     window.location.replace('login.html');
                 }
-                throw new Error(data.message || 'Phiên đăng nhập đã hết hạn');
+                throw new Error(data.message || apiT('auth.sessionExpired'));
             }
 
             if (!response.ok) {
@@ -452,7 +458,7 @@ class ApiClient {
             if (!window.location.pathname.includes('login.html')) {
                 window.location.replace('login.html');
             }
-            throw new Error('Phiên đăng nhập đã hết hạn');
+            throw new Error(apiT('auth.sessionExpired'));
         }
         if (!response.ok) {
             let msg = 'HTTP ' + response.status;

@@ -1,8 +1,8 @@
 // Categories Module - Real API Integration
-import API from './api.js?v=5';
+import API from './api.js?v=9';
 import { requireAuth } from './auth.js';
 import { getCategoryIcon } from './assets.js';
-import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (() => {

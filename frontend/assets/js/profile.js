@@ -1,7 +1,7 @@
 // Profile Module - Real API Integration
-import API from './api.js?v=5';
+import API from './api.js?v=9';
 import { requireAuth, getUser } from './auth.js';
-import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (() => {

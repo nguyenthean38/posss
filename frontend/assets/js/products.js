@@ -1,8 +1,8 @@
 // Products Module - Real API Integration
-import API from './api.js?v=7';
+import API from './api.js?v=9';
 import { requireAuth } from './auth.js';
 import { getProductImage } from './assets.js';
-import { initAiChatWidget } from './ai-chat-widget.js?v=1';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (() => {
@@ -116,10 +116,10 @@ import { i18n } from './shared.js';
     function rowActions(p) {
         return `
       <div class="ps-actions">
-        <button class="ps-actBtn" data-act="view" title="View"><i class="bi bi-eye"></i></button>
-        <button class="ps-actBtn" data-act="restock" title="Nhập kho"><i class="bi bi-box-arrow-in-down"></i></button>
-        <button class="ps-actBtn admin-only" data-act="edit" title="Edit"><i class="bi bi-pencil-square"></i></button>
-        <button class="ps-actBtn danger admin-only" data-act="del" title="Delete"><i class="bi bi-trash3"></i></button>
+        <button class="ps-actBtn" data-act="view" title="${t("prod.modalView")}"><i class="bi bi-eye"></i></button>
+        <button class="ps-actBtn" data-act="restock" title="${t("prod.restockTitle")}"><i class="bi bi-box-arrow-in-down"></i></button>
+        <button class="ps-actBtn admin-only" data-act="edit" title="${t("btn.edit")}"><i class="bi bi-pencil-square"></i></button>
+        <button class="ps-actBtn danger admin-only" data-act="del" title="${t("btn.delete")}"><i class="bi bi-trash3"></i></button>
       </div>
     `;
     }
@@ -300,7 +300,7 @@ import { i18n } from './shared.js';
 
             // Kiểm tra ảnh bắt buộc khi tạo mới
             if (!id && !imageFile) {
-                toast("Ảnh sản phẩm là bắt buộc", "error");
+                toast(t("prod.imageRequired"), "error");
                 return;
             }
 
@@ -372,13 +372,13 @@ import { i18n } from './shared.js';
         const qty = parseInt(document.getElementById("restockQty").value, 10);
         
         if (!id || isNaN(qty) || qty <= 0) {
-            toast(t("toast.invalid") || "Số lượng không hợp lệ", "error");
+            toast(t("toast.qtyInvalid"), "error");
             return;
         }
 
         try {
             await API.products.restock(id, qty);
-            toast(t("toast.saved") || "Nhập kho thành công");
+            toast(t("toast.restockOk"));
             render();
             bootstrap.Modal.getInstance(document.getElementById("restockModal"))?.hide();
         } catch (err) {
@@ -435,7 +435,7 @@ import { i18n } from './shared.js';
             
             const fCat = document.getElementById("fCategory");
             if (!fCat) return;
-            fCat.innerHTML = `<option value="" disabled selected>Chọn danh mục</option>` +
+            fCat.innerHTML = `<option value="" disabled selected>${t("prod.selectCategory")}</option>` +
                 data.map(c => `<option value="${c.id}">${c.name || c.category_name}</option>`).join("");
         } catch(err) {
             console.error('Load categories error', err);

@@ -3,8 +3,14 @@
  * Backend dùng PHP Session, không dùng JWT
  * Cookie PHPSESSID được browser tự động quản lý
  */
-import { api } from './api.js?v=5';
+import { api } from './api.js?v=9';
 import { getAvatarImage } from './assets.js';
+import { i18n } from './shared.js';
+
+function t(k) {
+    const lang = localStorage.getItem('ps_lang') || 'vi';
+    return i18n[lang]?.[k] || i18n.en[k] || k;
+}
 
 const STORAGE_KEY = "ps_user";
 
@@ -86,7 +92,7 @@ export async function requireAuth(redirectTo = "login.html") {
   // Fast check: Nếu không có user info trong sessionStorage
   if (!user) {
     location.replace(redirectTo);
-    throw new Error("Chưa đăng nhập");
+    throw new Error(t('auth.notLoggedIn'));
   }
   
   // Instant RBAC UI application
@@ -112,13 +118,12 @@ export async function requireAuth(redirectTo = "login.html") {
       } else if (nameStr.length >= 2) {
           initials = nameStr.substring(0, 2).toUpperCase();
       }
-      const roleStr = u.role === 'admin' ? "Administrator" : "Nhân viên";
       const roleKey = u.role === 'admin' ? "role.admin" : "role.staff";
       
       document.querySelectorAll('.ps-user__name').forEach(el => el.textContent = nameStr);
       document.querySelectorAll('.ps-user__role').forEach(el => {
           el.setAttribute('data-i18n', roleKey);
-          el.textContent = roleStr;
+          el.textContent = t(roleKey);
       });
       
       // Update avatar - use image if available, otherwise use initials
@@ -162,7 +167,7 @@ export async function requireAuth(redirectTo = "login.html") {
     console.error('Auth verification failed:', error);
     _clearUser();
     location.replace(redirectTo);
-    throw new Error("Phiên đăng nhập đã hết hạn");
+    throw new Error(t('auth.sessionExpired'));
   }
 }
 
@@ -182,4 +187,5 @@ export function isAdmin() {
   const user = _loadUser();
   return user && user.role === 'admin';
 }
+
 
