@@ -48,6 +48,17 @@ services:
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-google/gemini-2.0-flash-001}
       OPENROUTER_APP_URL: ${OPENROUTER_APP_URL:-http://localhost:8080}
       OPENROUTER_APP_NAME: ${OPENROUTER_APP_NAME:-PhoneStore POS}
+      # SePay — compose đọc .env ở gốc project; container không mount .env trực tiếp
+      SEPAY_MERCHANT_ID: ${SEPAY_MERCHANT_ID:-}
+      SEPAY_SECRET_KEY: ${SEPAY_SECRET_KEY:-}
+      SEPAY_ENV: ${SEPAY_ENV:-sandbox}
+      SEPAY_SUCCESS_URL: ${SEPAY_SUCCESS_URL:-}
+      SEPAY_ERROR_URL: ${SEPAY_ERROR_URL:-}
+      SEPAY_CANCEL_URL: ${SEPAY_CANCEL_URL:-}
+      # VietQR — TK ngân hàng nhận tiền
+      SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-}
+      SEPAY_ACCOUNT_NUMBER: ${SEPAY_ACCOUNT_NUMBER:-}
+      SEPAY_ACCOUNT_NAME: ${SEPAY_ACCOUNT_NAME:-}
     networks:
       - phonestore_network
 

@@ -34,14 +34,16 @@ set_exception_handler(function($exception) {
 
 // CORS Headers cho phÃ©p Frontend (HTML/JS) gá»i API
 $allowedOrigins = [
-    'http://127.0.0.1:8080',   // Docker (truy cáº­p trá»±c tiáº¿p)
+    'http://127.0.0.1:8080',   // Docker (truy cập trực tiếp)
     'http://localhost:8080',    // Docker (localhost)
     'http://127.0.0.1:5500',   // VS Code Live Server
     'http://localhost:5500',    // VS Code Live Server
-    'http://127.0.0.1:3000',   // Dev server khÃ¡c
+    'http://127.0.0.1:3000',   // Dev server khác
     'http://localhost:3000',
     'http://127.0.0.1:8000',
     'http://localhost:8000',
+    // Production / staging HTTPS — thêm domain thật hoặc URL ngrok đang dùng vào đây
+    'https://unconsonant-alycia-pawkily.ngrok-free.dev',
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins, true)) {
@@ -91,6 +93,7 @@ require_once __DIR__ . '/controllers/CategoryController.php';
 require_once __DIR__ . '/controllers/ProductController.php';
 require_once __DIR__ . '/controllers/CustomerController.php';
 require_once __DIR__ . '/controllers/PosController.php';
+require_once __DIR__ . '/controllers/SepayController.php';
 require_once __DIR__ . '/controllers/ReportController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
 require_once __DIR__ . '/controllers/LogController.php';
@@ -106,13 +109,27 @@ $db = Database::getConnection();
 // Náº¿u lÃ  multipart/form-data (cÃ³ file upload) â†’ dÃ¹ng $_POST
 // Náº¿u lÃ  application/json â†’ parse JSON tá»« php://input
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+$rawInput = file_get_contents('php://input');
 if (strpos($contentType, 'multipart/form-data') !== false) {
-    // FormData: Láº¥y tá»« $_POST
     $data = $_POST;
+} elseif (strpos($contentType, 'x-www-form-urlencoded') !== false) {
+    // SePay bank-monitoring webhook có thể gửi form-urlencoded
+    $data = $_POST;
+    if (empty($data) && $rawInput !== '') {
+        parse_str($rawInput, $data);
+    }
 } else {
-    // JSON: Parse tá»« php://input
-    $data = json_decode(file_get_contents("php://input"), true);
-    if ($data === null) { $data = []; }
+    $data = json_decode($rawInput, true);
+    if (!is_array($data) || empty($data)) {
+        // Fallback: thử form-urlencoded (một số webhook gửi không khai báo Content-Type đúng)
+        if (!empty($_POST)) {
+            $data = $_POST;
+        } elseif ($rawInput !== '') {
+            parse_str($rawInput, $parsed);
+            if (!empty($parsed)) { $data = $parsed; }
+        }
+        if (!is_array($data)) { $data = []; }
+    }
 }
 // Parse Ä‘Æ°á»ng dáº«n Path parameters /api/staff/{id}/resend
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -130,6 +147,7 @@ $categoryCtrl = new CategoryController($db);
 $productCtrl = new ProductController($db);
 $customerCtrl = new CustomerController($db);
 $posCtrl = new PosController($db);
+$sepayCtrl = new SepayController($db);
 $reportCtrl = new ReportController($db);
 $profileCtrl = new ProfileController($db);
 $logCtrl = new LogController($db);
@@ -298,6 +316,10 @@ elseif (preg_match('/^\/api\/admin\/shifts\/(\d+)$/', $uri, $m) && $method === '
 // Admin: nhat ky hoat dong (doc bang logs)
 elseif ($uri === '/api/admin/activity-logs' && $method === 'GET') { $logCtrl->activityLogs(); }
 // POS
+elseif ($uri === '/api/pos/sepay/ipn' && $method === 'POST') { $sepayCtrl->ipn($data ?? []); }
+elseif ($uri === '/api/pos/sepay/init' && $method === 'POST') { $sepayCtrl->init($data ?? []); }
+elseif ($uri === '/api/pos/sepay/status' && $method === 'GET') { $sepayCtrl->status(isset($_GET['invoice']) ? (string)$_GET['invoice'] : ''); }
+elseif ($uri === '/api/pos/sepay/cancel' && $method === 'POST') { $sepayCtrl->cancel($data ?? []); }
 elseif ($uri === '/api/pos/session' && $method === 'POST') { $posCtrl->initSession(); }
 elseif ($uri === '/api/pos/cart/add' && $method === 'POST') { $posCtrl->addToCart($data); }
 elseif ($uri === '/api/pos/cart/item' && $method === 'PUT') { $posCtrl->updateItem($data); }

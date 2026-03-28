@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhoneStore — Kết quả thanh toán</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.25rem; }
+        a { color: #0d6efd; }
+    </style>
+</head>
+<body>
+    <h1 id="title">Kết quả thanh toán</h1>
+    <p id="msg">Bạn có thể đóng trang này và quay lại màn hình bán hàng. Trạng thái đơn được cập nhật qua thông báo từ SePay (IPN).</p>
+    <p><a href="pos.html">← Quay lại POS</a></p>
+    <script>
+        const q = new URLSearchParams(location.search);
+        const s = q.get("status") || q.get("sepay") || "";
+        if (s === "success" || s === "ok") {
+            document.getElementById("title").textContent = "Thanh toán thành công";
+            document.getElementById("msg").textContent = "Cảm ơn bạn. Vui lòng quay lại ứng dụng POS.";
+        } else if (s === "error") {
+            document.getElementById("title").textContent = "Thanh toán thất bại";
+        } else if (s === "cancel") {
+            document.getElementById("title").textContent = "Đã hủy thanh toán";
+        }
+    </script>
+</body>
+</html>

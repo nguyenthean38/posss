@@ -144,7 +144,8 @@ class VoucherService {
 
         $v = $pdo->prepare(
             'SELECT cv.id, cv.code, cv.status, cv.tier_id, vt.name AS tier_name,
-                    vt.discount_amount_vnd, vt.discount_percent, vt.min_lifetime_spend_vnd, vt.min_points_required
+                    vt.discount_amount_vnd, vt.discount_percent, vt.min_lifetime_spend_vnd, vt.min_points_required,
+                    vt.valid_from, vt.valid_to
              FROM customer_vouchers cv
              INNER JOIN voucher_tiers vt ON vt.id = cv.tier_id
              WHERE cv.customer_id = ? AND cv.status = \'issued\'

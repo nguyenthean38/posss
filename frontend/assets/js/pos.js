@@ -1,7 +1,7 @@
 /**
  * POS Module - Real API Integration
  */
-import { api } from './api.js?v=9';
+import { api } from './api.js?v=10';
 import { requireAuth, getCurrentUser, getUser } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
@@ -19,6 +19,12 @@ import { i18n } from './shared.js';
     /** Danh sách phiếu từ API loyalty-summary (để tính giảm) */
     let loyaltyVouchersList = [];
 
+    const SEPAY_POLL_MS = 3000;
+    let sepayPollTimer = null;
+    let sepayCountdownTimer = null;
+    let sepayInvoice = "";
+    let sepayExpiresMs = 0;
+
     // ===== i18n =====
 
     // ===== HELPERS =====
@@ -26,6 +32,75 @@ import { i18n } from './shared.js';
         const v = Number(n || 0);
         return v.toLocaleString("vi-VN") + " ₫";
     };
+
+    function fmtVoucherDate(iso) {
+        if (!iso) return "";
+        const d = String(iso).slice(0, 10);
+        if (getLang() === "vi") return d.split("-").reverse().join("/");
+        return d;
+    }
+
+    function getPayMethod() {
+        const qr = document.getElementById("payMethodQr");
+        return qr?.checked ? "qr" : "cash";
+    }
+
+    function stopSepayTimers() {
+        if (sepayPollTimer) {
+            clearInterval(sepayPollTimer);
+            sepayPollTimer = null;
+        }
+        if (sepayCountdownTimer) {
+            clearInterval(sepayCountdownTimer);
+            sepayCountdownTimer = null;
+        }
+    }
+
+    async function cancelSepayPending() {
+        if (!sepayInvoice) return;
+        try {
+            await api.posSepayCancel(sepayInvoice);
+        } catch (e) {
+            console.warn("sepay cancel", e);
+        }
+        sepayInvoice = "";
+    }
+
+    function syncPayMethodUI() {
+        const cashSec = document.getElementById("payCashSection");
+        const btnCash = document.getElementById("btnCompletePay");
+        const btnQr = document.getElementById("btnCreateQr");
+        const isQr = getPayMethod() === "qr";
+        if (cashSec) cashSec.style.display = isQr ? "none" : "";
+        if (btnCash) btnCash.classList.toggle("d-none", isQr);
+        if (btnQr) btnQr.classList.toggle("d-none", !isQr);
+        updatePayState();
+    }
+
+    function updateVoucherFieldState() {
+        const phone = (document.getElementById("payPhone")?.value || "").trim().replace(/\s/g, "");
+        const sel = document.getElementById("payVoucher");
+        const help = document.getElementById("payVoucherHelp");
+        const btnClr = document.getElementById("btnVoucherClear");
+        const ok = phone.length >= 9;
+        if (sel) {
+            sel.disabled = !ok;
+            if (!ok) {
+                sel.value = "";
+                loyaltyVouchersList = [];
+                sel.innerHTML = "";
+                const opt0 = document.createElement("option");
+                opt0.value = "";
+                opt0.textContent = t("pay.voucherNone");
+                sel.appendChild(opt0);
+            }
+        }
+        if (help) help.classList.toggle("d-none", ok);
+        if (btnClr) {
+            const hasV = !!(sel && sel.value);
+            btnClr.classList.toggle("d-none", !ok || !hasV);
+        }
+    }
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
@@ -271,6 +346,7 @@ import { i18n } from './shared.js';
         const sel = document.getElementById("payVoucher");
         if (!sel) return;
         const phone = (document.getElementById("payPhone")?.value || "").trim().replace(/\s/g, "");
+        updateVoucherFieldState();
         sel.innerHTML = "";
         const opt0 = document.createElement("option");
         opt0.value = "";
@@ -294,12 +370,14 @@ import { i18n } from './shared.js';
                         : v.discount_percent
                             ? `${v.discount_percent}%`
                             : "";
-                o.textContent = `${v.code} · ${v.tier_name || ""} (${disc})`;
+                const hsd = v.valid_to ? ` · ${t("pay.voucherHsd")}: ${fmtVoucherDate(v.valid_to)}` : "";
+                o.textContent = `${v.code} · ${v.tier_name || ""} (${disc})${hsd}`;
                 sel.appendChild(o);
             }
         } catch (e) {
             console.warn("loyalty summary", e);
         }
+        updateVoucherFieldState();
         updatePayState();
         updatePointsPreview();
     }
@@ -337,25 +415,7 @@ import { i18n } from './shared.js';
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal?.hide();
 
-            // Reset form
-            document.getElementById("payPhone").value = "";
-            document.getElementById("payName").value = "";
-            document.getElementById("payCash").value = "";
-            const hint = document.getElementById("payLoyaltyHint");
-            if (hint) hint.textContent = "";
-            const pp = document.getElementById("payPointsPreview");
-            if (pp) pp.textContent = "";
-            document.getElementById("payEarnYes").checked = true;
-            loyaltyVouchersList = [];
-            const pv = document.getElementById("payVoucher");
-            if (pv) {
-                pv.innerHTML = "";
-                const o = document.createElement("option");
-                o.value = "";
-                o.textContent = t("pay.voucherNone");
-                pv.appendChild(o);
-            }
-            updatePayState();
+            resetPayFormAfterCheckout();
 
         } catch (error) {
             console.error('Checkout error:', error);
@@ -499,13 +559,21 @@ import { i18n } from './shared.js';
         const changeEl = document.getElementById("payChange");
         if (changeEl) changeEl.textContent = fmtVND(change);
 
-        const btn = document.getElementById("btnCompletePay");
-        if (btn) btn.disabled = subtotal <= 0 || cash < effective;
+        const btnCash = document.getElementById("btnCompletePay");
+        const btnQr = document.getElementById("btnCreateQr");
+        const isQr = getPayMethod() === "qr";
+        if (isQr) {
+            if (btnCash) btnCash.disabled = true;
+            if (btnQr) btnQr.disabled = subtotal <= 0 || effective < 1000;
+        } else {
+            if (btnQr) btnQr.disabled = true;
+            if (btnCash) btnCash.disabled = subtotal <= 0 || cash < effective;
+        }
 
         updatePointsPreview();
     }
 
-    function completePay() {
+    function buildPayPayload() {
         const phone = (document.getElementById("payPhone")?.value || "").trim();
         const name = (document.getElementById("payName")?.value || "").trim();
         const cashInput = document.getElementById("payCash");
@@ -521,8 +589,181 @@ import { i18n } from './shared.js';
         if (vid) {
             payload.CustomerVoucherId = parseInt(vid, 10);
         }
+        return payload;
+    }
 
-        checkout(payload);
+    function completePay() {
+        checkout(buildPayPayload());
+    }
+
+    function submitSepayCheckoutForm(data) {
+        const postUrl = data.checkout_post_url || data.checkoutPostUrl || '';
+        const fields  = data.checkout_fields  || data.checkoutFields  || {};
+        const link = document.getElementById('sepayCheckoutLink');
+        const form = document.getElementById('sepayHiddenForm');
+        if (!link || !form || !postUrl) return;
+
+        // Build hidden form for POST — SePay checkout/init only accepts POST + signed fields
+        form.action  = postUrl;
+        form.method  = 'POST';
+        form.target  = '_blank';
+        form.innerHTML = '';
+        Object.keys(fields).forEach((k) => {
+            const inp = document.createElement('input');
+            inp.type  = 'hidden';
+            inp.name  = k;
+            inp.value = fields[k] == null ? '' : String(fields[k]);
+            form.appendChild(inp);
+        });
+        link.classList.remove('d-none');
+    }
+
+    function showSepaySuccess(amountStr, pointsEarned, bal) {
+        const wait = document.getElementById("sepayWaitPanel");
+        const ok = document.getElementById("sepaySuccessPanel");
+        const amtEl = document.getElementById("sepaySuccessAmount");
+        const ptsEl = document.getElementById("sepaySuccessPoints");
+        if (wait) wait.classList.add("d-none");
+        if (ok) ok.classList.remove("d-none");
+        if (amtEl) amtEl.textContent = amountStr;
+        if (ptsEl) {
+            if (pointsEarned > 0 && bal != null) {
+                ptsEl.textContent = t("toast.paidLoyalty").replace("{pts}", String(pointsEarned)).replace("{bal}", String(bal));
+            } else {
+                ptsEl.textContent = "";
+            }
+        }
+    }
+
+    function resetSepayModalPanels() {
+        const wait = document.getElementById("sepayWaitPanel");
+        const ok = document.getElementById("sepaySuccessPanel");
+        if (wait) wait.classList.remove("d-none");
+        if (ok) ok.classList.add("d-none");
+    }
+
+    async function pollSepayOnce() {
+        if (!sepayInvoice) return;
+        try {
+            const st = await api.posSepayStatus(sepayInvoice);
+            const status = st.status || st.Status;
+            if (status === "paid") {
+                stopSepayTimers();
+                const pe = st.PointsEarned ?? st.points_earned ?? 0;
+                const bal = st.CustomerLoyaltyBalance ?? st.customer_loyalty_balance;
+                const subtotal = cart.TotalAmount || 0;
+                const vd = getVoucherDiscount(subtotal);
+                const effective = Math.max(0, subtotal - vd);
+                showSepaySuccess(fmtVND(effective), pe, bal);
+                if (st.PdfUrl || st.pdf_url) {
+                    window.open(st.PdfUrl || st.pdf_url, "_blank");
+                }
+                toast(pe > 0 && bal != null ? t("toast.paidLoyalty").replace("{pts}", String(pe)).replace("{bal}", String(bal)) : t("toast.sepayPaid"));
+                sepayInvoice = "";
+                // Đóng modal sau 2.2s — không phụ thuộc initCart để tránh bị block nếu session lỗi
+                setTimeout(() => {
+                    const qm = document.getElementById("sepayQrModal");
+                    const m = bootstrap.Modal.getInstance(qm);
+                    m?.hide();
+                    resetSepayModalPanels();
+                    const payModalEl = document.getElementById("payModal");
+                    const pm = bootstrap.Modal.getInstance(payModalEl);
+                    pm?.hide();
+                    resetPayFormAfterCheckout();
+                }, 2200);
+                // Reload cart độc lập — không block luồng đóng modal
+                initCart().then(() => renderCart()).catch(err => console.warn("initCart after pay", err));
+            } else if (status === "expired" || status === "cancelled") {
+                stopSepayTimers();
+                toast(status === "expired" ? t("pay.qrExpired") : t("pay.qrCancel"));
+                sepayInvoice = "";
+                const qm = document.getElementById("sepayQrModal");
+                const m = bootstrap.Modal.getInstance(qm);
+                m?.hide();
+                resetSepayModalPanels();
+            }
+        } catch (e) {
+            console.warn("sepay poll", e);
+        }
+    }
+
+    async function startSepayCheckout() {
+        stopSepayTimers();
+        resetSepayModalPanels();
+        const payload = buildPayPayload();
+        try {
+            const data = await api.posSepayInit(payload);
+            sepayInvoice = data.invoice || data.Invoice || "";
+            const exp = data.expired_at || data.ExpiredAt;
+            sepayExpiresMs = exp ? new Date(exp).getTime() : Date.now() + 300000;
+
+            const img = document.getElementById("sepayQrRefImg");
+            if (img && (data.qr_image_url || data.QrImageUrl)) {
+                img.src = data.qr_image_url || data.QrImageUrl;
+                img.classList.remove("d-none");
+            } else if (img) {
+                img.classList.add("d-none");
+            }
+
+            const amtLine = document.getElementById("sepayQrAmountLine");
+            if (amtLine) amtLine.textContent = fmtVND(data.amount ?? data.Amount);
+            const invLine = document.getElementById("sepayQrInvoiceLine");
+            if (invLine) invLine.textContent = sepayInvoice;
+
+            submitSepayCheckoutForm(data);
+
+            const cd = document.getElementById("sepayQrCountdown");
+            const tick = () => {
+                const left = Math.max(0, Math.floor((sepayExpiresMs - Date.now()) / 1000));
+                const mm = String(Math.floor(left / 60)).padStart(2, "0");
+                const ss = String(left % 60).padStart(2, "0");
+                if (cd) cd.textContent = `${mm}:${ss}`;
+                if (left <= 0) {
+                    stopSepayTimers();
+                    pollSepayOnce();
+                }
+            };
+            tick();
+            sepayCountdownTimer = setInterval(tick, 1000);
+
+            sepayPollTimer = setInterval(() => pollSepayOnce(), SEPAY_POLL_MS);
+            pollSepayOnce();
+
+            const qm = document.getElementById("sepayQrModal");
+            if (qm) bootstrap.Modal.getOrCreateInstance(qm).show();
+        } catch (e) {
+            console.error(e);
+            const msg = e.message || "";
+            if (/SePay chưa cấu hình|SePay not configured|503/i.test(msg)) {
+                toast(t("pay.sepayNotConfigured"));
+            } else {
+                toast(msg || t("toast.error"));
+            }
+        }
+    }
+
+    function resetPayFormAfterCheckout() {
+        document.getElementById("payPhone").value = "";
+        document.getElementById("payName").value = "";
+        document.getElementById("payCash").value = "";
+        const hint = document.getElementById("payLoyaltyHint");
+        if (hint) hint.textContent = "";
+        const pp = document.getElementById("payPointsPreview");
+        if (pp) pp.textContent = "";
+        document.getElementById("payEarnYes").checked = true;
+        loyaltyVouchersList = [];
+        const pv = document.getElementById("payVoucher");
+        if (pv) {
+            pv.innerHTML = "";
+            const o = document.createElement("option");
+            o.value = "";
+            o.textContent = t("pay.voucherNone");
+            pv.appendChild(o);
+        }
+        document.getElementById("payMethodCash").checked = true;
+        syncPayMethodUI();
+        updateVoucherFieldState();
+        updatePayState();
     }
 
     // ===== LAYOUT CONTROLS =====
@@ -558,6 +799,40 @@ import { i18n } from './shared.js';
             renderCart();
             refreshPosShift();
             refreshPayLoyaltyHint();
+            syncPayMethodUI();
+            updateVoucherFieldState();
+        });
+
+        document.getElementById("payMethodCash")?.addEventListener("change", syncPayMethodUI);
+        document.getElementById("payMethodQr")?.addEventListener("change", syncPayMethodUI);
+        document.getElementById("btnCreateQr")?.addEventListener("click", startSepayCheckout);
+        document.getElementById("btnVoucherClear")?.addEventListener("click", () => {
+            const pv = document.getElementById("payVoucher");
+            if (pv) pv.value = "";
+            updateVoucherFieldState();
+            updatePayState();
+            updatePointsPreview();
+        });
+
+        async function closeSepayModalFromUser() {
+            stopSepayTimers();
+            await cancelSepayPending();
+            resetSepayModalPanels();
+            const qm = document.getElementById("sepayQrModal");
+            bootstrap.Modal.getInstance(qm)?.hide();
+        }
+
+        document.getElementById("btnSepayQrClose")?.addEventListener("click", () => closeSepayModalFromUser());
+        document.getElementById("btnSepaySwitchCash")?.addEventListener("click", async () => {
+            await closeSepayModalFromUser();
+            document.getElementById("payMethodCash").checked = true;
+            syncPayMethodUI();
+        });
+        document.getElementById("btnSepayRetry")?.addEventListener("click", async () => {
+            await cancelSepayPending();
+            stopSepayTimers();
+            resetSepayModalPanels();
+            await startSepayCheckout();
         });
     }
 
@@ -591,11 +866,15 @@ import { i18n } from './shared.js';
         document.getElementById("payCash")?.addEventListener("input", updatePayState);
         document.getElementById("payModal")?.addEventListener("shown.bs.modal", () => {
             document.getElementById("payEarnYes").checked = true;
+            const pc = document.getElementById("payMethodCash");
+            if (pc) pc.checked = true;
+            syncPayMethodUI();
             updatePayState();
             const lh = document.getElementById("payLoyaltyHint");
             if (lh) lh.textContent = "";
             const pp = document.getElementById("payPointsPreview");
             if (pp) pp.textContent = "";
+            updateVoucherFieldState();
             schedulePayLoyaltyHint();
         });
         document.getElementById("payPhone")?.addEventListener("input", schedulePayLoyaltyHint);

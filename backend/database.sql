@@ -120,11 +120,33 @@ CREATE TABLE orders (
     customer_voucher_id INT NULL,
     customer_pay DECIMAL(15, 2) NOT NULL,
     change_amount DECIMAL(15, 2) NOT NULL,
+    payment_method ENUM('cash','bank_transfer') NOT NULL DEFAULT 'cash',
+    payment_status ENUM('pending','paid','cancelled') NOT NULL DEFAULT 'paid',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (customer_voucher_id) REFERENCES customer_vouchers(id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS sepay_pending_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_invoice VARCHAR(64) NOT NULL,
+    staff_user_id INT NOT NULL,
+    order_id INT NULL,
+    cart_snapshot JSON NOT NULL,
+    customer_data JSON NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    subtotal_before_voucher DECIMAL(15,2) NOT NULL DEFAULT 0,
+    voucher_discount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    status ENUM('pending','paid','expired','cancelled') NOT NULL DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expired_at DATETIME NOT NULL,
+    paid_at DATETIME NULL,
+    UNIQUE KEY uq_order_invoice (order_invoice),
+    KEY idx_status_exp (status, expired_at),
+    KEY idx_staff (staff_user_id),
+    CONSTRAINT fk_sepay_pending_staff FOREIGN KEY (staff_user_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO voucher_tiers (name, min_points_required, min_lifetime_spend_vnd, discount_amount_vnd, discount_percent, active) VALUES
 ('Ưu đãi 500k chi tiêu', 0, 500000, 25000, NULL, 1),

@@ -367,6 +367,25 @@ class ApiClient {
         });
     }
 
+    async posSepayInit(data) {
+        return this.request('/api/pos/sepay/init', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async posSepayStatus(invoice) {
+        const q = encodeURIComponent(invoice || '');
+        return this.request(`/api/pos/sepay/status?invoice=${q}`, { method: 'GET' });
+    }
+
+    async posSepayCancel(invoice) {
+        return this.request('/api/pos/sepay/cancel', {
+            method: 'POST',
+            body: JSON.stringify({ Invoice: invoice })
+        });
+    }
+
     async posLoyaltySummary(phone) {
         const q = encodeURIComponent(phone || '');
         return this.request(`/api/pos/loyalty-summary?phone=${q}`, { method: 'GET' });

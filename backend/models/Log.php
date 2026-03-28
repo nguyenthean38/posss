@@ -10,7 +10,11 @@ class Log {
     public function createLog($user_id, $action, $details = "") {
         $query = "INSERT INTO " . $this->table_name . " (user_id, action, details) VALUES (:user_id, :action, :details)";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
+        if ($user_id === null || $user_id === '') {
+            $stmt->bindValue(':user_id', null, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindValue(':user_id', (int)$user_id, PDO::PARAM_INT);
+        }
         $stmt->bindParam(':action', $action);
         $stmt->bindParam(':details', $details);
         return $stmt->execute();

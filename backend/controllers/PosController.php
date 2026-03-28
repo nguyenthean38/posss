@@ -1,4 +1,7 @@
 <?php
+
+require_once __DIR__ . '/../services/PosCheckoutService.php';
+
 class PosController {
     private $db;
     private $productModel;
@@ -123,6 +126,12 @@ class PosController {
         if (session_status() === PHP_SESSION_NONE) session_start();
         if (empty($_SESSION['cart'])) Response::json(["message" => "Giỏ hàng rỗng"], 400);
 
+        $paymentMethod = isset($data['payment_method']) ? strtolower(trim((string)$data['payment_method'])) : (isset($data['PaymentMethod']) ? strtolower(trim((string)$data['PaymentMethod'])) : 'cash');
+        if ($paymentMethod === 'bank_transfer' || $paymentMethod === 'qr' || $paymentMethod === 'sepay') {
+            Response::json(["message" => "Thanh toán chuyển khoản dùng nút Tạo mã QR, không gọi checkout trực tiếp"], 400);
+        }
+        $paymentMethod = 'cash';
+
         // Chuẩn hóa: chấp nhận cả PascalCase và snake_case
         $phone = isset($data['phone']) ? trim($data['phone']) : (isset($data['Phone']) ? trim($data['Phone']) : '');
         $fullName = isset($data['full_name']) ? trim($data['full_name']) : (isset($data['FullName']) ? trim($data['FullName']) : '');
@@ -146,127 +155,28 @@ class PosController {
             $customerVoucherId = null;
         }
 
-        $subtotalBeforeVoucher = $this->getCartTotal();
-        $voucherDiscount = 0.0;
-        $lockedVoucher = null;
-
-        $custId = null;
-        if ($phone !== '') {
-            $cust = $this->customerModel->findByPhone($phone);
-            if ($cust) {
-                $custId = (int)$cust['id'];
-            } else {
-                $nameToCreate = $fullName !== '' ? $fullName : 'Khách hàng';
-                $newId = $this->customerModel->create($nameToCreate, $phone, $address);
-                if ($newId) {
-                    $custId = (int)$newId;
-                }
-            }
-        }
-
-        if ($customerVoucherId !== null && $custId === null) {
-            Response::json(["message" => "Cần số điện thoại khách để dùng phiếu"], 400);
-        }
+        $cartItems = array_values($_SESSION['cart']);
+        $staffId = (int)$_SESSION['user_id'];
 
         try {
-            $this->db->beginTransaction();
-
-            if ($customerVoucherId !== null && $custId !== null) {
-                $lockedVoucher = VoucherService::lockVoucherForRedeem($this->db, $customerVoucherId, $custId);
-                if (!$lockedVoucher) {
-                    $this->db->rollBack();
-                    Response::json(["message" => "Phiếu không hợp lệ hoặc đã dùng"], 400);
-                }
-                $voucherDiscount = VoucherService::computeDiscount($lockedVoucher, (float)$subtotalBeforeVoucher);
-            }
-
-            $totalAfterVoucher = max(0.0, (float)$subtotalBeforeVoucher - $voucherDiscount);
-            if ($customerPay < $totalAfterVoucher) {
-                $this->db->rollBack();
-                Response::json(["message" => "Số tiền khách đưa không đủ"], 400);
-            }
-
-            $change = $customerPay - $totalAfterVoucher;
-            $staffId = $_SESSION['user_id'];
-
-            $earnBase = LoyaltyVoucherRules::EARN_ON_TOTAL_AFTER_VOUCHER ? $totalAfterVoucher : $subtotalBeforeVoucher;
-
-            $sql = "INSERT INTO orders (customer_id, user_id, total_amount, customer_pay, change_amount, subtotal_before_voucher, voucher_discount, customer_voucher_id, created_at)
-                    VALUES (:cid, :uid, :total, :pay, :change, :subbf, :vdisc, :cvid, NOW())";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':cid', $custId, $custId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-            $stmt->bindParam(':uid', $staffId, PDO::PARAM_INT);
-            $stmt->bindParam(':total', $totalAfterVoucher);
-            $stmt->bindParam(':pay', $customerPay);
-            $stmt->bindParam(':change', $change);
-            $stmt->bindParam(':subbf', $subtotalBeforeVoucher);
-            $stmt->bindParam(':vdisc', $voucherDiscount);
-            $cvBind = $customerVoucherId;
-            $stmt->bindValue(':cvid', $cvBind, $cvBind === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-            $stmt->execute();
-            $orderId = (int)$this->db->lastInsertId();
-
-            $sqlDetail = "INSERT INTO order_details (order_id, product_id, quantity, unit_price, import_price_at_sale)
-                          VALUES (:oid, :pid, :qty, :price, :import)";
-            $stmtD = $this->db->prepare($sqlDetail);
-
-            foreach ($_SESSION['cart'] as $item) {
-                $stmtD->bindParam(':oid', $orderId);
-                $stmtD->bindParam(':pid', $item['id']);
-                $stmtD->bindParam(':qty', $item['quantity']);
-                $stmtD->bindParam(':price', $item['selling_price']);
-                $stmtD->bindParam(':import', $item['import_price']);
-                $stmtD->execute();
-
-                $this->db->query("UPDATE products SET stock_quantity = stock_quantity - " . (int)$item['quantity'] . " WHERE id = " . (int)$item['id']);
-            }
-
-            if ($custId !== null) {
-                VoucherService::incrementLifetimeSpend($this->db, $custId, (float)$subtotalBeforeVoucher);
-            }
-
-            $pointsEarned = 0;
-            $loyaltyBalance = null;
-            if ($earnLoyalty && $custId) {
-                $loyalty = new LoyaltyPoints($this->db);
-                $earn = $loyalty->earnForOrder((int)$custId, $orderId, (float)$earnBase);
-                if ($earn) {
-                    $pointsEarned = $earn['points'];
-                    $loyaltyBalance = $earn['balance_after'];
-                }
-            }
-
-            if ($customerVoucherId !== null) {
-                VoucherService::markVoucherUsed($this->db, $customerVoucherId, $orderId);
-            }
-
-            if ($custId) {
-                VoucherService::issueEligibleVouchers($this->db, $custId);
-            }
-
-            $this->db->commit();
-            $this->logModel->createLog($_SESSION['user_id'], 'checkout', 'Thanh toán đơn hàng ID=' . $orderId);
-
+            $payload = PosCheckoutService::executeCheckout(
+                $this->db,
+                $cartItems,
+                $phone,
+                $fullName,
+                $address,
+                $customerPay,
+                $earnLoyalty,
+                $customerVoucherId,
+                $staffId,
+                $paymentMethod,
+                $this->logModel
+            );
             $_SESSION['cart'] = [];
-
-            $payload = [
-                'order_id' => $orderId,
-                'OrderId' => $orderId,
-                'pdf_url' => '/api/pos/invoice/' . $orderId,
-                'PdfUrl' => '/api/pos/invoice/' . $orderId,
-                'points_earned' => $pointsEarned,
-                'PointsEarned' => $pointsEarned,
-                'customer_loyalty_balance' => $loyaltyBalance,
-                'CustomerLoyaltyBalance' => $loyaltyBalance,
-                'subtotal_before_voucher' => (float)$subtotalBeforeVoucher,
-                'voucher_discount' => (float)$voucherDiscount,
-                'total_amount' => (float)$totalAfterVoucher,
-                'TotalAmount' => (float)$totalAfterVoucher,
-            ];
             Response::json($payload);
-
+        } catch (InvalidArgumentException $e) {
+            Response::json(["message" => $e->getMessage()], 400);
         } catch (Exception $e) {
-            $this->db->rollBack();
             Response::json(["message" => "Lỗi thanh toán: " . $e->getMessage()], 500);
         }
     }
