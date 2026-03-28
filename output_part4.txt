@@ -1,0 +1,25 @@
+============================================================
+PART 4: NHỮNG API CÒN SÓT LẠI TỪ DOCS
+============================================================
+(Đã login admin)
+
+⚠️ [GET] 2.8 Thống kê bán hàng NV  =>  HTTP 404
+   Response: {'message': 'Nhân viên không tồn tại'}
+------------------------------------------------------------
+⚠️ [GET] 3.6 Tìm kiếm danh mục  =>  HTTP 404
+   Response: {'message': 'Routing khÃ´ng tá»“n táº¡i hoáº·c sai HTTP method!'}
+------------------------------------------------------------
+✅ [GET] 7.1 Xem hồ sơ cá nhân  =>  HTTP 200
+   Response: {'profile': {'id': 1, 'full_name': 'Administrator', 'email': 'admin@gmail.com', 'role': 'admin', 'status': 'active', 'avatar': None, 'phone': None, 'address': None, 'created_at': '2026-03-19 15:45:28'}}
+------------------------------------------------------------
+✅ [PUT] 7.2 Cập nhật hồ sơ  =>  HTTP 200
+   Response: {'message': 'Cập nhật thành công', 'profile': {'id': 1, 'full_name': 'Admin Tester', 'email': 'admin@gmail.com', 'role': 'admin', 'status': 'active', 'avatar': None, 'phone': None, 'address': None, 'created_at': '2026-03-19 15:45:28'}}
+------------------------------------------------------------
+⚠️ [POST] 7.3 Upload ảnh đại diện (Multipart)  =>  HTTP 400
+   Response: {'message': 'Lỗi upload ảnh hoặc chưa chọn file'}
+------------------------------------------------------------
+✅ [GET] 7.4 Nhật ký Admin/NV  =>  HTTP 200
+   Response: {'items': [{'id': 1559, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-27T17:46:48+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 1214, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-27T13:35:09+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 1173, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-27T13:30:52+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 1130, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-27T13:20:46+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 930, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-27T11:27:48+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 741, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-23T02:58:19+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 157, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-19T18:24:46+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 88, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-19T18:21:39+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}, {'id': 3, 'user_id': 3, 'details': 'Đăng nhập thành công', 'created_at': '2026-03-19T16:46:57+07:00', 'user_name': 'Staff Member', 'user_email': 'staff@gmail.com'}], 'pagination': {'page': 1, 'limit': 50, 'total': 9, 'total_pages': 1}}
+------------------------------------------------------------
+
+✔ PART 4 HOÀN TẤT

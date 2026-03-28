@@ -1,0 +1,78 @@
+============================================================
+PART 2: PRODUCTS + CUSTOMERS + POS
+============================================================
+(Đã login admin)
+
+>>> PRODUCTS <<<
+✅ [GET] 4.1 DS sản phẩm  =>  HTTP 200
+   Response: {'items': [{'id': 6, 'category_id': 1, 'category_name': 'thehoang', 'product_name': 'Test Upd', 'barcode': 'pop880', 'image': 'uploads/products/product_1774244886_deaf51f7.png', 'import_price': '87776.00', 'selling_price': '2333333.00', 'stock_quantity': 72, 'created_at': '2026-03-23 05:48:06'}, {'id': 5, 'category_id': 2, 'category_name': "l;l;';'", 'product_name': 'hôil777', 'barcode': 'pop88', 'image': 'uploads/products/product_1774244392_3a87587f.png', 'import_price': '87776.00', 'selling_price': '2333333.00', 'stock_quantity': 13, 'created_at': '2026-03-23 05:39:52'}, {'id': 4, 'category_id': 2, 'category_name': "l;l;';'", 'product_name': 'hôil', 'barcode': 'pop8', 'image': 'uploads/products/product_1774244300_20fbd1dd.png', 'import_price': '87776.00', 'selling_price': '2333333.00', 'stock_quantity': 9, 'created_at': '2026-03-23 05:38:20'}, {'id': 3, 'category_id': 2, 'category_name': "l;l;';'", 'product_name': 'thehaju', 'barcode': '887', 'image': None, 'import_price': '87776.00', 'selling_price': '444.00', 'stock_quantity': 6, 'created_at': '2026-03-22 11:00:25'}, {'id': 2, 'category_id': 1, 'category_name': 'thehoang', 'product_name': "l;l;';'", 'barcode': '1198', 'image': None, 'import_price': '3444444.00', 'selling_price': '2333333.00', 'stock_quantity': 33, 'created_at': '2026-03-22 06:24:09'}, {'id': 1, 'category_id': 1, 'category_name': 'thehoang', 'product_name': 'theha', 'barcode': '114', 'image': None, 'import_price': '3444444.00', 'selling_price': '2333333.00', 'stock_quantity': 31, 'created_at': '2026-03-22 05:31:59'}], 'pagination': {'page': 1, 'limit': 20, 'total': 6, 'total_pages': 1}}
+------------------------------------------------------------
+⚠️ [POST] 4.2 Tạo SP (thiếu ảnh)  =>  HTTP 400
+   Response: {'message': 'Dữ liệu sản phẩm không hợp lệ'}
+------------------------------------------------------------
+✅ [GET] 4.3 Chi tiết SP  =>  HTTP 200
+   Response: {'id': 6, 'category_id': 1, 'category_name': 'thehoang', 'product_name': 'Test Upd', 'barcode': 'pop880', 'image': 'uploads/products/product_1774244886_deaf51f7.png', 'import_price': '87776.00', 'selling_price': '2333333.00', 'stock_quantity': 72, 'created_at': '2026-03-23 05:48:06'}
+------------------------------------------------------------
+✅ [PUT] 4.4 Sửa SP  =>  HTTP 200
+   Response: {'message': 'Cập nhật sản phẩm thành công', 'product': {'id': 6, 'category_id': 1, 'category_name': 'thehoang', 'product_name': 'SP_Upd_ead17a', 'barcode': 'pop880', 'image': 'uploads/products/product_1774244886_deaf51f7.png', 'import_price': '87776.00', 'selling_price': '2333333.00', 'stock_quantity': 72, 'created_at': '2026-03-23 05:48:06'}}
+------------------------------------------------------------
+✅ [PATCH] 4.5 Nhập kho  =>  HTTP 200
+   Response: {'message': 'Nhập kho thành công'}
+------------------------------------------------------------
+⚠️ [DELETE] 4.6 Xóa SP (có thể bị chặn)  =>  HTTP 400
+   Response: {'message': 'Không thể xóa sản phẩm vì đã tồn tại trong đơn hàng. Vui lòng ngừng kinh doanh hoặc ẩn sản phẩm.'}
+------------------------------------------------------------
+
+>>> CUSTOMERS <<<
+✅ [GET] 5.1 DS khách hàng  =>  HTTP 200
+   Response: {'items': [{'id': 5, 'name': 'AI Test Customer', 'phone': '0988001477', 'address': '', 'avatar': 'uploads/customers/default-customer.png', 'loyalty_points': 46, 'total_orders': 1, 'total_revenue': '4666666.00'}, {'id': 4, 'name': 'AI Test Customer', 'phone': '0987930357', 'address': '', 'avatar': 'uploads/customers/default-customer.png', 'loyalty_points': 46, 'total_orders': 1, 'total_revenue': '4666666.00'}, {'id': 3, 'name': 'AI Test Customer', 'phone': '0987873626', 'address': '', 'avatar': 'uploads/customers/default-customer.png', 'loyalty_points': 46, 'total_orders': 1, 'total_revenue': '4666666.00'}, {'id': 2, 'name': 'jdjdj555', 'phone': '3636366363', 'address': '', 'avatar': 'uploads/customers/default-customer.png', 'loyalty_points': 23, 'total_orders': 1, 'total_revenue': '2333333.00'}, {'id': 1, 'name': 'll4l4k4k', 'phone': '9299299', 'address': '', 'avatar': 'uploads/customers/default-customer.png', 'loyalty_points': 0, 'total_orders': 1, 'total_revenue': '4666666.00'}], 'pagination': {'page': 1, 'limit': 20, 'total': 5, 'total_pages': 1}}
+------------------------------------------------------------
+⚠️ [GET] 5.2 Tìm KH theo SĐT  =>  HTTP 404
+   Response: {'message': 'Khách hàng không tồn tại'}
+------------------------------------------------------------
+✅ [POST] 5.3 Tạo KH  =>  HTTP 201
+   Response: {'message': 'Tạo khách hàng thành công', 'customer': {'id': 8, 'name': 'KH_ead17a', 'phone': '0912689203', 'address': None, 'avatar': 'uploads/customers/default-customer.png', 'loyalty_points': 0, 'total_orders': 0, 'total_revenue': '0.00'}}
+------------------------------------------------------------
+✅ [GET] 5.4 Chi tiết KH  =>  HTTP 200
+   Response: {'customer': {'id': 8, 'name': 'KH_ead17a', 'phone': '0912689203', 'address': None, 'avatar': 'uploads/customers/default-customer.png', 'loyalty_points': 0, 'total_orders': 0, 'total_revenue': '0.00'}, 'purchase_overview': {'order_count': 0, 'total_amount': 0, 'total_product_quantity': 0, 'first_purchase_at': None, 'last_purchase_at': None, 'recent_orders': []}}
+------------------------------------------------------------
+⚠️ [PUT] 5.5 Sửa KH  =>  HTTP 400
+   Response: {'message': 'Họ tên và SĐT không được để trống'}
+------------------------------------------------------------
+✅ [GET] 5.6 Lịch sử mua  =>  HTTP 200
+   Response: []
+------------------------------------------------------------
+⚠️ [GET] 5.7 Chi tiết đơn hàng  =>  HTTP 404
+   Response: {'message': 'Không tìm thấy đơn hàng'}
+------------------------------------------------------------
+✅ [DELETE] 5.8 Xóa KH  =>  HTTP 200
+   Response: {'message': 'Xóa thành công'}
+------------------------------------------------------------
+
+>>> POS <<<
+✅ [POST] 6.1 Mở session POS  =>  HTTP 200
+   Response: {'Items': [], 'TotalAmount': 0}
+------------------------------------------------------------
+✅ [POST] 6.2 Thêm SP giỏ (barcode)  =>  HTTP 200
+   Response: {'Items': [{'id': 6, 'product_name': 'SP_Upd_ead17a', 'barcode': 'pop880', 'selling_price': 2333333, 'import_price': 87776, 'quantity': 1}], 'TotalAmount': 2333333}
+------------------------------------------------------------
+✅ [PUT] 6.3 Sửa SL giỏ  =>  HTTP 200
+   Response: {'Items': [{'id': 6, 'product_name': 'SP_Upd_ead17a', 'barcode': 'pop880', 'selling_price': 2333333, 'import_price': 87776, 'quantity': 2}], 'TotalAmount': 4666666}
+------------------------------------------------------------
+✅ [POST] 6.4 Tính tiền thừa  =>  HTTP 200
+   Response: {'change_amount': 45333334, 'ChangeAmount': 45333334}
+------------------------------------------------------------
+✅ [POST] 6.5 Thanh toán  =>  HTTP 200
+   Response: {'order_id': '6', 'OrderId': '6', 'pdf_url': '/api/pos/invoice/6', 'PdfUrl': '/api/pos/invoice/6', 'points_earned': 46, 'PointsEarned': 46, 'customer_loyalty_balance': 46, 'CustomerLoyaltyBalance': 46, 'subtotal_before_voucher': 4666666, 'voucher_discount': 0, 'total_amount': 4666666, 'TotalAmount': 4666666}
+------------------------------------------------------------
+✅ [DELETE] 6.6 Xóa SP giỏ  =>  HTTP 200
+   Response: {'Items': [], 'TotalAmount': 0}
+------------------------------------------------------------
+✅ [GET] 6.7 Xuất hóa đơn  =>  HTTP 200
+   Response: Đơn hàng không tồn tại.
+------------------------------------------------------------
+✅ [GET] 6.8 Loyalty summary  =>  HTTP 200
+   Response: {'customer': {'id': 9, 'name': 'KH_ead17a', 'phone': '0912689203', 'loyalty_points': 46, 'lifetime_spend_vnd': '4666666.00'}, 'lifetime_spend_vnd': 4666666, 'loyalty_points': 46, 'vouchers': [{'id': 9, 'code': '249E5D2DBB5B', 'status': 'issued', 'tier_id': 1, 'tier_name': 'Ưu đãi 500k chi tiêu', 'discount_amount_vnd': '25000.00', 'discount_percent': None, 'min_lifetime_spend_vnd': '500000.00', 'min_points_required': 0}, {'id': 10, 'code': '601DA6D3A5A7', 'status': 'issued', 'tier_id': 2, 'tier_name': 'Ưu đãi 2 triệu chi tiêu', 'discount_amount_vnd': '100000.00', 'discount_percent': None, 'min_lifetime_spend_vnd': '2000000.00', 'min_points_required': 0}], 'eligible_tiers_preview': [{'tier_id': 3, 'name': 'Ưu đãi 10% (50 điểm)', 'min_lifetime_spend_vnd': 0, 'min_points_required': 50, 'eligible': False, 'discount_preview_vnd': 100000}, {'tier_id': 1, 'name': 'Ưu đãi 500k chi tiêu', 'min_lifetime_spend_vnd': 500000, 'min_points_required': 0, 'eligible': True, 'discount_preview_vnd': 25000}, {'tier_id': 2, 'name': 'Ưu đãi 2 triệu chi tiêu', 'min_lifetime_spend_vnd': 2000000, 'min_points_required': 0, 'eligible': True, 'discount_preview_vnd': 100000}]}
+------------------------------------------------------------
+
+✔ PART 2 HOÀN TẤT

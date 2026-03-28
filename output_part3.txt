@@ -1,0 +1,54 @@
+============================================================
+PART 3: REPORTS + SHIFTS + AI CHAT
+============================================================
+(Đã login admin)
+
+>>> REPORTS <<<
+✅ [GET] 8.1 Báo cáo tổng quan (today)  =>  HTTP 200
+   Response: {'TotalRevenue': 18666664, 'OrderCount': 4, 'TotalProductsSold': 8, 'CustomerCount': 6, 'RecentOrders': [{'OrderId': 6, 'Date': '2026-03-28 16:13', 'CustomerName': 'KH_ead17a', 'TotalAmount': '4666666.00'}, {'OrderId': 5, 'Date': '2026-03-28 15:53', 'CustomerName': 'AI Test Customer', 'TotalAmount': '4666666.00'}, {'OrderId': 4, 'Date': '2026-03-28 15:52', 'CustomerName': 'AI Test Customer', 'TotalAmount': '4666666.00'}, {'OrderId': 3, 'Date': '2026-03-28 15:51', 'CustomerName': 'AI Test Customer', 'TotalAmount': '4666666.00'}], 'TopProducts': [{'ProductName': 'SP_Upd_ead17a', 'TotalSold': '8', 'TotalRevenue': '18666664.00'}], 'CategoryBreakdown': [{'CategoryName': 'thehoang', 'Revenue': '18666664.00'}]}
+------------------------------------------------------------
+✅ [GET] 8.2 Báo cáo tổng quan (range)  =>  HTTP 200
+   Response: {'TotalRevenue': 0, 'OrderCount': 0, 'TotalProductsSold': 0, 'CustomerCount': 6, 'RecentOrders': [], 'TopProducts': [], 'CategoryBreakdown': []}
+------------------------------------------------------------
+✅ [GET] 8.3 DS đơn hàng  =>  HTTP 200
+   Response: {'items': [], 'pagination': {'totalItems': 0, 'totalPages': 0}}
+------------------------------------------------------------
+✅ [GET] 8.4 Lợi nhuận  =>  HTTP 200
+   Response: {'TotalRevenue': 0, 'TotalCost': 0, 'NetProfit': 0}
+------------------------------------------------------------
+✅ [GET] 8.5 Biểu đồ (revenue/day)  =>  HTTP 200
+   Response: []
+------------------------------------------------------------
+✅ [GET] 8.6 Biểu đồ (orders/week)  =>  HTTP 200
+   Response: []
+------------------------------------------------------------
+
+>>> SHIFTS <<<
+⚠️ [GET] 12.1 Trạng thái ca (Admin => 403)  =>  HTTP 403
+   Response: {'message': 'Chỉ nhân viên mới dùng điểm danh ca.'}
+------------------------------------------------------------
+⚠️ [POST] 12.2 Chấm vào ca (Admin => 403)  =>  HTTP 403
+   Response: {'message': 'Chỉ nhân viên mới dùng điểm danh ca.'}
+------------------------------------------------------------
+⚠️ [POST] 12.3 Chấm ra ca (Admin => 403)  =>  HTTP 403
+   Response: {'message': 'Chỉ nhân viên mới dùng điểm danh ca.'}
+------------------------------------------------------------
+⚠️ [GET] 12.4 Ca của tôi (Admin => 403)  =>  HTTP 403
+   Response: {'message': 'Chỉ nhân viên mới dùng điểm danh ca.'}
+------------------------------------------------------------
+❌ [GET] 12.5 Admin DS ca  =>  HTTP 500
+   Response: {'message': "Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phonestore_pos.shift_attendance' doesn't exist", 'file': 'ShiftAttendance.php', 'line': 182}
+------------------------------------------------------------
+❌ [PATCH] 12.6 Admin sửa ca  =>  HTTP 500
+   Response: {'message': "Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phonestore_pos.shift_attendance' doesn't exist", 'file': 'ShiftAttendance.php', 'line': 147}
+------------------------------------------------------------
+❌ [GET] 12.7 Admin xuất CSV  =>  HTTP 500
+   Response: {'message': "Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phonestore_pos.shift_attendance' doesn't exist", 'file': 'ShiftAttendance.php', 'line': 182}
+------------------------------------------------------------
+
+>>> AI CHAT <<<
+✅ [POST] 13.1 Chat AI  =>  HTTP 200
+   Response: {'reply': 'Doanh thu hôm nay là 18.666.664 VNĐ.'}
+------------------------------------------------------------
+
+✔ PART 3 HOÀN TẤT
