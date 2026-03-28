@@ -145,7 +145,7 @@
                         <table class="table ps-table mb-0">
                             <thead>
                                 <tr>
-                                    <th style="width: 60px;">Ảnh</th>
+                                    <th style="width: 60px;" data-i18n="prod.colImage">Ảnh</th>
                                     <th data-i18n="prod.colName">Product name</th>
                                     <th style="width: 180px;" data-i18n="prod.colBarcode">Barcode</th>
                                     <th style="width: 150px;" data-i18n="prod.colCategory">Category</th>
@@ -164,6 +164,57 @@
                 </div>
             </section>
         </main>
+
+        <!-- Trợ lý AI — widget compact (shared across pages) -->
+        <div id="aiPanelBackdrop" class="ps-ai-backdrop" hidden></div>
+        <aside id="aiPanel" class="ps-ai-widget" hidden role="dialog" aria-modal="true" aria-labelledby="aiPanelTitle">
+            <header class="ps-ai-widget__header">
+                <button type="button" class="btn-close btn-close-white ps-ai-widget__close" id="aiPanelClose" data-i18n-aria-label="ai.close" aria-label="Đóng"></button>
+                <div class="ps-ai-widget__head-row">
+                    <div class="ps-ai-widget__avatar" aria-hidden="true">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="ps-ai-widget__head-text">
+                        <h2 class="ps-ai-widget__title" id="aiPanelTitle" data-i18n="ai.title">Trợ lý AI</h2>
+                        <p class="ps-ai-widget__subtitle" data-i18n="ai.subtitle">Doanh thu, đơn hàng, báo cáo · 1900 54 54 63</p>
+                    </div>
+                </div>
+                <div class="ps-ai-widget__actions" aria-label="Liên hệ">
+                    <a class="ps-ai-widget__action" href="tel:1900545463" id="aiActionPhone" title="Hotline" aria-label="Gọi hotline">
+                        <i class="bi bi-telephone-fill"></i>
+                    </a>
+                    <a class="ps-ai-widget__action" href="#" id="aiActionFb" rel="noopener noreferrer" title="Messenger" aria-label="Messenger">
+                        <i class="bi bi-messenger"></i>
+                    </a>
+                    <a class="ps-ai-widget__action" href="#" id="aiActionZalo" title="Zalo" aria-label="Zalo">
+                        <span class="ps-ai-widget__zalo">Z</span>
+                    </a>
+                </div>
+            </header>
+            <div class="ps-ai-widget__body">
+                <div id="aiMessages" class="ps-ai-widget__messages">
+                    <div id="aiEmptyState" class="ps-ai-widget__empty">
+                        <p class="ps-ai-widget__empty-lead" data-i18n="ai.emptyLead">Gợi ý câu hỏi:</p>
+                        <ul class="ps-ai-widget__hints">
+                            <li data-i18n="ai.hint1">Doanh thu hôm nay thế nào?</li>
+                            <li data-i18n="ai.hint2">Top sản phẩm bán chạy?</li>
+                            <li data-i18n="ai.hint3">Tổng đơn tuần này?</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <footer class="ps-ai-widget__footer">
+                <label class="visually-hidden" for="aiInput" data-i18n="ai.inputLabel">Nhập câu hỏi</label>
+                <textarea id="aiInput" class="ps-ai-widget__input" rows="2" maxlength="2000" data-i18n-placeholder="ai.placeholder" placeholder="Ví dụ: Doanh thu hôm nay thế nào?"></textarea>
+                <button type="button" class="ps-ai-widget__send" id="aiSend">
+                    <span id="aiSendLabel" data-i18n="ai.send">Gửi</span>
+                    <span id="aiSendSpinner" class="spinner-border spinner-border-sm ms-1 d-none" role="status" aria-hidden="true"></span>
+                </button>
+            </footer>
+        </aside>
+        <button type="button" id="btnAiFab" class="ps-ai-fab" title="Trợ lý AI" aria-label="Mở trợ lý AI" data-i18n-tooltip="ai.fabTitle">
+            <i class="bi bi-chat-heart-fill"></i>
+        </button>
 
         <div class="ps-overlay" id="overlay"></div>
     </div>
@@ -187,9 +238,9 @@
 
                     <!-- Image Upload -->
                     <div class="mt-3">
-                        <label class="ps-label">Ảnh sản phẩm <span style="color: var(--danger)">*</span></label>
+                        <label class="ps-label"><span data-i18n="prod.imageLabel">Ảnh sản phẩm</span> <span style="color: var(--danger)">*</span></label>
                         <input class="ps-input" type="file" id="fImage" accept="image/*" />
-                        <small class="ps-help-text d-block mt-1">JPG, PNG, GIF, WEBP - Tối đa 2MB. Nếu không chọn, sẽ dùng ảnh mặc định.</small>
+                        <small class="ps-help-text d-block mt-1" data-i18n="prod.imageHelp">JPG, PNG, GIF, WEBP - Tối đa 2MB. Nếu không chọn, sẽ dùng ảnh mặc định.</small>
                         <div id="imagePreview" class="mt-2" style="display: none;">
                             <img id="previewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover;" />
                         </div>
@@ -255,7 +306,7 @@
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content ps-modal">
                 <div class="ps-modal__head">
-                    <div class="ps-modal__title">Nhập kho</div>
+                    <div class="ps-modal__title" data-i18n="prod.restockTitle">Nhập kho</div>
                     <button class="ps-icon-btn" type="button" data-bs-dismiss="modal" aria-label="Close">
                         <i class="bi bi-x-lg"></i>
                     </button>
@@ -263,13 +314,13 @@
 
                 <div class="ps-modal__body">
                     <input type="hidden" id="restockProdId" />
-                    <label class="ps-label mb-2">Số lượng nhập thêm</label>
+                    <label class="ps-label mb-2" data-i18n="prod.restockQtyLabel">Số lượng nhập thêm</label>
                     <input type="number" class="ps-input text-center fs-4" id="restockQty" value="1" min="1" />
                 </div>
 
                 <div class="ps-modal__footer d-flex gap-2">
-                    <button class="ps-btn-secondary w-50" type="button" data-bs-dismiss="modal">Hủy</button>
-                    <button class="ps-btn-primary w-50" id="btnConfirmRestock" type="button">Xác nhận</button>
+                    <button class="ps-btn-secondary w-50" type="button" data-bs-dismiss="modal"><span data-i18n="common.cancel">Hủy</span></button>
+                    <button class="ps-btn-primary w-50" id="btnConfirmRestock" type="button"><span data-i18n="btn.confirm">Xác nhận</span></button>
                 </div>
             </div>
         </div>
@@ -328,7 +379,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js?v=639095644633487831"></script>
-    <script type="module" src="assets/js/products.js?v=7"></script>
+    <script type="module" src="assets/js/products.js?v=10"></script>
 </body>
 
 </html>

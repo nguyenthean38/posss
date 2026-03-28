@@ -1,8 +1,9 @@
 /**
  * POS Module - Real API Integration
  */
-import { api } from './api.js?v=7';
+import { api } from './api.js?v=9';
 import { requireAuth, getCurrentUser, getUser } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (async () => {
@@ -19,7 +20,6 @@ import { i18n } from './shared.js';
     let loyaltyVouchersList = [];
 
     // ===== i18n =====
-
 
     // ===== HELPERS =====
     const fmtVND = (n) => {
@@ -611,6 +611,8 @@ import { i18n } from './shared.js';
         // Load data
         await initCart();
         await loadProducts();
+
+        initAiChatWidget();
     }
 
     init();

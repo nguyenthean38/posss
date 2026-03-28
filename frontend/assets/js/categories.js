@@ -1,7 +1,8 @@
 // Categories Module - Real API Integration
-import API from './api.js?v=5';
+import API from './api.js?v=9';
 import { requireAuth } from './auth.js';
 import { getCategoryIcon } from './assets.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (() => {
@@ -10,7 +11,6 @@ import { i18n } from './shared.js';
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
     let pendingDeleteId = null;
-
 
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
@@ -275,6 +275,7 @@ import { i18n } from './shared.js';
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
 
         render();
+        initAiChatWidget();
     }
 
     init();

@@ -33,7 +33,8 @@ class AiChatController
         $role = $_SESSION['role'] ?? 'staff';
         $isAdmin = ($role === 'admin');
 
-        $result = $this->service->runChat($message, $isAdmin);
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $result = $this->service->runChat($message, $isAdmin, $userId);
         if (!$result['ok']) {
             Response::json(['message' => $result['error'] ?? 'Lỗi không xác định'], 400);
             return;

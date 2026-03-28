@@ -1,5 +1,6 @@
-import api from './api.js?v=6';
+import api from './api.js?v=9';
 import { requireAuth, getUser } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (async () => {
@@ -12,6 +13,31 @@ import { i18n } from './shared.js';
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
     const t = (k) => i18n[getLang()]?.[k] || i18n.en[k] || k;
     const fmtVND = (n) => (Number(n || 0)).toLocaleString("vi-VN") + "\u00A0₫";
+
+    /** Nhân viên: nhãn KPI = doanh thu hôm nay của tôi (đồng bộ API). */
+    function applyStaffDashboardKpiI18n() {
+        const u = getUser();
+        if (!u || u.role !== "staff") return;
+        const pairs = [
+            ["kpi.revenue", "kpi.revenueStaff"],
+            ["kpi.orders", "kpi.ordersStaff"],
+            ["kpi.products", "kpi.productsStaff"],
+            ["kpi.customers", "kpi.customersStaff"],
+        ];
+        pairs.forEach(([from, to]) => {
+            document.querySelectorAll(`[data-i18n="${from}"]`).forEach((el) => {
+                el.setAttribute("data-i18n", to);
+            });
+        });
+    }
+
+    function ymdLocal(d) {
+        const x = new Date(d);
+        const yyyy = x.getFullYear();
+        const mm = String(x.getMonth() + 1).padStart(2, "0");
+        const dd = String(x.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+    }
 
     function applyLang(lang) {
         document.documentElement.lang = lang;
@@ -89,6 +115,8 @@ import { i18n } from './shared.js';
             const current = localStorage.getItem(KEY_LANG) || "vi";
             applyLang(current === "vi" ? "en" : "vi");
             rebuildCharts();
+            refreshShiftPanel();
+            loadDashboard();
         });
     }
 
@@ -112,10 +140,9 @@ import { i18n } from './shared.js';
     }
 
     function getLangText() {
-        const lang = localStorage.getItem(KEY_LANG) || "vi";
         return {
-            revenueLabel: lang === "vi" ? "Doanh thu (triệu)" : "Revenue (M)",
-            ordersLabel: lang === "vi" ? "Đơn hàng" : "Orders",
+            revenueLabel: t("dash.chartRevenueM"),
+            ordersLabel: t("dash.chartOrders"),
         };
     }
 
@@ -130,13 +157,17 @@ import { i18n } from './shared.js';
 
         const commonGrid = { color: colors.grid };
         const commonTicks = { color: colors.ticks, font: { size: 11 } };
+        const chartDayLabels =
+            getLang() === "vi"
+                ? ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+                : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
         const salesCtx = document.getElementById("salesBar");
         if (salesCtx && data.weekly_sales) {
             salesChart = new Chart(salesCtx, {
                 type: "bar",
                 data: {
-                    labels: data.weekly_sales.labels || ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
+                    labels: data.weekly_sales.labels || chartDayLabels,
                     datasets: [{
                         label: langText.revenueLabel,
                         data: data.weekly_sales.values || [0, 0, 0, 0, 0, 0, 0],
@@ -177,7 +208,7 @@ import { i18n } from './shared.js';
             ordersChart = new Chart(ordersCtx, {
                 type: "line",
                 data: {
-                    labels: data.weekly_orders.labels || ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
+                    labels: data.weekly_orders.labels || chartDayLabels,
                     datasets: [{
                         label: langText.ordersLabel,
                         data: data.weekly_orders.values || [0, 0, 0, 0, 0, 0, 0],
@@ -247,29 +278,35 @@ import { i18n } from './shared.js';
             const st = await api.getShiftStatus();
             const rec = st.record;
             if (!rec) {
-                txt.textContent = "Chưa chấm vào ca hôm nay (" + (st.work_date || "") + ").";
+                txt.textContent = t("shift.none").replace("{date}", st.work_date || "");
                 btnIn.disabled = false;
                 btnOut.disabled = true;
             } else if (rec.status === "open" || !rec.clock_out_at) {
-                txt.textContent = "Đang trong ca — vào lúc " + fmtShift(rec.clock_in_at_iso || rec.clock_in_at);
+                txt.textContent = t("shift.inProgress").replace(
+                    "{time}",
+                    fmtShift(rec.clock_in_at_iso || rec.clock_in_at)
+                );
                 btnIn.disabled = true;
                 btnOut.disabled = false;
             } else {
-                txt.textContent = "Đã hoàn thành ca — ra lúc " + fmtShift(rec.clock_out_at_iso || rec.clock_out_at);
+                txt.textContent = t("shift.done").replace(
+                    "{time}",
+                    fmtShift(rec.clock_out_at_iso || rec.clock_out_at)
+                );
                 btnIn.disabled = true;
                 btnOut.disabled = true;
             }
-        } catch (e) { console.warn("shift status", e); txt.textContent = "Không tải được trạng thái ca."; }
+        } catch (e) { console.warn("shift status", e); txt.textContent = t("shift.loadErr"); }
     }
 
     function wireShiftButtons() {
         document.getElementById("btnShiftIn")?.addEventListener("click", async () => {
-            try { await api.shiftClockIn({}); showToast("Đã chấm vào ca."); await refreshShiftPanel(); }
-            catch (e) { showToast(e.message || "Lỗi"); }
+            try { await api.shiftClockIn({}); showToast(t("shift.toastIn")); await refreshShiftPanel(); }
+            catch (e) { showToast(e.message || t("toast.error")); }
         });
         document.getElementById("btnShiftOut")?.addEventListener("click", async () => {
-            try { await api.shiftClockOut(); showToast("Đã chấm ra ca."); await refreshShiftPanel(); }
-            catch (e) { showToast(e.message || "Lỗi"); }
+            try { await api.shiftClockOut(); showToast(t("shift.toastOut")); await refreshShiftPanel(); }
+            catch (e) { showToast(e.message || t("toast.error")); }
         });
     }
 
@@ -277,15 +314,29 @@ import { i18n } from './shared.js';
         try {
             const data = await api.getReportSummary();
 
-            // KPIs - backend trả TotalRevenue, OrderCount, TotalProductsSold, CustomerCount
+            // KPIs — sau applyStaffDashboardKpiI18n nhân viên dùng data-i18n="kpi.*Staff"
+            const kpiStaffAttr = {
+                "kpi.revenue": "kpi.revenueStaff",
+                "kpi.orders": "kpi.ordersStaff",
+                "kpi.products": "kpi.productsStaff",
+                "kpi.customers": "kpi.customersStaff",
+            };
             const setKpi = (key, value) => {
-                const el = document.querySelector(`[data-i18n="${key}"]`)?.closest('.ps-kpi')?.querySelector('.ps-kpi__value');
+                const u = getUser();
+                const attr =
+                    u && u.role === "staff" && kpiStaffAttr[key]
+                        ? kpiStaffAttr[key]
+                        : key;
+                const el = document
+                    .querySelector(`[data-i18n="${attr}"]`)
+                    ?.closest(".ps-kpi")
+                    ?.querySelector(".ps-kpi__value");
                 if (el) el.textContent = value;
             };
-            setKpi('kpi.revenue', fmtVND(data.TotalRevenue));
-            setKpi('kpi.orders', data.OrderCount || 0);
-            setKpi('kpi.products', data.TotalProductsSold || 0);
-            setKpi('kpi.customers', data.CustomerCount || 0);
+            setKpi("kpi.revenue", fmtVND(data.TotalRevenue));
+            setKpi("kpi.orders", data.OrderCount || 0);
+            setKpi("kpi.products", data.TotalProductsSold || 0);
+            setKpi("kpi.customers", data.CustomerCount || 0);
 
             // Recent orders - backend trả RecentOrders[{OrderId, Date, CustomerName, TotalAmount}]
             const tbody = document.querySelector('.ps-table tbody');
@@ -295,10 +346,10 @@ import { i18n } from './shared.js';
                     ? orders.map(o => `
                         <tr>
                             <td><a class="ps-link" href="#">#${o.OrderId}</a></td>
-                            <td>${o.CustomerName || "Khách lẻ"}</td>
+                            <td>${o.CustomerName || t("customer.walkIn")}</td>
                             <td class="text-end">${fmtVND(o.TotalAmount)}</td>
                         </tr>`).join("")
-                    : `<tr><td colspan="3" class="text-center" style="opacity:.5">Chưa có đơn hàng</td></tr>`;
+                    : `<tr><td colspan="3" class="text-center" style="opacity:.5">${t("view.noOrders")}</td></tr>`;
             }
 
             // Top products - backend trả TopProducts[{ProductName, TotalSold, TotalRevenue}]
@@ -315,14 +366,20 @@ import { i18n } from './shared.js';
                             </div>
                             <div class="ps-topitem__value">${fmtVND(p.TotalRevenue)}</div>
                         </div>`).join("")
-                    : `<div class="ps-topitem" style="opacity:.5">Chưa có dữ liệu</div>`;
+                    : `<div class="ps-topitem" style="opacity:.5">${t("common.noData")}</div>`;
             }
 
-            // Fetch chart data from /api/reports/chart
+            // Fetch chart data from /api/reports/chart (nhân viên: chỉ hôm nay — khớp backend)
             try {
+                const u = getUser();
+                const today = ymdLocal(new Date());
+                const chartBase =
+                    u && u.role === "staff"
+                        ? { period: "day", fromDate: today, toDate: today }
+                        : { period: "day" };
                 const [chartRevenue, chartOrders] = await Promise.all([
-                    api.getReportChartData({ type: 'revenue', period: 'day' }),
-                    api.getReportChartData({ type: 'orders', period: 'day' }),
+                    api.getReportChartData({ type: "revenue", ...chartBase }),
+                    api.getReportChartData({ type: "orders", ...chartBase }),
                 ]);
                 buildCharts({
                     weekly_sales: {
@@ -342,94 +399,18 @@ import { i18n } from './shared.js';
         }
     }
 
-    function wireAiChat() {
-        const fab = document.getElementById('btnAiFab');
-        const panel = document.getElementById('aiPanel');
-        const backdrop = document.getElementById('aiPanelBackdrop');
-        const closeBtn = document.getElementById('aiPanelClose');
-        const sendBtn = document.getElementById('aiSend');
-        const input = document.getElementById('aiInput');
-        const messages = document.getElementById('aiMessages');
-        if (!fab || !panel || !messages) return;
-
-        function removeEmptyState() {
-            const empty = document.getElementById('aiEmptyState');
-            if (empty && empty.parentNode) empty.remove();
-        }
-
-        function openPanel() {
-            panel.hidden = false;
-            if (backdrop) backdrop.hidden = false;
-            input?.focus();
-        }
-        function closePanel() {
-            panel.hidden = true;
-            if (backdrop) backdrop.hidden = true;
-        }
-
-        function isPanelOpen() {
-            return panel && !panel.hidden;
-        }
-
-        fab.addEventListener('click', openPanel);
-        closeBtn?.addEventListener('click', closePanel);
-        backdrop?.addEventListener('click', closePanel);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && isPanelOpen()) {
-                e.preventDefault();
-                closePanel();
-            }
-        });
-
-        function appendBubble(role, text) {
-            removeEmptyState();
-            const div = document.createElement('div');
-            div.className = role === 'user' ? 'ps-ai-bubble ps-ai-bubble--user' : 'ps-ai-bubble ps-ai-bubble--bot';
-            div.textContent = text;
-            messages.appendChild(div);
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        async function send() {
-            const text = (input?.value || '').trim();
-            if (!text) return;
-            const spinner = document.getElementById('aiSendSpinner');
-            sendBtn.disabled = true;
-            spinner?.classList.remove('d-none');
-            appendBubble('user', text);
-            input.value = '';
-            try {
-                const res = await api.aiChat(text);
-                appendBubble('bot', res.reply || '(Không có nội dung)');
-            } catch (e) {
-                appendBubble('bot', 'Lỗi: ' + (e.message || 'Không gửi được'));
-            } finally {
-                sendBtn.disabled = false;
-                spinner?.classList.add('d-none');
-            }
-        }
-
-        sendBtn?.addEventListener('click', send);
-        input?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                send();
-            }
-        });
-    }
-
     async function init() {
         const savedTheme = localStorage.getItem(KEY_THEME) || "dark";
         const savedLang = localStorage.getItem(KEY_LANG) || "vi";
 
+        applyStaffDashboardKpiI18n();
         applyLang(savedLang);
         setTheme(savedTheme);
         initLayout();
         loadDashboard();
         wireShiftButtons();
         refreshShiftPanel();
-        wireAiChat();
+        initAiChatWidget();
     }
 
     await init();

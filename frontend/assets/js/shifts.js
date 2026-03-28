@@ -1,5 +1,6 @@
-import api from './api.js?v=6';
+import api from './api.js?v=9';
 import { requireAuth, isAdmin } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 const KEY_THEME = 'ps_theme';
@@ -108,10 +109,6 @@ function statusLabel(st) {
         document.body.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
         localStorage.setItem(KEY_THEME, cur === 'dark' ? 'light' : 'dark');
     });
-    document.getElementById('btnLang')?.addEventListener('click', () => {
-        applyLang(getLang() === 'vi' ? 'en' : 'vi');
-    });
-
     const dateInput = document.getElementById('dateInput');
     const staffFilter = document.getElementById('staffFilter');
     const tbody = document.getElementById('tbody');
@@ -153,7 +150,7 @@ function statusLabel(st) {
                         <td>${escapeHtml(fmtDisplay(r.clock_in_at_iso || r.clock_in_at))}</td>
                         <td>${escapeHtml(fmtDisplay(r.clock_out_at_iso || r.clock_out_at))}</td>
                         <td>${escapeHtml(statusLabel(r.status))}</td>
-                        <td><button type="button" class="ps-btn-primary ps-btn-sm py-1 px-3 btn-edit">${escapeHtml(t('sh.edit'))}</button></td>
+                        <td><button type="button" class="btn btn-sm btn-outline-primary btn-edit">${escapeHtml(t('sh.edit'))}</button></td>
                     </tr>`).join('')
                 : '<tr><td colspan="5" class="text-center opacity-50 py-4">—</td></tr>';
 
@@ -175,6 +172,11 @@ function statusLabel(st) {
             toast(e.message || t('toast.err'));
         }
     }
+
+    document.getElementById('btnLang')?.addEventListener('click', () => {
+        applyLang(getLang() === 'vi' ? 'en' : 'vi');
+        void load();
+    });
 
     document.getElementById('btnLoad')?.addEventListener('click', load);
     document.getElementById('btnExport')?.addEventListener('click', async () => {
@@ -211,4 +213,5 @@ function statusLabel(st) {
     });
 
     await load();
+    initAiChatWidget();
 })();

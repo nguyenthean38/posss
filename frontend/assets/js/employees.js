@@ -1,8 +1,9 @@
 /**
  * Employees Module - Real API Integration
  */
-import { api } from './api.js?v=5';
+import { api } from './api.js?v=9';
 import { requireAuth, isAdmin } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (() => {
@@ -12,7 +13,6 @@ import { i18n } from './shared.js';
     let employees = [];
     let pendingDeleteId = null;
     let viewEmployeeId = null;
-
 
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
@@ -205,7 +205,7 @@ import { i18n } from './shared.js';
                 </div>
             </div>
             <div id="salesSection" style="margin-top:12px;opacity:.5">
-                <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> Đang tải doanh số...
+                <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> ${t("emp.loadingSales")}
             </div>
         `;
 
@@ -366,6 +366,7 @@ import { i18n } from './shared.js';
         document.getElementById("btnConfirmDelete")?.addEventListener("click", confirmDelete);
 
         await loadEmployees();
+        initAiChatWidget();
     }
 
     init();

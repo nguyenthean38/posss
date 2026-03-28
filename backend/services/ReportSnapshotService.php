@@ -17,12 +17,17 @@ class ReportSnapshotService
      * @param string $timeline today|yesterday|7days|month|''
      * @param string $fromDate Y-m-d
      * @param string $toDate Y-m-d
+     * @param int|null $forUserId Nếu set: chỉ đơn của nhân viên này, mặc định hôm nay (dùng cho staff)
      */
-    public function getSummaryOverviewData(string $timeline, string $fromDate = '', string $toDate = ''): array
+    public function getSummaryOverviewData(string $timeline, string $fromDate = '', string $toDate = '', ?int $forUserId = null): array
     {
         $orderFilter = '';
         $useRange = false;
-        if ($timeline === 'today') {
+        $staffUid = null;
+        if ($forUserId !== null && $forUserId > 0) {
+            $staffUid = $forUserId;
+            $orderFilter = " AND DATE(o.created_at) = CURDATE() AND o.user_id = :staff_uid";
+        } elseif ($timeline === 'today') {
             $orderFilter = " AND DATE(o.created_at) = CURDATE()";
         } elseif ($timeline === 'yesterday') {
             $orderFilter = " AND DATE(o.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
@@ -41,6 +46,9 @@ class ReportSnapshotService
                    FROM orders o
                    $where";
         $stmtRev = $this->db->prepare($sqlRev);
+        if ($staffUid !== null) {
+            $stmtRev->bindValue(':staff_uid', $staffUid, PDO::PARAM_INT);
+        }
         if ($useRange) {
             $stmtRev->bindParam(':fd', $fromDate);
             $stmtRev->bindParam(':td', $toDate);
@@ -53,6 +61,9 @@ class ReportSnapshotService
                    INNER JOIN orders o ON od.order_id = o.id
                    $where";
         $stmtQty = $this->db->prepare($sqlQty);
+        if ($staffUid !== null) {
+            $stmtQty->bindValue(':staff_uid', $staffUid, PDO::PARAM_INT);
+        }
         if ($useRange) {
             $stmtQty->bindParam(':fd', $fromDate);
             $stmtQty->bindParam(':td', $toDate);
@@ -60,7 +71,17 @@ class ReportSnapshotService
         $stmtQty->execute();
         $qtyRow = $stmtQty->fetch(PDO::FETCH_ASSOC);
 
-        $custCount = (int)$this->db->query("SELECT COUNT(*) FROM customers")->fetchColumn();
+        if ($staffUid !== null) {
+            $cst = $this->db->prepare(
+                "SELECT COUNT(DISTINCT o.customer_id) FROM orders o
+                 WHERE o.user_id = :staff_uid AND DATE(o.created_at) = CURDATE() AND o.customer_id IS NOT NULL"
+            );
+            $cst->bindValue(':staff_uid', $staffUid, PDO::PARAM_INT);
+            $cst->execute();
+            $custCount = (int)$cst->fetchColumn();
+        } else {
+            $custCount = (int)$this->db->query("SELECT COUNT(*) FROM customers")->fetchColumn();
+        }
 
         $recentSql = "SELECT o.id AS OrderId,
                              DATE_FORMAT(o.created_at, '%Y-%m-%d %H:%i') AS Date,
@@ -72,6 +93,9 @@ class ReportSnapshotService
                       ORDER BY o.created_at DESC
                       LIMIT 5";
         $recentStmt = $this->db->prepare($recentSql);
+        if ($staffUid !== null) {
+            $recentStmt->bindValue(':staff_uid', $staffUid, PDO::PARAM_INT);
+        }
         if ($useRange) {
             $recentStmt->bindParam(':fd', $fromDate);
             $recentStmt->bindParam(':td', $toDate);
@@ -90,6 +114,9 @@ class ReportSnapshotService
                    ORDER BY TotalSold DESC
                    LIMIT 4";
         $topStmt = $this->db->prepare($topSql);
+        if ($staffUid !== null) {
+            $topStmt->bindValue(':staff_uid', $staffUid, PDO::PARAM_INT);
+        }
         if ($useRange) {
             $topStmt->bindParam(':fd', $fromDate);
             $topStmt->bindParam(':td', $toDate);
@@ -108,6 +135,9 @@ class ReportSnapshotService
                    ORDER BY Revenue DESC
                    LIMIT 8";
         $catStmt = $this->db->prepare($catSql);
+        if ($staffUid !== null) {
+            $catStmt->bindValue(':staff_uid', $staffUid, PDO::PARAM_INT);
+        }
         if ($useRange) {
             $catStmt->bindParam(':fd', $fromDate);
             $catStmt->bindParam(':td', $toDate);
@@ -116,7 +146,8 @@ class ReportSnapshotService
         $categoryBreakdown = $catStmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
-            'timeline_label' => $timeline,
+            'timeline_label' => $staffUid !== null ? 'today_staff_self' : $timeline,
+            'scope' => $staffUid !== null ? 'staff_today_self' : 'store',
             'TotalRevenue' => (float)$revRow['total_revenue'],
             'OrderCount' => (int)$revRow['order_count'],
             'TotalProductsSold' => (int)$qtyRow['total_products_sold'],
@@ -152,22 +183,24 @@ class ReportSnapshotService
 
     /**
      * Rút gọn cho prompt — tối đa ~30 điểm
+     * @param int|null $forUserId Chỉ đơn của nhân viên này (staff AI)
      */
-    public function getChartData(string $type, string $period, string $fromDate, string $toDate): array
+    public function getChartData(string $type, string $period, string $fromDate, string $toDate, ?int $forUserId = null): array
     {
         $valSql = ($type === 'revenue') ? "COALESCE(SUM(o.total_amount), 0)" : "COUNT(o.id)";
+        $userSql = ($forUserId !== null && $forUserId > 0) ? " AND o.user_id = :staff_uid" : '';
 
         if ($period === 'week') {
             $sql = "SELECT DATE(MIN(o.created_at)) AS label, $valSql AS value
                     FROM orders o
-                    WHERE DATE(o.created_at) BETWEEN :fd AND :td
+                    WHERE DATE(o.created_at) BETWEEN :fd AND :td" . $userSql . "
                     GROUP BY YEARWEEK(o.created_at)
                     ORDER BY YEARWEEK(o.created_at) ASC
                     LIMIT 52";
         } else {
             $sql = "SELECT DATE(o.created_at) AS label, $valSql AS value
                     FROM orders o
-                    WHERE DATE(o.created_at) BETWEEN :fd AND :td
+                    WHERE DATE(o.created_at) BETWEEN :fd AND :td" . $userSql . "
                     GROUP BY DATE(o.created_at)
                     ORDER BY DATE(o.created_at) ASC
                     LIMIT 31";
@@ -175,6 +208,9 @@ class ReportSnapshotService
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':fd', $fromDate);
         $stmt->bindParam(':td', $toDate);
+        if ($forUserId !== null && $forUserId > 0) {
+            $stmt->bindValue(':staff_uid', $forUserId, PDO::PARAM_INT);
+        }
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

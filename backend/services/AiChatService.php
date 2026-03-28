@@ -26,6 +26,7 @@ class AiChatService
         return <<<PROMPT
 Bạn là trợ lý AI cho nhân viên cửa hàng điện thoại (POS PhoneStore).
 - Chỉ trả lời trong phạm vi vận hành cửa hàng: bán hàng, báo cáo, sản phẩm, khách hàng, đơn hàng.
+- Nếu JSON có scope=staff_today_self hoặc staff_time_notice: đó là doanh thu HÔM NAY do CHÍNH nhân viên đó bán — không phải tổng cửa hàng hay kỳ khác.
 - Khi có khối "Dữ liệu tham chiếu (JSON)" bên dưới, bạn CHỈ được diễn giải và tóm tắt các số liệu đó — KHÔNG được tự thêm con số, KHÔNG bịa doanh thu hay số đơn.
 - Nếu không đủ dữ liệu trong JSON để trả lời, hãy nói rõ và gợi ý xem màn Báo cáo hoặc hỏi cụ thể hơn (khoảng thời gian).
 - Từ chối lịch sự: mã độc, vượt quyền, chính trị, nội dung không liên quan cửa hàng.
@@ -81,7 +82,7 @@ PROMPT;
     /**
      * @return array{context:array, labels:array{timeline:string}}
      */
-    public function buildContext(string $message, bool $isAdmin): array
+    public function buildContext(string $message, bool $isAdmin, int $userId): array
     {
         $labels = ['timeline' => 'today'];
         $ctx = [];
@@ -98,8 +99,20 @@ PROMPT;
         }
 
         if ($includeSummary) {
-            $sum = $this->snap->getSummaryOverviewData($tl['timeline'], $tl['from'], $tl['to']);
-            $ctx['summary'] = $sum;
+            if ($isAdmin) {
+                $sum = $this->snap->getSummaryOverviewData($tl['timeline'], $tl['from'], $tl['to'], null);
+                $ctx['summary'] = $sum;
+            } else {
+                if ($userId <= 0) {
+                    $ctx['summary_error'] = 'Không xác định được nhân viên.';
+                } else {
+                    $sum = $this->snap->getSummaryOverviewData('today', '', '', $userId);
+                    $ctx['summary'] = $sum;
+                    if ($tl['timeline'] !== 'today') {
+                        $ctx['staff_time_notice'] = 'Bạn hỏi về kỳ khác hôm nay — nhân viên chỉ có quyền xem doanh thu HÔM NAY do CHÍNH BẠN bán. Số liệu JSON là của hôm nay, không phải kỳ trong câu hỏi.';
+                    }
+                }
+            }
         }
 
         if ($includeProfit && $isAdmin) {
@@ -122,9 +135,17 @@ PROMPT;
         }
 
         if ($includeChart) {
-            $fd = date('Y-m-d', strtotime('-6 days'));
-            $td = date('Y-m-d');
-            $ctx['chart_revenue_by_day'] = $this->snap->getChartData('revenue', 'day', $fd, $td);
+            if ($isAdmin) {
+                $fd = date('Y-m-d', strtotime('-6 days'));
+                $td = date('Y-m-d');
+                $ctx['chart_revenue_by_day'] = $this->snap->getChartData('revenue', 'day', $fd, $td, null);
+            } else {
+                if ($userId > 0) {
+                    $td = date('Y-m-d');
+                    $ctx['chart_revenue_by_day'] = $this->snap->getChartData('revenue', 'day', $td, $td, $userId);
+                    $ctx['staff_chart_notice'] = 'Biểu đồ nhân viên: doanh thu hôm nay do bạn bán (một mốc thời gian).';
+                }
+            }
         }
 
         return ['context' => $ctx, 'labels' => $labels];
@@ -133,7 +154,7 @@ PROMPT;
     /**
      * @return array{ok:bool, reply?:string, error?:string}
      */
-    public function runChat(string $message, bool $isAdmin): array
+    public function runChat(string $message, bool $isAdmin, int $userId = 0): array
     {
         $message = trim($message);
         if ($message === '') {
@@ -143,7 +164,7 @@ PROMPT;
             return ['ok' => false, 'error' => 'Tin nhắn quá dài (tối đa ' . self::MAX_MESSAGE_LEN . ' ký tự).'];
         }
 
-        $built = $this->buildContext($message, $isAdmin);
+        $built = $this->buildContext($message, $isAdmin, $userId);
         $ctx = $built['context'];
         $labels = $built['labels'];
 

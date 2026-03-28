@@ -1,5 +1,6 @@
-import api from './api.js?v=8';
+import api from './api.js?v=9';
 import { requireAuth, isAdmin } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 const KEY_THEME = 'ps_theme';
@@ -144,6 +145,7 @@ function initLayout() {
     document.getElementById('btnLang')?.addEventListener('click', () => {
         const next = getLang() === 'vi' ? 'en' : 'vi';
         applyLang(next);
+        void loadLogs();
     });
 }
 
@@ -176,4 +178,5 @@ function initLayout() {
         if (page < (pagination.total_pages || 1)) { page += 1; loadLogs(); }
     });
     await loadLogs();
+    initAiChatWidget();
 })();

@@ -1,6 +1,7 @@
 // Reports Module - Real API Integration
-import API from './api.js?v=5';
-import { requireAuth } from './auth.js';
+import API from './api.js?v=9';
+import { requireAuth, getUser } from './auth.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (() => {
@@ -8,7 +9,6 @@ import { i18n } from './shared.js';
 
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
-
 
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
@@ -499,7 +499,7 @@ import { i18n } from './shared.js';
                     <tr>
                         <td><a class="ps-link" href="javascript:void(0)">#${o.OrderId}</a></td>
                         <td>${o.Date || "-"}</td>
-                        <td>${o.CustomerName || "Khách lẻ"}</td>
+                        <td>${o.CustomerName || t("customer.walkIn")}</td>
                         <td>${o.StaffName || "—"}</td>
                         ${productsCell}
                         <td class="text-end" style="font-weight:900">${fmtVND(o.TotalAmount)}</td>
@@ -508,7 +508,7 @@ import { i18n } from './shared.js';
                         </td>
                     </tr>`;
                 }).join("")
-                : `<tr><td colspan="7" class="text-center" style="opacity:.5">Không có đơn hàng trong khoảng thời gian này</td></tr>`;
+                : `<tr><td colspan="7" class="text-center" style="opacity:.5">${t("reports.noOrdersInRange")}</td></tr>`;
 
             tb.querySelectorAll(".ps-actBtn").forEach(btn => {
                 btn.addEventListener("click", () => openOrder(btn.dataset.id));
@@ -562,8 +562,8 @@ import { i18n } from './shared.js';
           </div>
           <div class="ps-orderMeta mt-2">
             <div class="ps-orderGrid">
-              <div class="k">Khách đưa</div><div class="v">${fmtVND(o.customer_pay)}</div>
-              <div class="k">Tiền thối</div><div class="v">${fmtVND(o.change)}</div>
+              <div class="k">${t("modal.customerPay")}</div><div class="v">${fmtVND(o.customer_pay)}</div>
+              <div class="k">${t("modal.changeAmount")}</div><div class="v">${fmtVND(o.change)}</div>
             </div>
           </div>`;
 
@@ -611,7 +611,39 @@ import { i18n } from './shared.js';
         initLayout();
         initRangeUI();
 
-        computeRange(currentRange);
+        const u = getUser();
+        if (u && u.role === "staff") {
+            currentRange = "today";
+            document.querySelectorAll(".ps-rangebtn").forEach((b) => {
+                if (b.dataset.range !== "today") {
+                    b.style.display = "none";
+                } else {
+                    b.classList.add("active");
+                }
+                if (b.dataset.range === "last7") {
+                    b.classList.remove("active");
+                }
+            });
+            const customBox = document.getElementById("customBox");
+            if (customBox) {
+                customBox.style.display = "none";
+            }
+            if (!document.getElementById("staffReportHint")) {
+                const bar = document.querySelector(".ps-rangebar");
+                if (bar) {
+                    const p = document.createElement("p");
+                    p.id = "staffReportHint";
+                    p.className = "small mb-2";
+                    p.style.opacity = "0.85";
+                    p.setAttribute("data-i18n", "reports.staffScopeHint");
+                    bar.parentNode.insertBefore(p, bar);
+                }
+            }
+            computeRange("today");
+            applyLang(savedLang);
+        } else {
+            computeRange(currentRange);
+        }
         refreshAll();
 
         let lastReportSurfaceRefresh = 0;
@@ -626,6 +658,8 @@ import { i18n } from './shared.js';
             if (!document.hidden) refreshWhenReportSurfaceVisible();
         });
         window.addEventListener("focus", () => refreshWhenReportSurfaceVisible());
+
+        initAiChatWidget();
     }
 
     init();

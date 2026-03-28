@@ -1,7 +1,8 @@
 // Customers Module - Real API Integration
-import API from './api.js?v=8';
+import API from './api.js?v=9';
 import { requireAuth } from './auth.js';
 import { getAvatarImage } from './assets.js';
+import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
 
 (() => {
@@ -10,7 +11,6 @@ import { i18n } from './shared.js';
     const KEY_THEME = "ps_theme";
     const KEY_LANG = "ps_lang";
     let pendingDeleteId = null;
-
 
 
     const getLang = () => localStorage.getItem(KEY_LANG) || "vi";
@@ -337,11 +337,11 @@ import { i18n } from './shared.js';
                       </div>
                       <div class="right">
                         <div class="money">${fmtVND(o.total)}</div>
-                        <div class="count">${o.item_count || 0} ${getLang() === "vi" ? "sản phẩm" : "items"}</div>
+                        <div class="count">${o.item_count || 0} ${t("product.items")}</div>
                       </div>
                     </div>
                   `).join("")
-                    : `<div class="ps-histItem"><div class="left" style="color:var(--muted);font-weight:800;">${getLang() === "vi" ? "Chưa có đơn hàng" : "No orders yet"}</div></div>`
+                    : `<div class="ps-histItem"><div class="left" style="color:var(--muted);font-weight:800;">${t("view.noOrders")}</div></div>`
                 }
           </div>
         `;
@@ -385,6 +385,7 @@ import { i18n } from './shared.js';
         });
 
         render();
+        initAiChatWidget();
     }
 
     init();
