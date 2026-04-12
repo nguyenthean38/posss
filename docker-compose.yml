@@ -59,6 +59,7 @@ services:
       SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-}
       SEPAY_ACCOUNT_NUMBER: ${SEPAY_ACCOUNT_NUMBER:-}
       SEPAY_ACCOUNT_NAME: ${SEPAY_ACCOUNT_NAME:-}
+      SEPAY_TRANSFER_PREFIX: ${SEPAY_TRANSFER_PREFIX:-SEVQR}
     networks:
       - phonestore_network
 

@@ -184,6 +184,7 @@ class SepayController {
         $mid = SepayConfig::merchantId();
         $secret = SepayConfig::secretKey();
         $custKey = $custId !== null ? 'CUST-' . $custId : 'CUST-NEW-' . substr(sha1($invoice), 0, 10);
+        $transferMemo = SepayConfig::formatTransferMemo($invoice);
 
         $fields = [
             'merchant' => $mid,
@@ -192,7 +193,7 @@ class SepayController {
             'operation' => 'PURCHASE',
             'payment_method' => 'BANK_TRANSFER',
             'order_invoice_number' => $invoice,
-            'order_description' => 'PhoneStore POS ' . $invoice,
+            'order_description' => 'PhoneStore POS ' . $transferMemo,
             'customer_id' => $custKey,
             'success_url' => SepayConfig::successUrl(),
             'error_url' => SepayConfig::errorUrl(),
@@ -207,16 +208,16 @@ class SepayController {
         $accountName = SepayConfig::accountName();
 
         if ($bankCode !== '' && $accountNo !== '') {
-            // VietQR chuẩn EMV — app ngân hàng quét được ngay
+            // VietQR — addInfo phải có SEVQR đầu dòng với VietinBank+SePay (xem cảnh báo trên dashboard SePay)
             $qrImageUrl = 'https://img.vietqr.io/image/'
                 . rawurlencode($bankCode) . '-'
                 . rawurlencode($accountNo) . '-qr_only.png'
                 . '?amount=' . $amountInt
-                . '&addInfo=' . rawurlencode($invoice)
+                . '&addInfo=' . rawurlencode($transferMemo)
                 . ($accountName !== '' ? '&accountName=' . rawurlencode($accountName) : '');
         } else {
             // Fallback nếu chưa cấu hình bank
-            $qrNote = rawurlencode($invoice . '|' . $amountInt . 'VND');
+            $qrNote = rawurlencode($transferMemo . '|' . $amountInt . 'VND');
             $qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&ecc=M&data=' . $qrNote;
         }
 
@@ -350,6 +351,41 @@ class SepayController {
             return;
         }
 
+        // Một số webhook SePay bọc giao dịch trong key "data"
+        if (isset($data['data']) && is_array($data['data']) && !isset($data['notification_type'])) {
+            $inner = $data['data'];
+            if (isset($inner['gateway']) || isset($inner['transferAmount']) || isset($inner['transfer_amount'])
+                || isset($inner['content']) || isset($inner['description'])) {
+                $data = array_merge($data, $inner);
+            }
+        }
+        // Đồng bộ tên field (snake_case / alias)
+        if (!isset($data['transferAmount']) && isset($data['transfer_amount'])) {
+            $data['transferAmount'] = $data['transfer_amount'];
+        }
+        foreach (['transferContent', 'remark', 'memo', 'message'] as $alt) {
+            if (($data['content'] ?? '') === '' && ($data[$alt] ?? '') !== '') {
+                $data['content'] = $data[$alt];
+            }
+        }
+        if (($data['code'] ?? '') === '' && ($data['referenceCode'] ?? '') === '' && ($data['reference_code'] ?? '') !== '') {
+            $data['code'] = $data['reference_code'];
+        }
+        if (!isset($data['transferType']) && isset($data['type']) && strtoupper(trim((string)$data['type'])) === 'IN') {
+            $data['transferType'] = 'in';
+        }
+
+        // SePay kênh VietinBank / bank feed: gateway + transferAmount, không có transferType
+        if (!isset($data['transferType']) && isset($data['gateway']) && isset($data['transferAmount'])) {
+            $data['transferType'] = 'in';
+            if (($data['content'] ?? '') === '' && ($data['description'] ?? '') !== '') {
+                $data['content'] = $data['description'];
+            }
+            if (($data['code'] ?? '') === '' && ($data['referenceCode'] ?? '') !== '') {
+                $data['code'] = $data['referenceCode'];
+            }
+        }
+
         // Phát hiện format payload:
         // A) SePay Payment Gateway IPN: có trường notification_type + order
         // B) SePay Bank Monitoring Webhook: có trường transferType + code + content
@@ -402,8 +438,33 @@ class SepayController {
                         $invoice = $inv; break;
                     }
                 }
+                // Chuẩn POS: INV-yyyymmddhhmmss-XXXXXX (6 ký tự hex) — bank đôi khi cắt/ghép khác substring
                 if ($invoice === '') {
-                    // Không tìm thấy trong pending — dùng rawCode để ghi log no_pending
+                    $hay = $rawCode . "\n" . $rawContent;
+                    if ($hay !== '' && preg_match('/INV-\d{14}-[A-F0-9]{6}/i', $hay, $m)) {
+                        $tag = strtoupper($m[0]);
+                        foreach ($candidates as $inv) {
+                            $u = strtoupper((string)$inv);
+                            if ($u === $tag || str_replace('-', '', $u) === str_replace('-', '', $tag)) {
+                                $invoice = $inv;
+                                break;
+                            }
+                        }
+                    }
+                }
+                // So khớp bỏ ký tự không phải A-Z0-9 (nội dung CK dính dấu, khoảng trắng, v.v.)
+                if ($invoice === '') {
+                    $blob = strtoupper((string)preg_replace('/[^A-Z0-9]/i', '', $rawCode . $rawContent));
+                    foreach ($candidates as $inv) {
+                        $stInv = str_replace('-', '', strtoupper((string)$inv));
+                        if ($stInv !== '' && strlen($stInv) >= 18 && strpos($blob, $stInv) !== false) {
+                            $invoice = $inv;
+                            break;
+                        }
+                    }
+                }
+                if ($invoice === '') {
+                    // Không tìm thấy trong pending — dùng raw để ghi log no_pending
                     $invoice = $rawCode !== '' ? $rawCode : $rawContent;
                 }
             }
