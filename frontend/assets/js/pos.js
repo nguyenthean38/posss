@@ -683,7 +683,17 @@ import { i18n } from './shared.js';
                 resetSepayModalPanels();
             }
         } catch (e) {
-            console.warn("sepay poll", e);
+            const msg = e?.message ?? '';
+            if (msg.includes('401') || msg.includes('sessionExpired') || msg.includes('Unauthorized')) {
+                stopSepayTimers();
+                const qm = document.getElementById('sepayQrModal');
+                const m = bootstrap.Modal.getInstance(qm);
+                m?.hide();
+                resetSepayModalPanels();
+                toast(t('auth.sessionExpired') || 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
+            } else {
+                console.warn("sepay poll", e);
+            }
         }
     }
 

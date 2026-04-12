@@ -44,6 +44,7 @@ $allowedOrigins = [
     'http://localhost:8000',
     // Production / staging HTTPS — thêm domain thật hoặc URL ngrok đang dùng vào đây
     'https://unconsonant-alycia-pawkily.ngrok-free.dev',
+    'https://unconsonant-olycia-powkily.ngrok-free.app',
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins, true)) {
@@ -119,16 +120,23 @@ if (strpos($contentType, 'multipart/form-data') !== false) {
         parse_str($rawInput, $data);
     }
 } else {
-    $data = json_decode($rawInput, true);
-    if (!is_array($data) || empty($data)) {
-        // Fallback: thử form-urlencoded (một số webhook gửi không khai báo Content-Type đúng)
+    $trimRaw = ltrim($rawInput, "\xEF\xBB\xBF");
+    $decoded = json_decode($trimRaw, true);
+    $data = is_array($decoded) ? $decoded : [];
+    // Tránh parse_str trên "{}" / JSON rỗng — PHP tạo key rác và phá empty() (xem debug log data_keys)
+    $looksLikeJson = (bool) preg_match('/^\s*[\[{]/', $trimRaw);
+    if (empty($data) && $trimRaw !== '' && !$looksLikeJson) {
         if (!empty($_POST)) {
             $data = $_POST;
-        } elseif ($rawInput !== '') {
-            parse_str($rawInput, $parsed);
-            if (!empty($parsed)) { $data = $parsed; }
+        } else {
+            parse_str($trimRaw, $parsed);
+            if (is_array($parsed) && !empty($parsed)) {
+                $data = $parsed;
+            }
         }
-        if (!is_array($data)) { $data = []; }
+    }
+    if (!is_array($data)) {
+        $data = [];
     }
 }
 // Parse Ä‘Æ°á»ng dáº«n Path parameters /api/staff/{id}/resend

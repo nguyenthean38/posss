@@ -154,14 +154,16 @@ class SepayController {
             Response::json(['message' => 'Số tiền tối thiểu không hợp lệ'], 400);
         }
 
+        $checkoutSid = session_id();
         try {
             $ins = $this->db->prepare(
-                'INSERT INTO sepay_pending_orders (order_invoice, staff_user_id, cart_snapshot, customer_data, amount, subtotal_before_voucher, voucher_discount, status, expired_at)
-                 VALUES (:inv, :uid, :cart, :cust, :amt, :subbf, :vdisc, \'pending\', :exp)'
+                'INSERT INTO sepay_pending_orders (order_invoice, staff_user_id, checkout_session_id, cart_snapshot, customer_data, amount, subtotal_before_voucher, voucher_discount, status, expired_at)
+                 VALUES (:inv, :uid, :sess, :cart, :cust, :amt, :subbf, :vdisc, \'pending\', :exp)'
             );
             $ins->execute([
                 ':inv' => $invoice,
                 ':uid' => $staffId,
+                ':sess' => $checkoutSid !== '' ? $checkoutSid : null,
                 ':cart' => $cartSnapshot,
                 ':cust' => $customerData,
                 ':amt' => $totalAfterVoucher,
@@ -170,7 +172,10 @@ class SepayController {
                 ':exp' => $expiredAt->format('Y-m-d H:i:s'),
             ]);
         } catch (PDOException $e) {
-            if (strpos($e->getMessage(), 'sepay_pending_orders') !== false || strpos($e->getMessage(), 'Unknown column') !== false) {
+            if (strpos($e->getMessage(), 'checkout_session_id') !== false || strpos($e->getMessage(), 'Unknown column') !== false) {
+                Response::json(['message' => 'Chưa chạy migration DB: backend/migrations/005_sepay_checkout_session.sql'], 500);
+            }
+            if (strpos($e->getMessage(), 'sepay_pending_orders') !== false) {
                 Response::json(['message' => 'Chưa chạy migration DB: backend/migrations/004_sepay_pos_payment.sql'], 500);
             }
             throw $e;
@@ -311,6 +316,23 @@ class SepayController {
         Response::json(['ok' => true]);
     }
 
+    /**
+     * Xoa gio hang trong session PHP cua quay POS (goi tu IPN — khong co cookie cua nhan vien).
+     */
+    private function clearPosSessionCart(?string $phpSessionId): void {
+        $sid = trim((string)$phpSessionId);
+        if ($sid === '') {
+            return;
+        }
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+        session_id($sid);
+        session_start();
+        $_SESSION['cart'] = [];
+        session_write_close();
+    }
+
     public function ipn(array $data): void {
         // Log raw payload để dễ debug — loại bỏ trường có chứa secret nếu có
         $safeLog = $data;
@@ -333,6 +355,8 @@ class SepayController {
         // B) SePay Bank Monitoring Webhook: có trường transferType + code + content
         $invoice    = '';
         $paidAmount = 0.0;
+        $rawCode    = '';
+        $rawContent = '';
 
         if (isset($data['transferType'])) {
             // === Format B: Bank Monitoring Webhook ===
@@ -351,6 +375,7 @@ class SepayController {
             $rawContent = trim((string)($data['content'] ?? ''));
 
             // Lấy tất cả pending trong 1 query, rồi match ở PHP để hỗ trợ LIKE/regex
+            $candidateCount = 0;
             if ($rawCode !== '' || $rawContent !== '') {
                 // Ưu tiên: khớp chính xác order_invoice với code; rồi stripped; rồi content chứa invoice
                 $stAll = $this->db->prepare(
@@ -360,6 +385,7 @@ class SepayController {
                 );
                 $stAll->execute();
                 $candidates = $stAll->fetchAll(PDO::FETCH_COLUMN);
+                $candidateCount = is_array($candidates) ? count($candidates) : 0;
 
                 foreach ($candidates as $inv) {
                     $invStripped = str_replace('-', '', $inv);
@@ -425,9 +451,12 @@ class SepayController {
             $pending = $st->fetch(PDO::FETCH_ASSOC);
             if (!$pending) {
                 $this->db->commit();
+                $this->logModel->createLog(null, 'sepay_ipn_no_pending',
+                    'tried_invoice=' . $invoice . ' rawCode=' . ($rawCode ?? '') . ' rawContent=' . substr($rawContent ?? '', 0, 120) . ' amount=' . $paidAmount
+                );
                 http_response_code(200);
                 header('Content-Type: application/json; charset=UTF-8');
-                echo json_encode(['success' => true, 'note' => 'no_pending']);
+                echo json_encode(['success' => true, 'note' => 'no_pending', 'tried_invoice' => $invoice]);
                 return;
             }
             if ($pending['status'] === 'paid') {
@@ -502,6 +531,19 @@ class SepayController {
             $up->execute([':oid' => $orderId, ':id' => $pending['id']]);
 
             $this->db->commit();
+
+            $this->logModel->createLog($staffId, 'sepay_ipn_paid',
+                'invoice=' . $invoice . ' order_id=' . $orderId . ' amount=' . $paidAmount
+            );
+
+            $sessClear = trim((string)($pending['checkout_session_id'] ?? ''));
+            try {
+                $this->clearPosSessionCart($sessClear !== '' ? $sessClear : null);
+            } catch (Throwable $t) {
+                try {
+                    $this->logModel->createLog(null, 'sepay_ipn_session_clear_fail', $invoice . ' ' . $t->getMessage());
+                } catch (Throwable $t2) { /* ignore */ }
+            }
 
             http_response_code(200);
             header('Content-Type: application/json; charset=UTF-8');
