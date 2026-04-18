@@ -210,9 +210,9 @@ class ProductController {
     }
 
     // [PATCH] /api/products/{id}/restock
-    // Dành cho cả Admin lẫn Nhân viên để nhập thêm kho
+    // Chỉ Admin được nhập kho (nhân viên chỉ xem, không thay đổi sản phẩm)
     public function restock($id, $data) {
-        AuthMiddleware::checkAuth(); // Nhân viên cũng được thực hiện
+        AuthMiddleware::checkAdmin();
         
         $id = (int)$id;
         $addQuantity = isset($data['quantity']) ? (int)$data['quantity'] : 0;

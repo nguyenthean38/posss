@@ -91,8 +91,13 @@ import { i18n } from './shared.js';
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
-            const username = $("#username")?.value?.trim() ?? "";
+            let username = $("#username")?.value?.trim() ?? "";
             const password = $("#password")?.value ?? "";
+
+            // Nếu người dùng paste cả email (có @), chỉ lấy phần trước @
+            if (username.includes("@")) {
+                username = username.split("@")[0].trim();
+            }
 
             if (!username || !password) return toast(t("toast.empty"));
 
@@ -102,10 +107,11 @@ import { i18n } from './shared.js';
             loginBtn.disabled = true;
 
             try {
-                await login(username, password);
+                const data = await login(username, password);
                 localStorage.setItem("username", username);
                 toast(t("toast.success"));
-                setTimeout(() => location.href = "dashboard.html", 800);
+                const dest = data?.user?.is_first_login ? "init-password.html" : "dashboard.html";
+                setTimeout(() => location.href = dest, 800);
             } catch (err) {
                 toast(t("toast.fail"));
                 console.error(err);

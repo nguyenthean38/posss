@@ -10,9 +10,11 @@ class CustomerController {
     }
 
     // [POST] /api/customers
-    // UC-21: Tạo khách hàng mới khi thanh toán lần đầu
+    // Theo đề: khách hàng chỉ được tạo tự động qua quá trình thanh toán (PosCheckoutService).
+    // Không cho phép tạo thủ công qua API này.
     public function store($data) {
-        AuthMiddleware::checkAuth();
+        Response::json(["message" => "Không thể tạo tài khoản khách hàng theo cách thủ công. Khách hàng sẽ được tạo tự động khi thanh toán lần đầu."], 403);
+        return;
 
         // Chuẩn hóa: chỉ chấp nhận snake_case (theo database schema)
         $fullName = isset($data['full_name']) ? trim($data['full_name']) : '';

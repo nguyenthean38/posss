@@ -18,17 +18,12 @@ class ReportController {
         $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '';
         $toDate   = isset($_GET['toDate'])   ? $_GET['toDate']   : '';
 
-        if (ReportScope::isStaffRole()) {
-            ReportScope::assertStaffAllowedRange($timeline, $fromDate, $toDate);
-            if ($timeline === '' && $fromDate === '' && $toDate === '') {
-                $timeline = 'today';
-            }
-            $snap = new ReportSnapshotService($this->db);
-            $row = $snap->getSummaryOverviewData('today', '', '', ReportScope::currentUserId());
-        } else {
-            $snap = new ReportSnapshotService($this->db);
-            $row = $snap->getSummaryOverviewData($timeline, $fromDate, $toDate, null);
+        if ($timeline === '' && $fromDate === '' && $toDate === '') {
+            $timeline = 'today';
         }
+        $snap = new ReportSnapshotService($this->db);
+        $staffUid = ReportScope::isStaffRole() ? ReportScope::currentUserId() : null;
+        $row = $snap->getSummaryOverviewData($timeline, $fromDate, $toDate, $staffUid);
 
         $this->logModel->createLog($_SESSION['user_id'], 'view_report_summary', 'Xem báo cáo tổng quan');
 
@@ -51,14 +46,8 @@ class ReportController {
         $limit = isset($_GET['pageSize']) ? max(1, (int)$_GET['pageSize']) : 20;
         $offset = ($page - 1) * $limit;
 
-        $today = date('Y-m-d');
         $staffUid = 0;
         if (ReportScope::isStaffRole()) {
-            if ($fromDate !== $today || $toDate !== $today) {
-                Response::json([
-                    'message' => 'Nhân viên chỉ xem đơn hàng hôm nay do bạn bán. Liên hệ quản trị để xem kỳ khác.',
-                ], 403);
-            }
             $staffUid = ReportScope::currentUserId();
         }
 
@@ -156,12 +145,6 @@ class ReportController {
 
         $staffUid = 0;
         if (ReportScope::isStaffRole()) {
-            $today = date('Y-m-d');
-            if ($fromDate !== $today || $toDate !== $today) {
-                Response::json([
-                    'message' => 'Nhân viên chỉ xem biểu đồ doanh thu hôm nay của bạn.',
-                ], 403);
-            }
             $staffUid = ReportScope::currentUserId();
         }
 

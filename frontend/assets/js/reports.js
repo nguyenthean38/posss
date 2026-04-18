@@ -613,21 +613,6 @@ import { i18n } from './shared.js';
 
         const u = getUser();
         if (u && u.role === "staff") {
-            currentRange = "today";
-            document.querySelectorAll(".ps-rangebtn").forEach((b) => {
-                if (b.dataset.range !== "today") {
-                    b.style.display = "none";
-                } else {
-                    b.classList.add("active");
-                }
-                if (b.dataset.range === "last7") {
-                    b.classList.remove("active");
-                }
-            });
-            const customBox = document.getElementById("customBox");
-            if (customBox) {
-                customBox.style.display = "none";
-            }
             if (!document.getElementById("staffReportHint")) {
                 const bar = document.querySelector(".ps-rangebar");
                 if (bar) {
@@ -639,11 +624,9 @@ import { i18n } from './shared.js';
                     bar.parentNode.insertBefore(p, bar);
                 }
             }
-            computeRange("today");
             applyLang(savedLang);
-        } else {
-            computeRange(currentRange);
         }
+        computeRange(currentRange);
         refreshAll();
 
         let lastReportSurfaceRefresh = 0;

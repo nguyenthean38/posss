@@ -195,7 +195,7 @@ import { i18n } from './shared.js';
                 return;
             }
 
-            await API.profile.changePassword({ current_password: cur, new_password: nw });
+            await API.profile.changePassword({ current_password: cur, new_password: nw, confirm_password: cf });
             document.getElementById("curPwd").value = "";
             document.getElementById("newPwd").value = "";
             document.getElementById("cfmPwd").value = "";

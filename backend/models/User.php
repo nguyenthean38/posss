@@ -89,6 +89,18 @@ class User {
         return false;
     }
 
+    // Reset mật khẩu về tạm thời và đánh dấu is_first_login=true khi admin gửi lại email kích hoạt
+    public function resetToTempPassword($user_id, $mssvTruongNhom) {
+        $hashed = password_hash($mssvTruongNhom, PASSWORD_DEFAULT);
+        $query = "UPDATE " . $this->table_name . " 
+                  SET password_hash = :pwd, is_first_login = TRUE 
+                  WHERE id = :id AND role = 'staff'";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':pwd', $hashed);
+        $stmt->bindParam(':id', $user_id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
     public function updatePassword($user_id, $newPassword, $isFirstLoginDone = false) {
         $pwd = password_hash($newPassword, PASSWORD_DEFAULT);
         $query = "UPDATE " . $this->table_name . " 

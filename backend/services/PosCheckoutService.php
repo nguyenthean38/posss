@@ -68,6 +68,42 @@ class PosCheckoutService {
         }
 
         try {
+            // Khoa va kiem tra ton kho (sap xep product_id tang dan de giam deadlock)
+            $qtyByProduct = [];
+            foreach ($cartItems as $item) {
+                $pid = (int)$item['id'];
+                if ($pid <= 0) {
+                    if ($wrapTransaction && $db->inTransaction()) {
+                        $db->rollBack();
+                    }
+                    throw new InvalidArgumentException('Sản phẩm không hợp lệ trong giỏ');
+                }
+                $qtyByProduct[$pid] = ($qtyByProduct[$pid] ?? 0) + (int)$item['quantity'];
+            }
+            ksort($qtyByProduct, SORT_NUMERIC);
+
+            $stockLock = $db->prepare('SELECT id, product_name, stock_quantity FROM products WHERE id = ? FOR UPDATE');
+            foreach ($qtyByProduct as $pid => $need) {
+                $stockLock->execute([$pid]);
+                $row = $stockLock->fetch(PDO::FETCH_ASSOC);
+                if (!$row) {
+                    if ($wrapTransaction && $db->inTransaction()) {
+                        $db->rollBack();
+                    }
+                    throw new InvalidArgumentException('Sản phẩm không còn trong hệ thống (ID ' . $pid . ')');
+                }
+                $stock = (int)$row['stock_quantity'];
+                if ($stock < $need) {
+                    if ($wrapTransaction && $db->inTransaction()) {
+                        $db->rollBack();
+                    }
+                    $name = (string)($row['product_name'] ?? '');
+                    throw new InvalidArgumentException(
+                        'Không đủ tồn kho: ' . $name . ' (còn ' . $stock . ', cần ' . $need . ').'
+                    );
+                }
+            }
+
             if ($customerVoucherId !== null && $custId !== null) {
                 $lockedVoucher = VoucherService::lockVoucherForRedeem($db, $customerVoucherId, $custId);
                 if (!$lockedVoucher) {
@@ -114,6 +150,9 @@ class PosCheckoutService {
             $sqlDetail = "INSERT INTO order_details (order_id, product_id, quantity, unit_price, import_price_at_sale)
                           VALUES (:oid, :pid, :qty, :price, :import)";
             $stmtD = $db->prepare($sqlDetail);
+            $updStock = $db->prepare(
+                'UPDATE products SET stock_quantity = stock_quantity - :dec WHERE id = :id AND stock_quantity >= :need'
+            );
 
             foreach ($cartItems as $item) {
                 $stmtD->bindParam(':oid', $orderId);
@@ -124,7 +163,17 @@ class PosCheckoutService {
                 $stmtD->bindParam(':import', $item['import_price']);
                 $stmtD->execute();
 
-                $db->query("UPDATE products SET stock_quantity = stock_quantity - " . (int)$item['quantity'] . " WHERE id = " . (int)$item['id']);
+                $dec = (int)$item['quantity'];
+                $updStock->bindValue(':dec', $dec, PDO::PARAM_INT);
+                $updStock->bindValue(':id', $pid, PDO::PARAM_INT);
+                $updStock->bindValue(':need', $dec, PDO::PARAM_INT);
+                $updStock->execute();
+                if ($updStock->rowCount() === 0) {
+                    if ($wrapTransaction && $db->inTransaction()) {
+                        $db->rollBack();
+                    }
+                    throw new InvalidArgumentException('Không thể trừ kho (tồn không đủ hoặc đã thay đổi).');
+                }
             }
 
             if ($custId !== null) {

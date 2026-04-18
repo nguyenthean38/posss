@@ -24,10 +24,9 @@ class ReportSnapshotService
         $orderFilter = '';
         $useRange = false;
         $staffUid = null;
-        if ($forUserId !== null && $forUserId > 0) {
-            $staffUid = $forUserId;
-            $orderFilter = " AND DATE(o.created_at) = CURDATE() AND o.user_id = :staff_uid";
-        } elseif ($timeline === 'today') {
+
+        // Bộ lọc thời gian — áp dụng như nhau cho admin và staff
+        if ($timeline === 'today') {
             $orderFilter = " AND DATE(o.created_at) = CURDATE()";
         } elseif ($timeline === 'yesterday') {
             $orderFilter = " AND DATE(o.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
@@ -39,6 +38,16 @@ class ReportSnapshotService
             $orderFilter = " AND DATE(o.created_at) BETWEEN :fd AND :td";
             $useRange = true;
         }
+
+        // Staff: lọc thêm theo user_id (chỉ xem đơn do chính mình bán)
+        if ($forUserId !== null && $forUserId > 0) {
+            $staffUid = $forUserId;
+            if ($orderFilter === '') {
+                $orderFilter = " AND DATE(o.created_at) = CURDATE()";
+            }
+            $orderFilter .= " AND o.user_id = :staff_uid";
+        }
+
         $where = "WHERE 1=1" . $orderFilter;
 
         $sqlRev = "SELECT COALESCE(SUM(o.total_amount), 0) AS total_revenue,
@@ -73,10 +82,13 @@ class ReportSnapshotService
 
         if ($staffUid !== null) {
             $cst = $this->db->prepare(
-                "SELECT COUNT(DISTINCT o.customer_id) FROM orders o
-                 WHERE o.user_id = :staff_uid AND DATE(o.created_at) = CURDATE() AND o.customer_id IS NOT NULL"
+                "SELECT COUNT(DISTINCT o.customer_id) FROM orders o $where AND o.customer_id IS NOT NULL"
             );
             $cst->bindValue(':staff_uid', $staffUid, PDO::PARAM_INT);
+            if ($useRange) {
+                $cst->bindParam(':fd', $fromDate);
+                $cst->bindParam(':td', $toDate);
+            }
             $cst->execute();
             $custCount = (int)$cst->fetchColumn();
         } else {
@@ -146,8 +158,8 @@ class ReportSnapshotService
         $categoryBreakdown = $catStmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
-            'timeline_label' => $staffUid !== null ? 'today_staff_self' : $timeline,
-            'scope' => $staffUid !== null ? 'staff_today_self' : 'store',
+            'timeline_label' => $timeline,
+            'scope' => $staffUid !== null ? 'staff_self' : 'store',
             'TotalRevenue' => (float)$revRow['total_revenue'],
             'OrderCount' => (int)$revRow['order_count'],
             'TotalProductsSold' => (int)$qtyRow['total_products_sold'],

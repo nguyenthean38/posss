@@ -19,6 +19,23 @@ export const i18n = {
         "nav.logout": "Đăng xuất",
         "nav.collapse": "Thu gọn",
 
+        // Login page
+        "login.subtitle": "BÁN HÀNG & KHO",
+        "login.welcome": "CHÀO MỪNG TRỞ LẠI!",
+        "login.username": "Tên đăng nhập",
+        "login.password": "Mật khẩu",
+        "login.btn": "ĐĂNG NHẬP",
+        "login.footer": "PhoneStore POS — Hệ thống quản lý bán lẻ",
+
+        // First login / activation page
+        "first.welcome": "KÍCH HOẠT TÀI KHOẢN",
+        "first.desc": "Vui lòng điền thông tin để kích hoạt tài khoản lần đầu.",
+        "first.email": "Địa chỉ email",
+        "first.password": "Mật khẩu tạm thời (MSSV trưởng nhóm)",
+        "first.alert": "Mật khẩu tạm thời là MSSV trưởng nhóm viết thường. Bạn sẽ phải đổi mật khẩu ngay sau đây.",
+        "first.btn": "XÁC NHẬN",
+        "first.footer": "PhoneStore POS — Kích hoạt tài khoản",
+
         // KPI Cards
         "kpi.revenue": "Tổng doanh thu",
         "kpi.orders": "Tổng đơn hàng",
@@ -28,7 +45,7 @@ export const i18n = {
         "kpi.ordersStaff": "Đơn hôm nay (của tôi)",
         "kpi.productsStaff": "SP bán hôm nay (của tôi)",
         "kpi.customersStaff": "Khách mua hôm nay (của tôi)",
-        "reports.staffScopeHint": "Chỉ xem dữ liệu hôm nay do bạn bán.",
+        "reports.staffScopeHint": "Chỉ xem đơn hàng do bạn bán.",
 
         // Panels
         "panel.salesOverview": "Tổng quan doanh số",
@@ -252,6 +269,7 @@ export const i18n = {
         "cart.total": "Tổng cộng",
         "cart.checkout": "Thanh toán",
         "cart.subtotal": "Tạm tính giỏ",
+        "cart.qtyInput": "Số lượng",
         "pay.title": "Thanh toán",
         "pay.phone": "Số điện thoại",
         "pay.name": "Tên khách hàng",
@@ -354,6 +372,23 @@ export const i18n = {
         "nav.logout": "Logout",
         "nav.collapse": "Collapse",
 
+        // Login page
+        "login.subtitle": "SALES & INVENTORY",
+        "login.welcome": "WELCOME BACK!",
+        "login.username": "Username",
+        "login.password": "Password",
+        "login.btn": "LOGIN",
+        "login.footer": "PhoneStore POS — Retail Management System",
+
+        // First login / activation page
+        "first.welcome": "ACTIVATE ACCOUNT",
+        "first.desc": "Please fill in the information to activate your account.",
+        "first.email": "Email address",
+        "first.password": "Temporary password (student ID of team leader)",
+        "first.alert": "Temporary password is the team leader's student ID in lowercase. You will be required to change your password right after.",
+        "first.btn": "CONFIRM",
+        "first.footer": "PhoneStore POS — Account Activation",
+
         // KPI Cards
         "kpi.revenue": "Total Revenue",
         "kpi.orders": "Total Orders",
@@ -363,7 +398,7 @@ export const i18n = {
         "kpi.ordersStaff": "Today's orders (mine)",
         "kpi.productsStaff": "Products sold today (mine)",
         "kpi.customersStaff": "Customers today (mine)",
-        "reports.staffScopeHint": "You only see today's data from your sales.",
+        "reports.staffScopeHint": "You only see orders from your own sales.",
 
         // Panels
         "panel.salesOverview": "Sales Overview",
@@ -586,6 +621,7 @@ export const i18n = {
         "cart.total": "Total",
         "cart.checkout": "Checkout",
         "cart.subtotal": "Subtotal",
+        "cart.qtyInput": "Quantity",
         "pay.title": "Payment",
         "pay.phone": "Phone number",
         "pay.name": "Customer name",

@@ -1,27 +1,38 @@
 <?php
+
+require_once __DIR__ . '/../config/load_env.php';
+
 class Mailer {
     // ================================================================
-    // CẤU HÌNH GMAIL SMTP
-    // Điền thông tin Gmail của bạn vào đây để gửi email thật
-    // Lưu ý: Dùng "App Password" (không phải mật khẩu Gmail thường)
+    // CẤU HÌNH GMAIL SMTP — đọc từ file .env (cạnh thư mục backend/)
+    // Sao chép .env.example thành .env rồi điền thông tin Gmail của bạn.
+    // Dùng "App Password" (không phải mật khẩu Gmail thường).
     // Tạo App Password tại: https://myaccount.google.com/apppasswords
     // ================================================================
-    private const SMTP_HOST     = 'ssl://smtp.gmail.com';
-    private const SMTP_PORT     = 465;
-    private const SMTP_USER     = 'hiennguyen011973@gmail.com';
-    private const SMTP_PASSWORD = 'gtjwlxcnzbyovodx';
-    private const FROM_EMAIL    = 'hiennguyen011973@gmail.com';
-    private const FROM_NAME     = 'PhoneStore POS';
+    private static function cfg(string $key, string $default = ''): string {
+        EnvLoader::loadFromProjectRoot();
+        $v = getenv($key);
+        return ($v !== false && $v !== '') ? $v : $default;
+    }
+
+    // Đọc biến môi trường theo đúng tên key trong .env
+    private static function smtpHost(): string     { return self::cfg('SMTP_HOST', 'ssl://smtp.gmail.com'); }
+    private static function smtpPort(): int        { return (int) self::cfg('SMTP_PORT', '465'); }
+    private static function smtpUser(): string     { return self::cfg('SMTP_USER', self::cfg('MAIL_USERNAME')); }
+    private static function smtpPassword(): string { return self::cfg('SMTP_PASSWORD', self::cfg('MAIL_PASSWORD')); }
+    private static function fromEmail(): string    { return self::cfg('SMTP_FROM_EMAIL', self::cfg('MAIL_FROM_ADDRESS', self::smtpUser())); }
+    private static function fromName(): string     { return self::cfg('SMTP_FROM_NAME', self::cfg('MAIL_FROM_NAME', 'PhoneStore POS')); }
+    private static function appBaseUrl(): string   { return rtrim(self::cfg('APP_BASE_URL', self::cfg('APP_URL', 'http://localhost:8080')), '/'); }
 
     public static function sendLoginLink($email, $token) {
-        $loginUrl = "http://localhost:8080/frontend/first-login.html?token=" . $token . "&email=" . urlencode($email);
+        $loginUrl = self::appBaseUrl() . "/frontend/first-login.html?token=" . $token . "&email=" . urlencode($email);
 
         // Luôn ghi link vào Docker log để test không cần email thật
         error_log("[MAILER] Login link for {$email}: " . $loginUrl);
 
         // Nếu chưa cấu hình SMTP → ghi log và return true (chế độ test)
-        if (empty(self::SMTP_USER) || empty(self::SMTP_PASSWORD)) {
-            error_log("[MAILER] SMTP chưa được cấu hình. Chạy: docker logs phonestore_backend để xem link.");
+        if (self::smtpUser() === '' || self::smtpPassword() === '') {
+            error_log("[MAILER] SMTP chưa được cấu hình trong .env. Xem link ở trên để kích hoạt thủ công.");
             return true;
         }
 
@@ -55,7 +66,7 @@ class Mailer {
         $msgBody .= $loginUrl . "\r\n\r\n";
         $msgBody .= "Tran trong.";
 
-        $headers  = "From: " . self::FROM_NAME . " <" . self::FROM_EMAIL . ">\r\n";
+        $headers  = "From: " . self::fromName() . " <" . self::fromEmail() . ">\r\n";
         $headers .= "To: <{$toEmail}>\r\n";
         $headers .= "Subject: {$subject}\r\n";
         $headers .= "MIME-Version: 1.0\r\n";
@@ -63,7 +74,7 @@ class Mailer {
         $headers .= "Date: " . date('r') . "\r\n";
 
         try {
-            $socket = fsockopen(self::SMTP_HOST, self::SMTP_PORT, $errno, $errstr, 15);
+            $socket = fsockopen(self::smtpHost(), self::smtpPort(), $errno, $errstr, 15);
             if (!$socket) {
                 error_log("[MAILER] Không kết nối được SMTP: {$errstr} ({$errno})");
                 return false;
@@ -86,18 +97,18 @@ class Mailer {
             }
 
             // Username
-            if (!self::smtpSend($socket, base64_encode(self::SMTP_USER) . "\r\n", '334')) {
+            if (!self::smtpSend($socket, base64_encode(self::smtpUser()) . "\r\n", '334')) {
                 fclose($socket); return false;
             }
 
             // Password
-            if (!self::smtpSend($socket, base64_encode(self::SMTP_PASSWORD) . "\r\n", '235')) {
+            if (!self::smtpSend($socket, base64_encode(self::smtpPassword()) . "\r\n", '235')) {
                 error_log("[MAILER] Xác thực Gmail thất bại - kiểm tra App Password");
                 fclose($socket); return false;
             }
 
             // MAIL FROM
-            if (!self::smtpSend($socket, "MAIL FROM:<" . self::SMTP_USER . ">\r\n", '250')) {
+            if (!self::smtpSend($socket, "MAIL FROM:<" . self::fromEmail() . ">\r\n", '250')) {
                 fclose($socket); return false;
             }
 

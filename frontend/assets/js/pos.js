@@ -499,10 +499,10 @@ import { i18n } from './shared.js';
                     <div class="ps-cartItem__price">${fmtVND(item.selling_price)}</div>
                 </div>
                 <div class="ps-cartItem__right">
-                    <button class="ps-qtyBtn" data-act="dec" aria-label="dec"><i class="bi bi-dash"></i></button>
-                    <div class="ps-qtyNum">${item.quantity}</div>
-                    <button class="ps-qtyBtn" data-act="inc" aria-label="inc"><i class="bi bi-plus"></i></button>
-                    <button class="ps-delBtn" data-act="rm" aria-label="remove"><i class="bi bi-trash3"></i></button>
+                    <button class="ps-qtyBtn" data-act="dec" type="button" aria-label="dec"><i class="bi bi-dash"></i></button>
+                    <input type="number" class="ps-qtyInput" min="1" step="1" value="${item.quantity}" inputmode="numeric" aria-label="${t("cart.qtyInput")}" />
+                    <button class="ps-qtyBtn" data-act="inc" type="button" aria-label="inc"><i class="bi bi-plus"></i></button>
+                    <button class="ps-delBtn" data-act="rm" type="button" aria-label="remove"><i class="bi bi-trash3"></i></button>
                 </div>
             </div>
         `).join("");
@@ -512,12 +512,55 @@ import { i18n } from './shared.js';
             const item = items.find(i => i.id == id);
             if (!item) return;
 
+            const qtyInput = row.querySelector(".ps-qtyInput");
+            const readQtyFromUi = () => {
+                if (qtyInput) {
+                    const v = parseInt(String(qtyInput.value).trim(), 10);
+                    if (!Number.isNaN(v)) return Math.max(1, v);
+                }
+                const cur = (cart.Items || []).find((i) => String(i.id) === String(id));
+                return cur ? Number(cur.quantity) : Number(item.quantity);
+            };
+
+            const commitQtyFromInput = () => {
+                if (!qtyInput) return;
+                const currentItem = (cart.Items || []).find((i) => String(i.id) === String(id));
+                const prev = currentItem ? Number(currentItem.quantity) : Number(item.quantity);
+                const raw = String(qtyInput.value).trim();
+                const nParsed = parseInt(raw, 10);
+                if (raw === "" || Number.isNaN(nParsed)) {
+                    qtyInput.value = String(Math.max(1, prev));
+                    return;
+                }
+                const n = Math.max(1, nParsed);
+                if (n !== prev) {
+                    updateCartItem(id, n);
+                } else {
+                    qtyInput.value = String(n);
+                }
+            };
+
+            if (qtyInput) {
+                qtyInput.addEventListener("blur", commitQtyFromInput);
+                qtyInput.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        qtyInput.blur();
+                    }
+                });
+                qtyInput.addEventListener("focus", () => qtyInput.select());
+                qtyInput.addEventListener("wheel", (e) => {
+                    if (document.activeElement === qtyInput) e.preventDefault();
+                }, { passive: false });
+            }
+
             row.querySelector('[data-act="inc"]').addEventListener("click", () => {
-                updateCartItem(id, item.quantity + 1);
+                updateCartItem(id, readQtyFromUi() + 1);
             });
             row.querySelector('[data-act="dec"]').addEventListener("click", () => {
-                if (item.quantity > 1) {
-                    updateCartItem(id, item.quantity - 1);
+                const q = readQtyFromUi();
+                if (q > 1) {
+                    updateCartItem(id, q - 1);
                 } else {
                     removeFromCart(id);
                 }

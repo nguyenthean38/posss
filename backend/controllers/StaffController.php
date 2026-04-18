@@ -56,15 +56,19 @@ class StaffController {
         AuthMiddleware::checkAdmin();
         
         $this->tokenModel->voidOldTokens($staffId); // Hủy token cũ
-        
-        // Cần truyền biến $email. Code nên fetch userby id nhưng tôi tạm mô phỏng (cần query by ID)
-        $query = "SELECT email FROM users WHERE id = ?";
+
+        $query = "SELECT email FROM users WHERE id = ? AND role = 'staff'";
         $stmt = $this->db->prepare($query);
         $stmt->execute([$staffId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$row) Response::json(["message" => "User không tồn tại!"], 404);
-        
+
+        // Reset mật khẩu về MSSV tạm thời và đánh dấu chưa kích hoạt
+        // để nhân viên có thể dùng lại mật khẩu tạm khi click link mới
+        $mssvTruongNhom = "52300003";
+        $this->userModel->resetToTempPassword($staffId, $mssvTruongNhom);
+
         $email = $row['email'];
         $token = $this->tokenModel->createToken($staffId);
         

@@ -1548,6 +1548,34 @@ body[data-theme="light"] .ps-kpi__trend.down {
     color: var(--text);
 }
 
+.ps-qtyInput {
+    width: 3.25rem;
+    min-width: 2.75rem;
+    max-width: 5rem;
+    height: 34px;
+    padding: 0 6px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, #fff 5%, transparent);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.ps-qtyInput::-webkit-outer-spin-button,
+.ps-qtyInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.ps-qtyInput:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
 .ps-delBtn {
     width: 34px;
     height: 34px;
