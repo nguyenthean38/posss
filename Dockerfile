@@ -5,6 +5,7 @@ FROM php:8.2-apache
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
 # Enable Apache modules (env: PassEnv DB_* tới PHP)
+RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
 RUN a2enmod rewrite headers env
 
 # Copy custom Apache VirtualHost config
