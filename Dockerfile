@@ -4,8 +4,14 @@ FROM php:8.2-apache
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
+# Fix MPM: xoa het symlink MPM cu, chi giu mpm_prefork (mod_php yeu cau)
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
+          /etc/apache2/mods-enabled/mpm_event.conf \
+          /etc/apache2/mods-enabled/mpm_worker.load \
+          /etc/apache2/mods-enabled/mpm_worker.conf \
+    && a2enmod mpm_prefork
+
 # Enable Apache modules (env: PassEnv DB_* tới PHP)
-RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
 RUN a2enmod rewrite headers env
 
 # Copy custom Apache VirtualHost config
