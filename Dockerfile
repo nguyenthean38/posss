@@ -4,13 +4,6 @@ FROM php:8.2-apache
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
-# Fix MPM: xoa het symlink MPM cu, chi giu mpm_prefork (mod_php yeu cau)
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
-          /etc/apache2/mods-enabled/mpm_event.conf \
-          /etc/apache2/mods-enabled/mpm_worker.load \
-          /etc/apache2/mods-enabled/mpm_worker.conf \
-    && a2enmod mpm_prefork
-
 # Enable Apache modules (env: PassEnv DB_* tới PHP)
 RUN a2enmod rewrite headers env
 
@@ -48,6 +41,19 @@ RUN chown -R www-data:www-data /var/www/html \
 RUN mkdir -p /var/www/html/backend/uploads/avatars \
     && chown -R www-data:www-data /var/www/html/backend/uploads \
     && chmod -R 777 /var/www/html/backend/uploads
+
+# Fix MPM conflict: dam bao chi co mpm_prefork duoc load (mod_php yeu cau)
+# Dat cuoi Dockerfile de khong bi layer nao ghi de
+RUN set -eux; \
+    find /etc/apache2/mods-enabled/ -name 'mpm_*.load' -delete; \
+    find /etc/apache2/mods-enabled/ -name 'mpm_*.conf' -delete; \
+    ln -sf /etc/apache2/mods-available/mpm_prefork.load \
+           /etc/apache2/mods-enabled/mpm_prefork.load; \
+    if [ -f /etc/apache2/mods-available/mpm_prefork.conf ]; then \
+        ln -sf /etc/apache2/mods-available/mpm_prefork.conf \
+               /etc/apache2/mods-enabled/mpm_prefork.conf; \
+    fi; \
+    apachectl -M 2>&1 | grep -i mpm || true
 
 # Expose port 80
 EXPOSE 80
