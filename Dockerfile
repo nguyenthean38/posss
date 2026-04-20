@@ -42,21 +42,12 @@ RUN mkdir -p /var/www/html/backend/uploads/avatars \
     && chown -R www-data:www-data /var/www/html/backend/uploads \
     && chmod -R 777 /var/www/html/backend/uploads
 
-# Fix MPM conflict: dam bao chi co mpm_prefork duoc load (mod_php yeu cau)
-# Dat cuoi Dockerfile de khong bi layer nao ghi de
-RUN set -eux; \
-    find /etc/apache2/mods-enabled/ -name 'mpm_*.load' -delete; \
-    find /etc/apache2/mods-enabled/ -name 'mpm_*.conf' -delete; \
-    ln -sf /etc/apache2/mods-available/mpm_prefork.load \
-           /etc/apache2/mods-enabled/mpm_prefork.load; \
-    if [ -f /etc/apache2/mods-available/mpm_prefork.conf ]; then \
-        ln -sf /etc/apache2/mods-available/mpm_prefork.conf \
-               /etc/apache2/mods-enabled/mpm_prefork.conf; \
-    fi; \
-    apachectl -M 2>&1 | grep -i mpm || true
+# Copy entrypoint script (fix MPM at runtime, not just build time)
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose port 80
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start via entrypoint (fixes MPM before Apache starts)
+CMD ["/entrypoint.sh"]
