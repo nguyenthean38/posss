@@ -542,7 +542,8 @@ api.products = {
 api.profile = {
     get: async () => { const r = await api.getProfile(); return r.profile || r; },
     update: (data) => api.updateProfile(data),
-    changePassword: (data) => api.changePassword(data.current_password, data.new_password, data.confirm_password || data.new_password)
+    changePassword: (data) => api.changePassword(data.current_password, data.new_password, data.confirm_password || data.new_password),
+    uploadAvatar: (formData) => api.uploadAvatar(formData)
 };
 api.reports = {
     getDashboard: (timeline) => {

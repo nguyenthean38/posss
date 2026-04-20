@@ -102,7 +102,14 @@
             <section class="ps-content ps-profile">
                 <!-- HERO CARD -->
                 <div class="ps-card ps-profileHero">
-                    <div class="ps-profileHero__avatar" id="heroAvatar">AD</div>
+                    <div class="ps-profileHero__avatarWrap">
+                        <div class="ps-profileHero__avatar" id="heroAvatar">AD</div>
+                        <button type="button" class="ps-profileHero__avatarBtn" id="btnPickAvatar"
+                                title="Đổi ảnh đại diện" aria-label="Đổi ảnh đại diện">
+                            <i class="bi bi-camera-fill"></i>
+                        </button>
+                        <input type="file" id="avatarFile" accept="image/jpeg,image/png" hidden />
+                    </div>
                     <div class="ps-profileHero__meta">
                         <div class="ps-profileHero__name" id="heroName">Administrator</div>
                         <div class="ps-profileHero__email" id="heroEmail">admin@phonestore.com</div>

@@ -3,6 +3,7 @@ import API from './api.js?v=9';
 import { requireAuth, getUser } from './auth.js';
 import { initAiChatWidget } from './ai-chat-widget.js?v=2';
 import { i18n } from './shared.js';
+import { getAvatarImage } from './assets.js';
 
 (() => {
     requireAuth();
@@ -85,6 +86,17 @@ import { i18n } from './shared.js';
         return (s[0] || "A").toUpperCase();
     }
 
+    function paintAvatar(elId, avatarPath, initialText) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        if (avatarPath) {
+            const src = getAvatarImage(avatarPath);
+            el.innerHTML = `<img src="${src}" alt="Avatar" onerror="this.remove();this.parentElement.textContent='${initialText}';" />`;
+        } else {
+            el.textContent = initialText;
+        }
+    }
+
     async function renderProfile() {
         try {
             const user = getUser();
@@ -93,8 +105,11 @@ import { i18n } from './shared.js';
             const p = await API.profile.get();
             const name = p.full_name || p.name || "";
             const init = initials(name);
+            const avatarPath = p.avatar || "";
 
-            document.getElementById("heroAvatar").textContent = init;
+            paintAvatar("heroAvatar", avatarPath, init);
+            paintAvatar("topAvatar", avatarPath, init);
+
             document.getElementById("heroName").textContent = name || "—";
             document.getElementById("heroEmail").textContent = p.email || "—";
             const roleText = (p.role === "admin" || p.role === "Admin") ? t("role.admin") : t("role.staff");
@@ -102,7 +117,6 @@ import { i18n } from './shared.js';
             const joinedDate = (p.created_at || "").split("T")[0] || (p.created_at || "").substring(0, 10) || "—";
             document.getElementById("heroJoined").textContent = `${t("info.joined")}: ${joinedDate}`;
 
-            document.getElementById("topAvatar").textContent = init;
             document.getElementById("topName").textContent = name || "—";
             document.getElementById("topRole").textContent = roleText;
 
@@ -112,6 +126,28 @@ import { i18n } from './shared.js';
             document.getElementById("fAddress").value = p.address || "";
         } catch (err) {
             console.error('Render error:', err);
+            toast(t("toast.error"));
+        }
+    }
+
+    async function uploadAvatar(file) {
+        if (!file) return;
+        if (!/^image\/(jpeg|png)$/.test(file.type)) {
+            toast("Chỉ hỗ trợ ảnh JPG/PNG");
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            toast("Ảnh vượt quá 2MB");
+            return;
+        }
+        try {
+            const fd = new FormData();
+            fd.append("avatar", file);
+            await API.profile.uploadAvatar(fd);
+            await renderProfile();
+            toast(t("toast.saved"));
+        } catch (err) {
+            console.error("Upload avatar error:", err);
             toast(t("toast.error"));
         }
     }
@@ -224,6 +260,15 @@ import { i18n } from './shared.js';
         document.getElementById("btnSaveInfo")?.addEventListener("click", saveInfo);
         document.getElementById("newPwd")?.addEventListener("input", updateStrength);
         document.getElementById("btnChangePwd")?.addEventListener("click", changePassword);
+
+        const fileInput = document.getElementById("avatarFile");
+        const pickBtn = document.getElementById("btnPickAvatar");
+        pickBtn?.addEventListener("click", () => fileInput?.click());
+        fileInput?.addEventListener("change", (e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadAvatar(f);
+            e.target.value = "";
+        });
 
         document.querySelectorAll("[data-eye]").forEach(btn => {
             btn.addEventListener("click", () => toggleEye(btn.dataset.eye));

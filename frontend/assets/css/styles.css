@@ -2964,6 +2964,47 @@ body[data-theme="light"] select.ps-input option {
     color: #fff;
     background: color-mix(in srgb, var(--primary) 85%, transparent);
     border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+    overflow: hidden;
+}
+
+.ps-profileHero__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ps-profileHero__avatarWrap {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    flex-shrink: 0;
+}
+
+.ps-profileHero__avatarBtn {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid var(--surface, #1b1e27);
+    background: var(--primary, #ff6b35);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform .15s ease, filter .15s ease;
+    font-size: 14px;
+}
+
+.ps-profileHero__avatarBtn:hover {
+    transform: scale(1.06);
+    filter: brightness(1.1);
+}
+
+.ps-profileHero__avatarBtn:active {
+    transform: scale(0.96);
 }
 
 .ps-profileHero__meta {
