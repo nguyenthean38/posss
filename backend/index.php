@@ -47,6 +47,7 @@ $allowedOrigins = [
     'https://unconsonant-olycia-powkily.ngrok-free.app',
     // Render deployment
     'https://poss.onrender.com',
+    'https://posss.onrender.com',
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins, true)) {
