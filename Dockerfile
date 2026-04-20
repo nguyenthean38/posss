@@ -42,6 +42,12 @@ RUN mkdir -p /var/www/html/backend/uploads/avatars \
     && chown -R www-data:www-data /var/www/html/backend/uploads \
     && chmod -R 777 /var/www/html/backend/uploads
 
+# Persistent-disk seed: keep a copy of default assets at a path NOT shadowed
+# by the Render persistent disk mount. entrypoint.sh copies missing files
+# from here back into the live uploads dir on every start.
+RUN cp -r /var/www/html/backend/uploads /var/www/html/backend/uploads_seed \
+    && chown -R www-data:www-data /var/www/html/backend/uploads_seed
+
 # Copy entrypoint script (fix MPM at runtime, not just build time)
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
