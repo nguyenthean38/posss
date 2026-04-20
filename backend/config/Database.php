@@ -32,15 +32,23 @@ class Database {
         }
 
         try {
+            $pdoOptions = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+            ];
+
+            // Aiven (và nhiều cloud MySQL) yêu cầu SSL — bật khi DB_SSL=true
+            $useSSL = strtolower((string)getenv('DB_SSL')) === 'true';
+            if ($useSSL) {
+                $pdoOptions[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+            }
+
             $this->connection = new PDO(
                 "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
                 $username,
                 $password,
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                ]
+                $pdoOptions
             );
             $this->connection->exec("SET time_zone = '+07:00'");
             $this->ensureLoyaltySchema($this->connection, $dbname);

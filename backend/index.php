@@ -45,6 +45,8 @@ $allowedOrigins = [
     // Production / staging HTTPS — thêm domain thật hoặc URL ngrok đang dùng vào đây
     'https://unconsonant-alycia-pawkily.ngrok-free.dev',
     'https://unconsonant-olycia-powkily.ngrok-free.app',
+    // Render deployment
+    'https://poss.onrender.com',
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins, true)) {
